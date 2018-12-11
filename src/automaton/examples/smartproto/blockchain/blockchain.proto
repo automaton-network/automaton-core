@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+message Hello {
+  // Peer unique ID
+  string name = 1;
+}
+
+message Block {
+  // Address of the miner
+  bytes miner = 1;
+
+  // Hash of the contents of the previous block
+  bytes prev_hash = 2;
+
+  // Height of the block
+  uint64 height = 3;
+
+  // Nonce used in order to achieve a valid block
+  bytes nonce = 4;
+}
+
+message GetBlocks {
+  // Height of the first requested block
+  uint64 height = 1;
+
+  // Maximum number of blocks to be sent starting at height specified above
+  uint32 count = 2;
+}
+
+message Blocks {
+  // List of block headers from the peer's current blockchain
+  repeated Block block = 1;
+}

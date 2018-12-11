@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+message TestMsg {
+	string name = 1;
+	int32 number = 2;
+	int32 num = 5;
+	int32 opt = 3;
+	repeated string array = 4;
+	repeated int32 int_array = 7;
+}

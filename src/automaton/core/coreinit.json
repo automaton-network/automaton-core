@@ -1,0 +1,21 @@
+{
+  "protocols" : [
+    "automaton/examples/smartproto/chat/",
+    "automaton/examples/smartproto/blockchain/",
+    "automaton/examples/smartproto/reservationsystem/"
+  ],
+  "command_definitions" : [
+    "automaton/core/rpc.proto"
+  ],
+  "command_implementations" : [
+    "automaton/core/core.lua"
+  ],
+  "commands" : [
+    {"cmd":"testprint", "input_message":"PrintRequest", "output_message":""}
+  ],
+  "rpc_config" : {
+    "default_port" : 33777,
+    "username" : "someuser",
+    "password" : ""
+  }
+}

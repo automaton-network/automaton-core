@@ -1,0 +1,138 @@
+digraph G {
+  bgcolor=white
+  fontcolor=black
+  labelloc=t
+  fontname=Arial
+  fontsize=12
+
+  node[
+    shape=oval
+    style="rounded,filled"
+    fillcolor="#ffffff:#e0ffff"
+    margin=0
+    fontname=Helvetica fontsize=10 fontcolor=black
+    penwidth=0.3
+    color="#004080"
+  ]
+  
+  edge[
+    color="#004080"
+    penwidth=0.3
+  ]
+
+  // test=1
+  subgraph cluster_a {
+    label="test = 1"
+    a_root -> a_test
+    a_root[label="root"]
+    a_test[label="test = 1" fillcolor="#e0ffff:#80ffff"]
+  }
+
+  // tester=2
+  subgraph cluster_b {
+    label="tester = 2"
+    b_root -> b_test
+    b_test -> b_test_er
+    b_root[label="root"]
+    b_test[label="test = 1" fillcolor="#e0ffff:#80ffff"]
+    b_test_er[label="er = 2" fillcolor="#e0ffff:#80ffff"]
+  }
+
+  // testing=3
+  subgraph cluster_c {
+    label="testing = 3"
+    c_root -> c_test
+    c_test -> c_test_er
+    c_test -> c_test_ing
+    c_root[label="root"]
+    c_test[label="test = 1" fillcolor="#e0ffff:#80ffff"]
+    c_test_er[label="er = 2" fillcolor="#e0ffff:#80ffff"]
+    c_test_ing[label="ing = 3" fillcolor="#e0ffff:#80ffff"]
+  }
+
+  // travel=4
+  subgraph cluster_d {
+    label="travel = 4"
+    d_root -> d_t
+    d_t -> { d_t_est d_t_ravel }
+    d_t_est -> d_t_est_er
+    d_t_est -> d_t_est_ing
+    d_root[label="root"]
+    d_t[label="t"]
+    d_t_est[label="est = 1" fillcolor="#e0ffff:#80ffff"]
+    d_t_est_er[label="er = 2" fillcolor="#e0ffff:#80ffff"]
+    d_t_est_ing[label="ing = 3" fillcolor="#e0ffff:#80ffff"]
+    d_t_ravel[label="ravel = 4" fillcolor="#e0ffff:#80ffff"]
+  }
+
+  // tramway=5
+  subgraph cluster_e {
+    label="tramway = 5"
+    e_root -> e_t
+    e_t -> { e_t_est e_t_ra }
+    e_t_est -> e_t_est_er
+    e_t_est -> e_t_est_ing
+    e_t_ra -> { e_t_ra_vel e_t_ra_mway }
+    e_root[label="root"]
+    e_t[label="t"]
+    e_t_est[label="est = 1" fillcolor="#e0ffff:#80ffff"]
+    e_t_est_er[label="er = 2" fillcolor="#e0ffff:#80ffff"]
+    e_t_est_ing[label="ing = 3" fillcolor="#e0ffff:#80ffff"]
+    e_t_ra[label="ra"]
+    e_t_ra_vel[label="vel = 4" fillcolor="#e0ffff:#80ffff"]
+    e_t_ra_mway[label="mway = 5" fillcolor="#e0ffff:#80ffff"]
+  }
+
+  // tram=6
+  subgraph cluster_f {
+    label="tram = 6"
+    f_root -> f_t
+    f_t -> { f_t_est f_t_ra }
+    f_t_est -> f_t_est_er
+    f_t_est -> f_t_est_ing
+    f_t_ra -> { f_t_ra_vel f_t_ra_m }
+    f_t_ra_m -> f_t_ra_m_way
+    f_root[label="root"]
+    f_t[label="t"]
+    f_t_est[label="est = 1" fillcolor="#e0ffff:#80ffff"]
+    f_t_est_er[label="er = 2" fillcolor="#e0ffff:#80ffff"]
+    f_t_est_ing[label="ing = 3" fillcolor="#e0ffff:#80ffff"]
+    f_t_ra[label="ra"]
+    f_t_ra_vel[label="vel = 4" fillcolor="#e0ffff:#80ffff"]
+    f_t_ra_m[label="m = 6" fillcolor="#e0ffff:#80ffff"]
+    f_t_ra_m_way[label="mway = 5" fillcolor="#e0ffff:#80ffff"]
+  }
+
+  // align clusters
+  // a_test -> d_root [style=invis]
+  // b_test_er -> d_root [style=invis]
+  // c_test_er -> d_root [style=invis]
+
+  // c_test_er -> e_root [style=invis]
+  // c_test_er -> f_root [style=invis]
+  b_test_er -> e_root [style=invis]
+  e_t_est_ing -> f_root [style=invis]
+
+/*
+  subgraph cluster_2 {
+    root -> t
+    t -> {
+      t_est
+      t_ra
+    }
+
+    t_est -> { test_er test_ing }
+    t_ra -> { tra_vel tra_m }
+    tra_m -> { tram_way }
+
+    t[label="t"]
+    t_est[label="est = 1" fillcolor="#e0ffff:#80ffff"]
+    test_er[label="er = 2" fillcolor="#e0ffff:#80ffff"]
+    test_ing[label="ing = 3" fillcolor="#e0ffff:#80ffff"]
+    t_ra[label="ra"]
+    tra_vel[label="vel = 4" fillcolor="#e0ffff:#80ffff"]
+    tra_m[label="m = 6" fillcolor=black fontcolor=white]
+    tram_way[label="way = 5" fillcolor=black fontcolor=white]
+  }
+*/
+}

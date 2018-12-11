@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+message Schema2 {
+	string name = 1;
+  schema1.Schema1 schema1_dependency = 2;
+  schema1.Schema1.Nested schema1_nested_dependency = 3;
+  schema1.Schema1.Nested.DoubleNested schema1_double_nested_dependency = 4;
+
+  message Nested {
+    message DoubleNested {
+    }
+  }
+}

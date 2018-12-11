@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+enum Test {
+  undefined = 0;
+  test1 = 1;
+  test2 = 2;
+  test3 = 3;
+}
+
+message BlockHeader {
+  bytes prev_hash = 1;
+  bytes hash = 2;
+  bytes nonce = 3;
+  bool b = 4;
+  Test e = 5;
+}
+
+message Blocks {
+  repeated BlockHeader headers = 1;
+}
+
+message Point {
+  sint64 x = 1;
+  sint64 y = 2;
+}
+
+message AddRequest {
+  int32 x = 1;
+  int32 y = 2;
+}
+
+message AddResponse {
+  int32 r = 1;
+}

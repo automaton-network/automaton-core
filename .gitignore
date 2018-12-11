@@ -1,0 +1,37 @@
+# Ignore all bazel-* symlinks. There is no full list since this can change
+# based on the name of the directory bazel is cloned into.
+/bazel-*
+/src/bazel-*
+/src/=*
+/src/logs*
+/src/third_party/localboost-s-x64-1_67*
+# Mac OS
+.DS_Store
+
+# Ignore intermediate files.
+src/logs/*
+*.log
+*.[oa]
+*.so
+*.obj
+*.lib
+*.exp
+*.dll
+*.exe
+*.manifest
+*.dmp
+*.swp
+.tags
+
+# Ignore archives
+*.zip
+*.tar.gz
+*.tar.xz
+
+# Visual Studio
+.vs
+.vscode
+
+# Locally built third_party libraries
+src/local_third_party
+src/automaton/examples/smartproto/blockchain/inspect.lua

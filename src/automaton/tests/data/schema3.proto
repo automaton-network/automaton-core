@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+message Schema3 {
+	string name = 1;
+  repeated schema1.Schema1 schema1_dependency = 2;
+  repeated schema1.Schema1.Nested schema1_nested_dependency = 3;
+  repeated schema1.Schema1.Nested.DoubleNested schema1_double_nested_dependency = 4;
+  repeated schema2.Schema2 schema2_dependency = 5;
+  repeated schema2.Schema2.Nested schema2_nested_dependency = 6;
+  repeated schema2.Schema2.Nested.DoubleNested schema2_double_nested_dependency = 7;
+}

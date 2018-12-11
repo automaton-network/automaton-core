@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+// Reservation System Smart Protocol Example
+
+// Handshake / Initial Validator Setup
+
+message Validator {
+  // Participant's public key
+  bytes public_key = 1;
+
+  // Participant's human readable name
+  string name = 2;
+
+  // Participant's signature of their human readable name
+  bytes signature = 3;
+}
+
+// Validator list is being shared amongst peers until they all have the full validator set
+message Hello {
+  string name = 1;
+  repeated Validator validators = 2;
+}
+
+// Consensus
+// Once we have the set of all public keys,
+// we sort them and elect leaders in a round-robin fashion
+
+// When it’s the validator’s turn to to create a StateTransition and it has
+// valid transactions a new StateTransition will be created, signed and broadcasted.
+
+message StateTransition {
+  //  validator_number * rounds
+  uint64 epoch = 1;
+  repeated CreateReservation reservations = 2;
+  repeated CancelReservation cancellations = 3;
+  // sign(epoch, reservations, cancellations) with the key of the validator
+  bytes signature = 4;
+}
+
+// Reservation System
+
+message CreateReservation {
+  repeated uint32 room_id = 1;
+  uint32 start_day = 2;
+  uint32 end_day = 3;
+  bytes client_public_key = 4;
+  // sign(room_id, start_date, end_day) with the key of the client
+  bytes client_signature = 5;
+}
+
+message CancelReservation {
+  repeated uint32 room_id = 1;
+  uint32 start_day = 2;
+  uint32 end_day = 3;
+  bytes client_public_key = 4;
+  bytes client_signature = 5;
+}

@@ -1,0 +1,319 @@
+<svg width="566pt" height="501pt" viewBox="0 0 566 501" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 497.4)">
+<title>G</title>
+<polygon fill="#ffffff" stroke="transparent" points="-4,4 -4,-497.4 562,-497.4 562,4 -4,4"></polygon>
+<text text-anchor="middle" x="279" y="-478.6" font-family="Arial" font-size="12.00" fill="#000000">Automaton State Tree</text>
+<!-- Root -->
+<g id="node1" class="node">
+<title>Root</title>
+<defs>
+<linearGradient id="l_0" gradientUnits="userSpaceOnUse" x1="108" y1="-379.5" x2="162" y2="-379.5">
+<stop offset="0" style="stop-color:#ffffff;stop-opacity:1.;"></stop>
+<stop offset="1" style="stop-color:#e0ffff;stop-opacity:1.;"></stop>
+</linearGradient>
+</defs>
+<ellipse fill="url(#l_0)" stroke="#000000" cx="135" cy="-379.5" rx="27" ry="33.8824"></ellipse>
+<text text-anchor="middle" x="135" y="-394.5" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">Root</text>
+<text text-anchor="middle" x="135" y="-382.5" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">before</text>
+<text text-anchor="middle" x="135" y="-370.5" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">inserting</text>
+<text text-anchor="middle" x="135" y="-358.5" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">tram</text>
+</g>
+<!-- t -->
+<g id="node2" class="node">
+<title>t</title>
+<defs>
+<linearGradient id="l_1" gradientUnits="userSpaceOnUse" x1="108" y1="-234" x2="162" y2="-234">
+<stop offset="0" style="stop-color:#ffffff;stop-opacity:1.;"></stop>
+<stop offset="1" style="stop-color:#e0ffff;stop-opacity:1.;"></stop>
+</linearGradient>
+</defs>
+<ellipse fill="url(#l_1)" stroke="#000000" cx="135" cy="-234" rx="27" ry="18"></ellipse>
+<text text-anchor="middle" x="135" y="-231" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">t</text>
+</g>
+<!-- Root&#45;&gt;t -->
+<g id="edge1" class="edge">
+<title>Root-&gt;t</title>
+<path fill="none" stroke="#000000" d="M135,-345.3867C135,-320.1843 135,-286.267 135,-262.5045"></path>
+<polygon fill="#000000" stroke="#000000" points="138.5001,-262.3689 135,-252.3689 131.5001,-262.369 138.5001,-262.3689"></polygon>
+</g>
+<!-- t_est -->
+<g id="node3" class="node">
+<title>t_est</title>
+<defs>
+<linearGradient id="l_2" gradientUnits="userSpaceOnUse" x1="72" y1="-162" x2="126" y2="-162">
+<stop offset="0" style="stop-color:#e0ffff;stop-opacity:1.;"></stop>
+<stop offset="1" style="stop-color:#80ffff;stop-opacity:1.;"></stop>
+</linearGradient>
+</defs>
+<ellipse fill="url(#l_2)" stroke="#000000" cx="99" cy="-162" rx="27" ry="18"></ellipse>
+<text text-anchor="middle" x="99" y="-159" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">est = 1</text>
+</g>
+<!-- t&#45;&gt;t_est -->
+<g id="edge2" class="edge">
+<title>t-&gt;t_est</title>
+<path fill="none" stroke="#000000" d="M126.2854,-216.5708C122.0403,-208.0807 116.8464,-197.6929 112.1337,-188.2674"></path>
+<polygon fill="#000000" stroke="#000000" points="115.237,-186.6477 107.6343,-179.2687 108.976,-189.7782 115.237,-186.6477"></polygon>
+</g>
+<!-- t_ra -->
+<g id="node4" class="node">
+<title>t_ra</title>
+<defs>
+<linearGradient id="l_3" gradientUnits="userSpaceOnUse" x1="144" y1="-162" x2="198" y2="-162">
+<stop offset="0" style="stop-color:#ffffff;stop-opacity:1.;"></stop>
+<stop offset="1" style="stop-color:#e0ffff;stop-opacity:1.;"></stop>
+</linearGradient>
+</defs>
+<ellipse fill="url(#l_3)" stroke="#000000" cx="171" cy="-162" rx="27" ry="18"></ellipse>
+<text text-anchor="middle" x="171" y="-159" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">ra</text>
+</g>
+<!-- t&#45;&gt;t_ra -->
+<g id="edge3" class="edge">
+<title>t-&gt;t_ra</title>
+<path fill="none" stroke="#000000" d="M143.7146,-216.5708C147.9597,-208.0807 153.1536,-197.6929 157.8663,-188.2674"></path>
+<polygon fill="#000000" stroke="#000000" points="161.024,-189.7782 162.3657,-179.2687 154.763,-186.6477 161.024,-189.7782"></polygon>
+</g>
+<!-- test_er -->
+<g id="node5" class="node">
+<title>test_er</title>
+<defs>
+<linearGradient id="l_4" gradientUnits="userSpaceOnUse" x1="0" y1="-90" x2="54" y2="-90">
+<stop offset="0" style="stop-color:#e0ffff;stop-opacity:1.;"></stop>
+<stop offset="1" style="stop-color:#80ffff;stop-opacity:1.;"></stop>
+</linearGradient>
+</defs>
+<ellipse fill="url(#l_4)" stroke="#000000" cx="27" cy="-90" rx="27" ry="18"></ellipse>
+<text text-anchor="middle" x="27" y="-87" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">er = 2</text>
+</g>
+<!-- t_est&#45;&gt;test_er -->
+<g id="edge4" class="edge">
+<title>t_est-&gt;test_er</title>
+<path fill="none" stroke="#000000" d="M83.7307,-146.7307C73.803,-136.803 60.6847,-123.6847 49.5637,-112.5637"></path>
+<polygon fill="#000000" stroke="#000000" points="51.7933,-109.8436 42.2473,-105.2473 46.8436,-114.7933 51.7933,-109.8436"></polygon>
+</g>
+<!-- test_ing -->
+<g id="node6" class="node">
+<title>test_ing</title>
+<defs>
+<linearGradient id="l_5" gradientUnits="userSpaceOnUse" x1="72" y1="-90" x2="126" y2="-90">
+<stop offset="0" style="stop-color:#e0ffff;stop-opacity:1.;"></stop>
+<stop offset="1" style="stop-color:#80ffff;stop-opacity:1.;"></stop>
+</linearGradient>
+</defs>
+<ellipse fill="url(#l_5)" stroke="#000000" cx="99" cy="-90" rx="27" ry="18"></ellipse>
+<text text-anchor="middle" x="99" y="-87" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">ing = 3</text>
+</g>
+<!-- t_est&#45;&gt;test_ing -->
+<g id="edge5" class="edge">
+<title>t_est-&gt;test_ing</title>
+<path fill="none" stroke="#000000" d="M99,-143.8314C99,-136.131 99,-126.9743 99,-118.4166"></path>
+<polygon fill="#000000" stroke="#000000" points="102.5001,-118.4132 99,-108.4133 95.5001,-118.4133 102.5001,-118.4132"></polygon>
+</g>
+<!-- tra_vel -->
+<g id="node7" class="node">
+<title>tra_vel</title>
+<defs>
+<linearGradient id="l_6" gradientUnits="userSpaceOnUse" x1="144" y1="-90" x2="198" y2="-90">
+<stop offset="0" style="stop-color:#e0ffff;stop-opacity:1.;"></stop>
+<stop offset="1" style="stop-color:#80ffff;stop-opacity:1.;"></stop>
+</linearGradient>
+</defs>
+<ellipse fill="url(#l_6)" stroke="#000000" cx="171" cy="-90" rx="27" ry="18"></ellipse>
+<text text-anchor="middle" x="171" y="-87" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">vel = 4</text>
+</g>
+<!-- t_ra&#45;&gt;tra_vel -->
+<g id="edge6" class="edge">
+<title>t_ra-&gt;tra_vel</title>
+<path fill="none" stroke="#000000" d="M171,-143.8314C171,-136.131 171,-126.9743 171,-118.4166"></path>
+<polygon fill="#000000" stroke="#000000" points="174.5001,-118.4132 171,-108.4133 167.5001,-118.4133 174.5001,-118.4132"></polygon>
+</g>
+<!-- tra_mway -->
+<g id="node8" class="node">
+<title>tra_mway</title>
+<defs>
+<linearGradient id="l_7" gradientUnits="userSpaceOnUse" x1="216" y1="-90" x2="270" y2="-90">
+<stop offset="0" style="stop-color:#e0ffff;stop-opacity:1.;"></stop>
+<stop offset="1" style="stop-color:#80ffff;stop-opacity:1.;"></stop>
+</linearGradient>
+</defs>
+<ellipse fill="url(#l_7)" stroke="#000000" cx="243" cy="-90" rx="27" ry="18"></ellipse>
+<text text-anchor="middle" x="243" y="-87" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">mway = 5</text>
+</g>
+<!-- t_ra&#45;&gt;tra_mway -->
+<g id="edge7" class="edge">
+<title>t_ra-&gt;tra_mway</title>
+<path fill="none" stroke="#000000" d="M186.2693,-146.7307C196.197,-136.803 209.3153,-123.6847 220.4363,-112.5637"></path>
+<polygon fill="#000000" stroke="#000000" points="223.1564,-114.7933 227.7527,-105.2473 218.2067,-109.8436 223.1564,-114.7933"></polygon>
+</g>
+<!-- words -->
+<g id="node9" class="node">
+<title>words</title>
+<defs>
+<linearGradient id="l_8" gradientUnits="userSpaceOnUse" x1="283.414" y1="-379.5" x2="346.586" y2="-379.5">
+<stop offset="0" style="stop-color:#ffffff;stop-opacity:1.;"></stop>
+<stop offset="1" style="stop-color:#e0ffff;stop-opacity:1.;"></stop>
+</linearGradient>
+</defs>
+<path fill="url(#l_8)" stroke="#000000" d="M295.414,-288.5C295.414,-288.5 334.586,-288.5 334.586,-288.5 340.586,-288.5 346.586,-294.5 346.586,-300.5 346.586,-300.5 346.586,-458.5 346.586,-458.5 346.586,-464.5 340.586,-470.5 334.586,-470.5 334.586,-470.5 295.414,-470.5 295.414,-470.5 289.414,-470.5 283.414,-464.5 283.414,-458.5 283.414,-458.5 283.414,-300.5 283.414,-300.5 283.414,-294.5 289.414,-288.5 295.414,-288.5"></path>
+<text text-anchor="middle" x="315" y="-454.5" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">WORDS</text>
+<polyline fill="none" stroke="#000000" points="283.414,-444.5 346.586,-444.5 "></polyline>
+<text text-anchor="middle" x="315" y="-428.5" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">test=1</text>
+<polyline fill="none" stroke="#000000" points="283.414,-418.5 346.586,-418.5 "></polyline>
+<text text-anchor="middle" x="315" y="-402.5" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">tester=2</text>
+<polyline fill="none" stroke="#000000" points="283.414,-392.5 346.586,-392.5 "></polyline>
+<text text-anchor="middle" x="315" y="-376.5" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">testing=3</text>
+<polyline fill="none" stroke="#000000" points="283.414,-366.5 346.586,-366.5 "></polyline>
+<text text-anchor="middle" x="315" y="-350.5" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">travel=4</text>
+<polyline fill="none" stroke="#000000" points="283.414,-340.5 346.586,-340.5 "></polyline>
+<text text-anchor="middle" x="315" y="-324.5" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">tramway=5</text>
+<polyline fill="none" stroke="#000000" points="283.414,-314.5 346.586,-314.5 "></polyline>
+<text text-anchor="middle" x="315" y="-298.5" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">tram=6</text>
+</g>
+<!-- Root2 -->
+<g id="node10" class="node">
+<title>Root2</title>
+<defs>
+<linearGradient id="l_9" gradientUnits="userSpaceOnUse" x1="396" y1="-379.5" x2="450" y2="-379.5">
+<stop offset="0" style="stop-color:#ffffff;stop-opacity:1.;"></stop>
+<stop offset="1" style="stop-color:#e0ffff;stop-opacity:1.;"></stop>
+</linearGradient>
+</defs>
+<ellipse fill="url(#l_9)" stroke="#000000" cx="423" cy="-379.5" rx="27" ry="33.8824"></ellipse>
+<text text-anchor="middle" x="423" y="-394.5" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">Root</text>
+<text text-anchor="middle" x="423" y="-382.5" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">after</text>
+<text text-anchor="middle" x="423" y="-370.5" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">inserting</text>
+<text text-anchor="middle" x="423" y="-358.5" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">tram</text>
+</g>
+<!-- t2 -->
+<g id="node11" class="node">
+<title>t2</title>
+<defs>
+<linearGradient id="l_10" gradientUnits="userSpaceOnUse" x1="396" y1="-234" x2="450" y2="-234">
+<stop offset="0" style="stop-color:#ffffff;stop-opacity:1.;"></stop>
+<stop offset="1" style="stop-color:#e0ffff;stop-opacity:1.;"></stop>
+</linearGradient>
+</defs>
+<ellipse fill="url(#l_10)" stroke="#000000" cx="423" cy="-234" rx="27" ry="18"></ellipse>
+<text text-anchor="middle" x="423" y="-231" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">t</text>
+</g>
+<!-- Root2&#45;&gt;t2 -->
+<g id="edge8" class="edge">
+<title>Root2-&gt;t2</title>
+<path fill="none" stroke="#000000" d="M423,-345.3867C423,-320.1843 423,-286.267 423,-262.5045"></path>
+<polygon fill="#000000" stroke="#000000" points="426.5001,-262.3689 423,-252.3689 419.5001,-262.369 426.5001,-262.3689"></polygon>
+</g>
+<!-- t_est2 -->
+<g id="node12" class="node">
+<title>t_est2</title>
+<defs>
+<linearGradient id="l_11" gradientUnits="userSpaceOnUse" x1="360" y1="-162" x2="414" y2="-162">
+<stop offset="0" style="stop-color:#e0ffff;stop-opacity:1.;"></stop>
+<stop offset="1" style="stop-color:#80ffff;stop-opacity:1.;"></stop>
+</linearGradient>
+</defs>
+<ellipse fill="url(#l_11)" stroke="#000000" cx="387" cy="-162" rx="27" ry="18"></ellipse>
+<text text-anchor="middle" x="387" y="-159" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">est = 1</text>
+</g>
+<!-- t2&#45;&gt;t_est2 -->
+<g id="edge9" class="edge">
+<title>t2-&gt;t_est2</title>
+<path fill="none" stroke="#000000" d="M414.2854,-216.5708C410.0403,-208.0807 404.8464,-197.6929 400.1337,-188.2674"></path>
+<polygon fill="#000000" stroke="#000000" points="403.237,-186.6477 395.6343,-179.2687 396.976,-189.7782 403.237,-186.6477"></polygon>
+</g>
+<!-- t_ra2 -->
+<g id="node13" class="node">
+<title>t_ra2</title>
+<defs>
+<linearGradient id="l_12" gradientUnits="userSpaceOnUse" x1="432" y1="-162" x2="486" y2="-162">
+<stop offset="0" style="stop-color:#ffffff;stop-opacity:1.;"></stop>
+<stop offset="1" style="stop-color:#e0ffff;stop-opacity:1.;"></stop>
+</linearGradient>
+</defs>
+<ellipse fill="url(#l_12)" stroke="#000000" cx="459" cy="-162" rx="27" ry="18"></ellipse>
+<text text-anchor="middle" x="459" y="-159" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">ra</text>
+</g>
+<!-- t2&#45;&gt;t_ra2 -->
+<g id="edge10" class="edge">
+<title>t2-&gt;t_ra2</title>
+<path fill="none" stroke="#000000" d="M431.7146,-216.5708C435.9597,-208.0807 441.1536,-197.6929 445.8663,-188.2674"></path>
+<polygon fill="#000000" stroke="#000000" points="449.024,-189.7782 450.3657,-179.2687 442.763,-186.6477 449.024,-189.7782"></polygon>
+</g>
+<!-- test_er2 -->
+<g id="node14" class="node">
+<title>test_er2</title>
+<defs>
+<linearGradient id="l_13" gradientUnits="userSpaceOnUse" x1="288" y1="-90" x2="342" y2="-90">
+<stop offset="0" style="stop-color:#e0ffff;stop-opacity:1.;"></stop>
+<stop offset="1" style="stop-color:#80ffff;stop-opacity:1.;"></stop>
+</linearGradient>
+</defs>
+<ellipse fill="url(#l_13)" stroke="#000000" cx="315" cy="-90" rx="27" ry="18"></ellipse>
+<text text-anchor="middle" x="315" y="-87" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">er = 2</text>
+</g>
+<!-- t_est2&#45;&gt;test_er2 -->
+<g id="edge11" class="edge">
+<title>t_est2-&gt;test_er2</title>
+<path fill="none" stroke="#000000" d="M371.7307,-146.7307C361.803,-136.803 348.6847,-123.6847 337.5637,-112.5637"></path>
+<polygon fill="#000000" stroke="#000000" points="339.7933,-109.8436 330.2473,-105.2473 334.8436,-114.7933 339.7933,-109.8436"></polygon>
+</g>
+<!-- test_ing2 -->
+<g id="node15" class="node">
+<title>test_ing2</title>
+<defs>
+<linearGradient id="l_14" gradientUnits="userSpaceOnUse" x1="360" y1="-90" x2="414" y2="-90">
+<stop offset="0" style="stop-color:#e0ffff;stop-opacity:1.;"></stop>
+<stop offset="1" style="stop-color:#80ffff;stop-opacity:1.;"></stop>
+</linearGradient>
+</defs>
+<ellipse fill="url(#l_14)" stroke="#000000" cx="387" cy="-90" rx="27" ry="18"></ellipse>
+<text text-anchor="middle" x="387" y="-87" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">ing = 3</text>
+</g>
+<!-- t_est2&#45;&gt;test_ing2 -->
+<g id="edge12" class="edge">
+<title>t_est2-&gt;test_ing2</title>
+<path fill="none" stroke="#000000" d="M387,-143.8314C387,-136.131 387,-126.9743 387,-118.4166"></path>
+<polygon fill="#000000" stroke="#000000" points="390.5001,-118.4132 387,-108.4133 383.5001,-118.4133 390.5001,-118.4132"></polygon>
+</g>
+<!-- tra_vel2 -->
+<g id="node16" class="node">
+<title>tra_vel2</title>
+<defs>
+<linearGradient id="l_15" gradientUnits="userSpaceOnUse" x1="432" y1="-90" x2="486" y2="-90">
+<stop offset="0" style="stop-color:#e0ffff;stop-opacity:1.;"></stop>
+<stop offset="1" style="stop-color:#80ffff;stop-opacity:1.;"></stop>
+</linearGradient>
+</defs>
+<ellipse fill="url(#l_15)" stroke="#000000" cx="459" cy="-90" rx="27" ry="18"></ellipse>
+<text text-anchor="middle" x="459" y="-87" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#000000">vel = 4</text>
+</g>
+<!-- t_ra2&#45;&gt;tra_vel2 -->
+<g id="edge13" class="edge">
+<title>t_ra2-&gt;tra_vel2</title>
+<path fill="none" stroke="#000000" d="M459,-143.8314C459,-136.131 459,-126.9743 459,-118.4166"></path>
+<polygon fill="#000000" stroke="#000000" points="462.5001,-118.4132 459,-108.4133 455.5001,-118.4133 462.5001,-118.4132"></polygon>
+</g>
+<!-- tra_m2 -->
+<g id="node17" class="node">
+<title>tra_m2</title>
+<ellipse fill="#000000" stroke="#000000" cx="531" cy="-90" rx="27" ry="18"></ellipse>
+<text text-anchor="middle" x="531" y="-87" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#ffffff">m = 6</text>
+</g>
+<!-- t_ra2&#45;&gt;tra_m2 -->
+<g id="edge14" class="edge">
+<title>t_ra2-&gt;tra_m2</title>
+<path fill="none" stroke="#000000" d="M474.2693,-146.7307C484.197,-136.803 497.3153,-123.6847 508.4363,-112.5637"></path>
+<polygon fill="#000000" stroke="#000000" points="511.1564,-114.7933 515.7527,-105.2473 506.2067,-109.8436 511.1564,-114.7933"></polygon>
+</g>
+<!-- tram_way2 -->
+<g id="node18" class="node">
+<title>tram_way2</title>
+<ellipse fill="#000000" stroke="#000000" cx="531" cy="-18" rx="27" ry="18"></ellipse>
+<text text-anchor="middle" x="531" y="-15" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#ffffff">way = 5</text>
+</g>
+<!-- tra_m2&#45;&gt;tram_way2 -->
+<g id="edge15" class="edge">
+<title>tra_m2-&gt;tram_way2</title>
+<path fill="none" stroke="#000000" d="M531,-71.8314C531,-64.131 531,-54.9743 531,-46.4166"></path>
+<polygon fill="#000000" stroke="#000000" points="534.5001,-46.4132 531,-36.4133 527.5001,-46.4133 534.5001,-46.4132"></polygon>
+</g>
+</g>
+</svg>

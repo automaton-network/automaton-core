@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+// wire messages
+
+message Hello {
+  string name = 1;
+}
+
+message Msg {
+  string author = 1;
+  uint64 sequence = 2;
+  string msg = 3;
+}
+
+// <control/cmd> messages
+
+message ReceivedMsg {
+  string hash = 1;
+  string data = 2;
+}
+
+message Messages {
+  repeated ReceivedMsg rmessages = 1;
+}
+
+message Peers {
+  repeated string id = 1;
+}

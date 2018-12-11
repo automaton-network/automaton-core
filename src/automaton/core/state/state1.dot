@@ -1,0 +1,68 @@
+digraph G {
+  bgcolor=white
+  fontcolor=black
+  label="Automaton State Tree"
+  labelloc=t
+  fontname=Arial
+  fontsize=12
+
+  node[
+    shape=oval
+    style="rounded,filled"
+    fillcolor="#ffffff:#e0ffff"
+    margin=0
+    fontname=Helvetica fontsize=10 fontcolor=black
+    penwidth=1
+  ]
+
+  Root -> t
+  t -> {
+    t_est
+    t_ra
+  }
+
+  t_est -> { test_er test_ing }
+  t_ra -> { tra_vel tra_mway }
+
+  Root[label="Root\nbefore\ninserting\ntram"]
+  t_est[label="est = 1" fillcolor="#e0ffff:#80ffff"]
+  test_er[label="er = 2" fillcolor="#e0ffff:#80ffff"]
+  test_ing[label="ing = 3" fillcolor="#e0ffff:#80ffff"]
+  t_ra[label="ra"]
+  tra_vel[label="vel = 4" fillcolor="#e0ffff:#80ffff"]
+  tra_mway[label="mway = 5" fillcolor="#e0ffff:#80ffff"]
+
+  words[
+    shape=record
+    label="{" +
+      "WORDS|" +
+      "test=1|" +
+      "tester=2|" +
+      "testing=3|" +
+      "travel=4|" +
+      "tramway=5|" +
+      "tram=6" +
+      "}"
+    margin=0.1
+  ]
+  
+  Root2 -> t2
+  t2 -> {
+    t_est2
+    t_ra2
+  }
+
+  t_est2 -> { test_er2 test_ing2 }
+  t_ra2 -> { tra_vel2 tra_m2 }
+  tra_m2 -> { tram_way2 }
+
+  Root2[label="Root\nafter\ninserting\ntram"]
+  t2[label="t"]
+  t_est2[label="est = 1" fillcolor="#e0ffff:#80ffff"]
+  test_er2[label="er = 2" fillcolor="#e0ffff:#80ffff"]
+  test_ing2[label="ing = 3" fillcolor="#e0ffff:#80ffff"]
+  t_ra2[label="ra"]
+  tra_vel2[label="vel = 4" fillcolor="#e0ffff:#80ffff"]
+  tra_m2[label="m = 6" fillcolor=black fontcolor=white]
+  tram_way2[label="way = 5" fillcolor=black fontcolor=white]
+}
