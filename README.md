@@ -2,16 +2,16 @@
 
 # Automaton
 
+## Build Status
+
+<img src="https://ci.appveyor.com/api/projects/status/5euy83253gjqdasg?svg=true">
+
 Table of Contents
 =================
 
   * [License](#license)
   * [Building Automaton](#building-automaton)
   * [Getting Started](#getting-started)
-
-## Build Status
-
-<img src="https://ci.appveyor.com/api/projects/status/5euy83253gjqdasg?svg=true">
 
 ## License
 
