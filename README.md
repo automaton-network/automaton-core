@@ -1,6 +1,6 @@
 <img align="right" title="Automaton Logo" width="128" height="128" src="media/automaton-avatar-64x64.svg">
 
-# Automaton Core
+# Automaton
 
 Table of Contents
 =================
@@ -8,6 +8,10 @@ Table of Contents
   * [License](#license)
   * [Building Automaton](#building-automaton)
   * [Getting Started](#getting-started)
+
+## Build Status
+
+<img src="https://ci.appveyor.com/api/projects/status/5euy83253gjqdasg?svg=true">
 
 ## License
 
