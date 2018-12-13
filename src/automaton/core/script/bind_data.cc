@@ -229,6 +229,8 @@ void engine::bind_data() {
       return json;
     });
 
+  msg_type.set("to_string", &msg::to_string);
+
   set_usertype("msg", msg_type);
 }
 

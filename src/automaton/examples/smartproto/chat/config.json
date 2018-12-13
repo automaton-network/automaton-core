@@ -16,7 +16,7 @@
   ],
 
   "commands": [
-    ["get_messages", [], ["Messages"]],
-    ["get_peers", [], ["Peers"]]
+    ["get_messages", "", "Messages"],
+    ["get_peers", "", "Peers"]
   ]
 }
