@@ -19,6 +19,12 @@ install:
 
     sudo apt-get update && sudo apt-get install bazel
 build_script:
+- ps: >-
+    .\download_and_build_third_party_libs_windows.ps1
+
+    cd src
+
+    bazel build //automaton/...
 - sh: >-
     ./download_and_build_third_party_libs.sh
 
@@ -26,6 +32,10 @@ build_script:
 
     bazel build //automaton/...
 test_script:
+-- ps: >-
+    cd src
+
+    bazel test //automaton/tests/...
 - sh: >-
     cd src
 
