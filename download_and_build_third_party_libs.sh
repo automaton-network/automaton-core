@@ -169,6 +169,6 @@ print_separator "=" 80
 cd boost_1_68_0
 [ ! -f b2 ] && ./bootstrap.sh
 [ ! -d stage ] && ./b2 \
-  --with-filesystem --with-system \
+  --with-filesystem --with-system --with-iostreams \
   cxxstd=14 link=static runtime-link=static stage
 cd ..
