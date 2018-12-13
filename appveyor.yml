@@ -32,7 +32,7 @@ build_script:
 
     bazel build //automaton/...
 test_script:
--- ps: >-
+- ps: >-
     cd src
 
     bazel test //automaton/tests/...
