@@ -16,6 +16,7 @@ cc_binary(
     # "//automaton/core/network:network_zmq",
     "//automaton/core/network:simulated_connection",
     "//automaton/core/smartproto",
+    "//automaton/core/node",
     "//automaton/core/state",
     "@json//:json",
   ],
