@@ -11,7 +11,15 @@
     "automaton/core/core.lua"
   ],
   "commands" : [
-    {"cmd":"testprint", "input_message":"PrintRequest", "output_message":""}
+    {"cmd":"testprint", "input":"PrintRequest", "output":""},
+    {"cmd":"list_supported_protocols", "input":"", "output":"ProtocolIDsList"},
+    {"cmd":"list_running_protocols", "input":"", "output":"ProtocolIDsList"},
+    {"cmd":"get_protocols", "input":"GetProtocolsRequest", "output":"ProtocolsList"},
+    {"cmd":"testprint", "input":"PrintRequest", "output":""},
+    {"cmd":"testprint", "input":"PrintRequest", "output":""},
+    {"cmd":"testprint", "input":"PrintRequest", "output":""},
+    {"cmd":"testprint", "input":"PrintRequest", "output":""},
+    {"cmd":"testprint", "input":"PrintRequest", "output":""}
   ],
   "rpc_config" : {
     "default_port" : 33777,
