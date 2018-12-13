@@ -3,6 +3,7 @@ image:
 - Ubuntu1604
 - Visual Studio 2017
 install:
+- cmd: choco install bazel
 - sh: >-
     sudo apt-get install pkg-config zip g++ zlib1g-dev unzip python
 
