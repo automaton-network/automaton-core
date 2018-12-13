@@ -1,6 +1,6 @@
 version: 0.1.{build}
 image:
-- Ubuntu1604
+# - Ubuntu1604
 - Visual Studio 2017
 install:
 - cmd: choco install bazel
@@ -18,25 +18,11 @@ install:
     curl https://bazel.build/bazel-release.pub.gpg | sudo apt-key add -
 
     sudo apt-get update && sudo apt-get install bazel
+- cmd: .\download_and_build_third_party_libs_windows.ps1
+- sh: ./download_and_build_third_party_libs.sh
 build_script:
-- ps: >-
-    .\download_and_build_third_party_libs_windows.ps1
-
-    cd src
-
-    bazel build //automaton/...
-- sh: >-
-    ./download_and_build_third_party_libs.sh
-
-    cd src
-
-    bazel build //automaton/...
+- cd src
+- bazel build //automaton/...
 test_script:
-- ps: >-
-    cd src
-
-    bazel test //automaton/tests/...
-- sh: >-
-    cd src
-
-    bazel test //automaton/tests/...
+- cd src
+- bazel test //automaton/tests/...
