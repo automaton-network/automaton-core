@@ -70,10 +70,10 @@ if(!(Test-Path -Path .\json-3.1.2) -and (New-Item -ItemType Directory -Path .\js
   wget -URI https://github.com/nlohmann/json/releases/download/v3.2.0/json.hpp -OutFile json-3.1.2/json.hpp
 }
 
-if(!(Test-Path -Path .\boost_1_68_0)) {
-    Get-Archive "https://dl.bintray.com/boostorg/release/1.68.0/source/boost_1_68_0.zip" `
-  "boost_1_68_0.zip" "3B1DB0B67079266C40B98329D85916E910BBADFC3DB3E860C049056788D4D5CD"
-}
+#if(!(Test-Path -Path .\boost_1_68_0)) {
+#    Get-Archive "https://dl.bintray.com/boostorg/release/1.68.0/source/boost_1_68_0.zip" `
+#  "boost_1_68_0.zip" "3B1DB0B67079266C40B98329D85916E910BBADFC3DB3E860C049056788D4D5CD"
+#}
 
 if(!(Test-Path -Path .\zlib-1.2.11)) {
     Get-Archive "https://zlib.net/zlib1211.zip" `
@@ -159,7 +159,9 @@ echo ("="*80)
 echo "  BUILDING boost"
 echo ("="*80)
 
+md boost_1_68_0
 cd boost_1_68_0
-bootstrap.bat
-b2 --with-filesystem --with-system --with-iostreams cxxstd=14 link=static stage
+dir C:\Libraries\boost_1_67_0
+# bootstrap.bat
+# b2 --with-filesystem --with-system --with-iostreams cxxstd=14 link=static stage
 cd ..
