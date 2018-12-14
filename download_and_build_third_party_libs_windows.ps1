@@ -160,10 +160,11 @@ echo "  BUILDING boost"
 echo ("="*80)
 
 md boost_1_68_0
-copy-item C:\\Libraries\\boost_1_67_0\\* boost_1_68_0 -force -recurse -verbose 
 cd boost_1_68_0
-md stage
-copy-item lib64-msvc-14.1\\* stage -force -recurse -verbose 
+echo "Moving pre-installed boost into our tree"
+Move-Item -Path C:\Libraries\boost_1_67_0 -Destination .
+Rename-Item -Path lib64-msvc-14.1 -NewName stage
+echo "Done."
 # bootstrap.bat
 # b2 --with-filesystem --with-system --with-iostreams cxxstd=14 link=static stage
 cd ..
