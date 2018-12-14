@@ -19,7 +19,7 @@ install:
     curl https://bazel.build/bazel-release.pub.gpg | sudo apt-key add -
 
     sudo apt-get update && sudo apt-get install bazel
-- cmd: .\download_and_build_third_party_libs_windows.ps1
+- ps: .\download_and_build_third_party_libs_windows.ps1
 - sh: ./download_and_build_third_party_libs.sh
 build_script:
 - cd src
