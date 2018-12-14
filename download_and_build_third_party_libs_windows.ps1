@@ -9,6 +9,22 @@ New-Item -ItemType Directory -Path .\$LOCAL_3P
 cd .\$LOCAL_3P
 [Net.ServicePointManager]::SecurityProtocol = "tls12, tls11"
 
+#  ====== Building boost ======
+echo ("="*80)
+echo "  BUILDING boost"
+echo ("="*80)
+
+echo "Moving pre-installed boost into our tree"
+Move-Item -Path C:\Libraries\boost_1_67_0 -Destination .\boost_1_68_0
+cd boost_1_68_0
+dir
+Rename-Item -Path lib64-msvc-14.1 -NewName stage
+echo "Done."
+# bootstrap.bat
+# b2 --with-filesystem --with-system --with-iostreams cxxstd=14 link=static stage
+cd ..
+
+
 function Get-GitRepo($repo, $dir, $commit) {
   echo ("="*80)
   echo " Updating $dir from repo $repo "
@@ -153,18 +169,3 @@ if (!(Test-Path .\CMakeCache.txt)) {
 }
 msbuild.exe replxx.sln /p:configuration=Release
 cd ..\..
-
-#  ====== Building boost ======
-echo ("="*80)
-echo "  BUILDING boost"
-echo ("="*80)
-
-md boost_1_68_0
-cd boost_1_68_0
-echo "Moving pre-installed boost into our tree"
-Move-Item -Path C:\Libraries\boost_1_67_0 -Destination .
-Rename-Item -Path lib64-msvc-14.1 -NewName stage
-echo "Done."
-# bootstrap.bat
-# b2 --with-filesystem --with-system --with-iostreams cxxstd=14 link=static stage
-cd ..
