@@ -22,10 +22,7 @@ install:
 - ps: .\download_and_build_third_party_libs_windows.ps1
 - sh: ./download_and_build_third_party_libs.sh
 build_script:
-- pwd
-- echo %cd%
-- cd src
+- cd ..
 - bazel build //automaton/...
 test_script:
-- cd src
 - bazel test //automaton/tests/...
