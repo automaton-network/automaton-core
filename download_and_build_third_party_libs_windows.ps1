@@ -121,13 +121,13 @@ $lua_extern_includes = "extern `"C`" {
 $lua_extern_includes | Out-File -FilePath .\lua\lua.hpp -Encoding utf8
 
 #  ====== Building LuaJIT ======
-echo ("="*80)
-echo "  BUILDING LuaJIT"
-echo ("="*80)
+# echo ("="*80)
+# echo "  BUILDING LuaJIT"
+# echo ("="*80)
 
-cd LuaJIT\src
-.\msvcbuild.bat
-cd ..\..
+# cd LuaJIT\src
+# .\msvcbuild.bat
+# cd ..\..
 
 #  ====== Building libzmq ======
 echo ("="*80)
