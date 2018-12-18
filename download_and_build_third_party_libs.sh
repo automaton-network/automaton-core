@@ -70,9 +70,9 @@ function get_archive() {
 
 # Download all libraries
 git_repo "https://github.com/LuaJIT/LuaJIT.git" "LuaJIT" "0bf80b07b0672ce874feedcc777afe1b791ccb5a"
-git_repo "https://github.com/zeromq/libzmq.git" "libzmq" "d062edd8c142384792955796329baf1e5a3377cd"
-git_repo "https://github.com/zeromq/cppzmq.git" "cppzmq" "d9f0f016c07046742738c65e1eb84722ae32d7d4"
-git_repo "https://github.com/zeromq/zmqpp.git" "zmqpp" "f8ff127683dc555aa004c0e6e2b18d2354a375be"
+# git_repo "https://github.com/zeromq/libzmq.git" "libzmq" "d062edd8c142384792955796329baf1e5a3377cd"
+# git_repo "https://github.com/zeromq/cppzmq.git" "cppzmq" "d9f0f016c07046742738c65e1eb84722ae32d7d4"
+# git_repo "https://github.com/zeromq/zmqpp.git" "zmqpp" "f8ff127683dc555aa004c0e6e2b18d2354a375be"
 git_repo "https://github.com/ThePhD/sol2.git" "sol2" "254466eb4b3ae630c731a557987f3adb1a8f86b0"
 git_repo "https://github.com/AmokHuginnsson/replxx.git" "replxx" "3cb884e3fb4b1a28efeb716fac75f77eecc7ea3d"
 git_repo "https://github.com/lua/lua.git" "lua" "e354c6355e7f48e087678ec49e340ca0696725b1"
@@ -81,9 +81,9 @@ git_repo "https://github.com/weidai11/cryptopp.git" "cryptopp" "c8d8caf70074655a
 git_repo "https://github.com/orlp/ed25519.git" "ed25519" "7fa6712ef5d581a6981ec2b08ee623314cd1d1c4"
 git_repo "https://github.com/google/googletest.git" "googletest" "2fe3bd994b3189899d93f1d5a881e725e046fdc2"
 # git_repo "https://github.com/nlohmann/json.git" "json" "359f98d14065bf4e53eeb274f5987fd08f16e5bf"
-git_repo "https://github.com/nelhage/rules_boost.git" "com_github_nelhage_rules_boost" "fe787183c14f2a5c6e5e1e75a7c57d2e799d3d19"
+# git_repo "https://github.com/nelhage/rules_boost.git" "com_github_nelhage_rules_boost" "fe787183c14f2a5c6e5e1e75a7c57d2e799d3d19"
 git_repo "https://github.com/protocolbuffers/protobuf.git" "protobuf" "48cb18e5c419ddd23d9badcfe4e9df7bde1979b2"
-git_repo "https://github.com/svaarala/duktape.git" "duktape" "d7fdb67f18561a50e06bafd196c6b423af9ad6fe"
+# git_repo "https://github.com/svaarala/duktape.git" "duktape" "d7fdb67f18561a50e06bafd196c6b423af9ad6fe"
 
 [ ! -d json-3.1.2 ] && \
   mkdir json-3.1.2 && \
@@ -128,27 +128,27 @@ make
 cd ..
 
 # Build libzmq
-print_separator "=" 80
-echo "   BUILDING libzmq"
-print_separator "=" 80
+# print_separator "=" 80
+# echo "   BUILDING libzmq"
+# print_separator "=" 80
 
 unset GREP_COLOR
 unset GREP_OPTIONS
-cd libzmq
-[ ! -f configure ] && ./autogen.sh && ./configure
-make
-cd ..
+# cd libzmq
+# [ ! -f configure ] && ./autogen.sh && ./configure
+# make
+# cd ..
 
 # Build zmqpp
-print_separator "=" 80
-echo "  BUILDING zmqpp"
-print_separator "=" 80
+# print_separator "=" 80
+# echo "  BUILDING zmqpp"
+# print_separator "=" 80
 
-cd zmqpp
-$sedi 's/CUSTOM_INCLUDE_PATH =/CUSTOM_INCLUDE_PATH = -I..\/libzmq\/include/' Makefile
-$sedi 's/LIBRARY_LIBS =/LIBRARY_LIBS = -L..\/libzmq\/src\/.libs/' Makefile
-make
-cd ..
+# cd zmqpp
+# $sedi 's/CUSTOM_INCLUDE_PATH =/CUSTOM_INCLUDE_PATH = -I..\/libzmq\/include/' Makefile
+# $sedi 's/LIBRARY_LIBS =/LIBRARY_LIBS = -L..\/libzmq\/src\/.libs/' Makefile
+# make
+# cd ..
 
 # Build replxx
 print_separator "=" 80
@@ -168,5 +168,7 @@ print_separator "=" 80
 
 cd boost_1_68_0
 [ ! -f b2 ] && ./bootstrap.sh
-[ ! -d stage ] && ./b2 cxxstd=14 link=static runtime-link=static stage
+[ ! -d stage ] && ./b2 \
+  --with-filesystem --with-system --with-iostreams \
+  cxxstd=14 link=static runtime-link=static stage
 cd ..
