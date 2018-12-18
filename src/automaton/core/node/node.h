@@ -35,7 +35,7 @@ struct peer_info {
 };
 
 class node: public network::connection::connection_handler,
-    public network::acceptor::acceptor_handler {
+            public network::acceptor::acceptor_handler {
  public:
   node(std::string id,
        uint32_t update_time_slice,
@@ -81,15 +81,7 @@ class node: public network::connection::connection_handler,
   std::set<peer_id> list_connected_peers();
 
   // Execute a script which returns corresponding type
-  void script(std::string command, std::promise<std::string>* result) {
-    add_task([this, command, result]() {
-      auto pfr = engine.safe_script(command);
-      if (result != nullptr) {
-        result->set_value(pfr);
-      }
-      return "";
-    });
-  }
+  void script(std::string command, std::promise<std::string>* result);
 
   uint32_t find_message_id(const char * name) {
     return engine.get_factory().get_schema_id(name);

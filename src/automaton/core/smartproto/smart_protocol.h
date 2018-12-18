@@ -21,11 +21,10 @@ class smart_protocol {
     cmd(std::string nm, std::string input, std::string output):name(nm), input_type(input), output_type(output) {}
   };
 
-  static smart_protocol* get_protocol(std::string proto_id);
+  static std::shared_ptr<smart_protocol> get_protocol(std::string proto_id);
   static std::vector<std::string> list_protocols();
 
-  smart_protocol();
-  bool load(std::string path);
+  static bool load(std::string path);
 
   std::unordered_map<std::string, std::string> get_msgs_definitions();
   std::vector<data::schema*> get_schemas();
@@ -34,7 +33,8 @@ class smart_protocol {
   std::vector<std::string> get_commands();
 
  private:
-  static std::unordered_map<std::string, smart_protocol*> protocols;
+  smart_protocol();
+  static std::unordered_map<std::string, std::shared_ptr<smart_protocol>> protocols;
   std::string id;
   uint32_t update_time_slice;
 
