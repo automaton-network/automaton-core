@@ -228,7 +228,7 @@ node::node(const std::string& id,
     , engine(factory)
     , acceptor_(nullptr) {
   LOG(DEBUG) << "Node constructor called";
-  smart_protocol* proto = smart_protocol::get_protocol(proto_id);
+  std::shared_ptr<smart_protocol> proto = smart_protocol::get_protocol(proto_id);
   init_bindings(proto->get_schemas(), proto->get_scripts(), proto->get_wire_msgs(), proto->get_commands());
   init_worker();
 }
@@ -622,6 +622,16 @@ std::set<peer_id> node::list_connected_peers() {
 peer_id node::get_next_peer_id() {
   lock_guard<mutex> lock(peer_ids_mutex);
   return ++peer_ids;
+}
+
+void node::script(std::string command, std::promise<std::string>* result) {
+  add_task([this, command, result]() {
+    auto pfr = engine.safe_script(command);
+    if (result != nullptr) {
+      result->set_value(pfr);
+    }
+    return "";
+  });
 }
 
 bool node::address_parser(const string& s, string* protocol, string* address) {
