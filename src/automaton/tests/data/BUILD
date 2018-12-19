@@ -10,6 +10,7 @@ cc_binary(
     "//automaton/core/data/protobuf",
   ],
   data = ["//automaton/tests/data:test.proto"],
+  flaky = True,
 )
 
 cc_test(
@@ -36,6 +37,7 @@ cc_test(
     "@gtest//:gtest_main",
   ],
   size = "small",
+  flaky = True,
 )
 
 cc_test(
@@ -68,6 +70,7 @@ cc_test(
     "@gtest//:gtest_main",
   ],
   size = "small",
+  flaky = True,
 )
 
 cc_test(
@@ -80,6 +83,7 @@ cc_test(
     "@gtest//:gtest_main",
   ],
   size = "small",
+  flaky = True,
 )
 
 cc_test(
@@ -92,6 +96,7 @@ cc_test(
     "@gtest//:gtest_main",
   ],
   size = "small",
+  flaky = True,
 )
 
 cc_test(
@@ -104,6 +109,7 @@ cc_test(
     "@gtest//:gtest_main",
   ],
   size = "small",
+  flaky = True,
 )
 
 cc_test(
@@ -116,6 +122,7 @@ cc_test(
     "@gtest//:gtest_main",
   ],
   size = "small",
+  flaky = True,
 )
 
 cc_test(
@@ -128,6 +135,7 @@ cc_test(
     "@gtest//:gtest_main",
   ],
   size = "small",
+  flaky = True,
 )
 
 cc_test(
@@ -150,6 +158,7 @@ cc_test(
     "@gtest//:gtest_main",
   ],
   size = "small",
+  flaky = True,
 )
 
 cc_test(
@@ -182,4 +191,5 @@ cc_test(
     "@gtest//:gtest_main",
   ],
   size = "small",
+  flaky = True,
 )
