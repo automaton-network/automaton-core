@@ -7,4 +7,5 @@ cc_test(
   ],
   data = ["//automaton/tests/io:test.txt"],
   size = "small",
+  flaky = True,
 )
