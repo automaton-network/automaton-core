@@ -1,9 +1,11 @@
 version: 0.1.{build}
 image:
-# - Ubuntu1604
+- Ubuntu1604
 - Visual Studio 2017
 install:
 - cmd: choco install bazel
+- cmd: .\download_and_build_third_party_libs_windows.ps1
+- cmd: cd ..\..
 - sh: >-
     sudo apt-get install pkg-config zip g++ zlib1g-dev unzip python
 
@@ -18,13 +20,10 @@ install:
     curl https://bazel.build/bazel-release.pub.gpg | sudo apt-key add -
 
     sudo apt-get update && sudo apt-get install bazel
-- ps: .\download_and_build_third_party_libs_windows.ps1
 - sh: ./download_and_build_third_party_libs.sh
-- cmd: cd LuaJIT\src
-- ps: .\msvcbuild.bat
-- cmd: cd ..\..
 build_script:
-- cd ..
+- cd src
 - bazel build //automaton/...
 test_script:
-- bazel test --test_tag_filters=-flaky //automaton/tests/...
+- cmd: bazel test --test_tag_filters=-flaky //automaton/tests/...
+- sh: bazel test //automaton/tests/...
