@@ -17,13 +17,16 @@ echo ("="*80)
 echo "Moving pre-installed boost into our tree"
 Move-Item -Path C:\Libraries\boost_1_67_0 -Destination .\boost_1_68_0
 cd boost_1_68_0
-dir
-Rename-Item -Path lib64-msvc-14.1 -NewName stage
-echo "Done."
+mkdir stage
+cd stage
+Rename-Item -Path lib64-msvc-14.1 -NewName lib
+cd ..
 # bootstrap.bat
 # b2 --with-filesystem --with-system --with-iostreams cxxstd=14 link=static stage
 cd ..
+echo "Done."
 
+return
 
 function Get-GitRepo($repo, $dir, $commit) {
   echo ("="*80)
