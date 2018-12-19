@@ -17,11 +17,11 @@ namespace automaton {
 namespace core {
 namespace smartproto {
 
-std::unordered_map<std::string, smart_protocol*> smart_protocol::protocols;
+std::unordered_map<std::string, std::shared_ptr<smart_protocol> > smart_protocol::protocols;
 
 smart_protocol::smart_protocol() {}
 
-smart_protocol* smart_protocol::get_protocol(std::string proto_id) {
+std::shared_ptr<smart_protocol> smart_protocol::get_protocol(std::string proto_id) {
   auto it = protocols.find(proto_id);
   if (it == protocols.end()) {
     return nullptr;
@@ -37,6 +37,7 @@ std::vector<std::string> smart_protocol::list_protocols() {
 }
 
 bool smart_protocol::load(std::string path) {
+  std::shared_ptr<smart_protocol> proto(new smart_protocol());
   std::ifstream i(path + "config.json");
   if (!i.is_open()) {
     LOG(ERROR) << "Error while opening " << path << "config.json";
@@ -45,26 +46,26 @@ bool smart_protocol::load(std::string path) {
     nlohmann::json j;
     i >> j;
     i.close();
-    update_time_slice = j["update_time_slice"];
+    proto->update_time_slice = j["update_time_slice"];
     std::vector<std::string> schemas_filenames = j["schemas"];
     std::vector<std::string> lua_scripts_filenames = j["lua_scripts"];
     std::vector<std::string> wm = j["wire_msgs"];
-    wire_msgs = wm;
+    proto->wire_msgs = wm;
     for (auto cmd : j["commands"]) {
-      commands.push_back({cmd[0], cmd[1], cmd[2]});
+      proto->commands.push_back({cmd[0], cmd[1], cmd[2]});
     }
 
     for (uint32_t i = 0; i < schemas_filenames.size(); ++i) {
       std::string file_content = get_file_contents((path + schemas_filenames[i]).c_str());
-      msgs_defs[schemas_filenames[i]] = file_content;
-      schemas.push_back(new protobuf_schema(file_content));
+      proto->msgs_defs[schemas_filenames[i]] = file_content;
+      proto->schemas.push_back(new protobuf_schema(file_content));
     }
 
     for (uint32_t i = 0; i < lua_scripts_filenames.size(); ++i) {
-      lua_scripts.push_back(get_file_contents((path + lua_scripts_filenames[i]).c_str()));
+      proto->lua_scripts.push_back(get_file_contents((path + lua_scripts_filenames[i]).c_str()));
     }
   }
-  protocols[path] = this;
+  protocols[path] = proto;
   return true;
 }
 

@@ -137,6 +137,10 @@ int main(int argc, char* argv[]) {
     cli.history_add(cmd.c_str());
   });
 
+  script.set_function("load_protocol", [&](std::string proto_id){
+    smart_protocol::load(proto_id);
+  });
+
   automaton::core::network::tcp_init();
 
   std::shared_ptr<automaton::core::network::simulation> sim = automaton::core::network::simulation::get_simulator();
@@ -161,8 +165,7 @@ int main(int argc, char* argv[]) {
     std::vector<std::string> paths = j["protocols"];
     for (auto p : paths) {
       script.safe_script(get_file_contents((p + "init.lua").c_str()));
-      smart_protocol* protocol = new smart_protocol();
-      protocol->load(p);
+      smart_protocol::load(p);
     }
     script.set_function("get_core_supported_protocols", [&](){
       std::unordered_map<std::string, std::unordered_map<std::string, std::string> > protocols;
