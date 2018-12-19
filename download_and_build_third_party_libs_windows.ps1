@@ -20,13 +20,12 @@ cd boost_1_68_0
 mkdir stage
 cd stage
 Move-Item -Path ..\lib64-msvc-14.1 -Destination lib
+dir lib
 cd ..
 # bootstrap.bat
 # b2 --with-filesystem --with-system --with-iostreams cxxstd=14 link=static stage
 cd ..
 echo "Done."
-
-return
 
 function Get-GitRepo($repo, $dir, $commit) {
   echo ("="*80)
