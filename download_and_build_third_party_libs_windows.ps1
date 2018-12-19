@@ -19,7 +19,7 @@ Move-Item -Path C:\Libraries\boost_1_67_0 -Destination .\boost_1_68_0
 cd boost_1_68_0
 mkdir stage
 cd stage
-Rename-Item -Path lib64-msvc-14.1 -NewName lib
+Move-Item -Path ..\lib64-msvc-14.1 -NewName lib
 cd ..
 # bootstrap.bat
 # b2 --with-filesystem --with-system --with-iostreams cxxstd=14 link=static stage
