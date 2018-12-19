@@ -2,16 +2,18 @@
 
 package(default_visibility = ["//visibility:public"])
 
-cc_binary(
-  name = "protobuf_schema_test",
-  srcs = ["protobuf_schema_test.cc",],
-  deps = [
-    "//automaton/core/io",
-    "//automaton/core/data/protobuf",
-  ],
-  data = ["//automaton/tests/data:test.proto"],
-  flaky = True,
-)
+# TODO(kari): Get rid of this standalone binary target
+# (should be covered by tests)
+# cc_binary(
+#   name = "protobuf_schema_test",
+#   srcs = ["protobuf_schema_test.cc",],
+#   deps = [
+#     "//automaton/core/io",
+#     "//automaton/core/data/protobuf",
+#   ],
+#   data = ["//automaton/tests/data:test.proto"],
+#   flaky = True,
+# )
 
 cc_test(
   name = "test_msg_json",

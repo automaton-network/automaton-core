@@ -24,4 +24,5 @@ cc_test(
       "//automaton/core/io",
       "@gtest//:gtest_main",
     ],
+    flaky = True,
 )
