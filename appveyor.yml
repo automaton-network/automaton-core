@@ -18,6 +18,7 @@ for:
   cache:
   - C:\ProgramData\chocolatey\bin -> appveyor.yml
   - C:\ProgramData\chocolatey\lib -> appveyor.yml
+  - src\local_third_party\*.gz -> appveyor.yml
 -
   matrix:
     only:
