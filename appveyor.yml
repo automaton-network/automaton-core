@@ -10,10 +10,22 @@ only_commits:
     - download_and_build_third_party_libs.*
     - src/
 
-cache:
-- C:\ProgramData\chocolatey\bin -> appveyor.yml
-- C:\ProgramData\chocolatey\lib -> appveyor.yml
-- src/local_third_party/*.gz -> appveyor.yml
+for:
+-
+  matrix:
+    only:
+      - image: Visual Studio 2017
+  cache:
+  - C:\ProgramData\chocolatey\bin -> appveyor.yml
+  - C:\ProgramData\chocolatey\lib -> appveyor.yml
+
+for:
+-
+  matrix:
+    only:
+      - image: Ubuntu1604
+  cache:
+  - src/local_third_party/*.gz -> appveyor.yml
 
 install:
 - cmd: choco install bazel
