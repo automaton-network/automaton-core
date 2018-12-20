@@ -4,8 +4,7 @@
 
 ## Build Status
 
-<img src="https://ci.appveyor.com/api/projects/status/5euy83253gjqdasg/branch/master?svg=true
-">
+<img src="https://ci.appveyor.com/api/projects/status/5euy83253gjqdasg/branch/master?svg=true">
 
 Table of Contents
 =================
