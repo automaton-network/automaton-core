@@ -28,6 +28,8 @@ for:
 install:
 - cmd: choco install bazel
 - cmd: Powershell.exe -executionpolicy remotesigned -File .\download_and_build_third_party_libs_windows.ps1
+- cmd: pwd
+- cmd: dir src\local_third_party
 - sh: >-
     sudo apt-get install pkg-config zip g++ zlib1g-dev unzip python
 
@@ -43,7 +45,9 @@ install:
 
     sudo apt-get update && sudo apt-get install bazel
 - sh: ./download_and_build_third_party_libs.sh
-
+# examine build state
+- sh: pwd
+- sh: ls -la src/local_third_party
 build_script:
 - cd src
 # - bazel build --incompatible_package_name_is_a_function=false //automaton/...
