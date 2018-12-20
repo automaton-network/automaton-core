@@ -18,13 +18,13 @@ for:
   cache:
   - C:\ProgramData\chocolatey\bin -> appveyor.yml
   - C:\ProgramData\chocolatey\lib -> appveyor.yml
-  - src\local_third_party\*.gz -> appveyor.yml
+  - src\local_third_party -> appveyor.yml
 -
   matrix:
     only:
       - image: Ubuntu1604
   cache:
-  - src/local_third_party/*.gz -> appveyor.yml
+  - src/local_third_party -> appveyor.yml
 
 install:
 - cmd: choco install bazel
