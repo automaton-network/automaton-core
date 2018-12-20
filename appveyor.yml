@@ -10,6 +10,10 @@ only_commits:
     - download_and_build_third_party_libs.*
     - src/
 
+cache:
+- C:\ProgramData\chocolatey\bin -> appveyor.yml
+- C:\ProgramData\chocolatey\lib -> appveyor.yml
+
 install:
 - cmd: choco install bazel
 - cmd: Powershell.exe -executionpolicy remotesigned -File .\download_and_build_third_party_libs_windows.ps1
