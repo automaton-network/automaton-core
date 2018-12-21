@@ -18,13 +18,20 @@ for:
   cache:
   - C:\ProgramData\chocolatey\bin -> appveyor.yml
   - C:\ProgramData\chocolatey\lib -> appveyor.yml
-  - src\local_third_party -> appveyor.yml
+  - src\local_third_party\bzip2-1.0.6.tar.gz -> appveyor.yml
+  - src\local_third_party\lua-5.3.4.tar.gz -> appveyor.yml
+  - src\local_third_party\xz-5.2.3.tar.gz -> appveyor.yml
+  - src\local_third_party\zlib-1.2.11.tar.gz -> appveyor.yml
 -
   matrix:
     only:
       - image: Ubuntu1604
   cache:
-  - src/local_third_party -> appveyor.yml
+  - src/local_third_party/boost_1_68_0.tar.gz -> appveyor.yml
+  - src/local_third_party/bzip2-1.0.6.tar.gz -> appveyor.yml
+  - src/local_third_party/lua-5.3.4.tar.gz -> appveyor.yml
+  - src/local_third_party/xz-5.2.3.tar.gz -> appveyor.yml
+  - src/local_third_party/zlib-1.2.11.tar.gz -> appveyor.yml
 
 install:
 - cmd: choco install bazel
