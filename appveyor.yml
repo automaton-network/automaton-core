@@ -40,7 +40,7 @@ for:
   - src/local_third_party/lua -> download_and_build_third_party_libs.sh
   - src/local_third_party/boost_1_68_0.tar.gz -> download_and_build_third_party_libs.sh
   - src/local_third_party/bzip2-1.0.6.tar.gz -> download_and_build_third_party_libs.sh
-  - src/local_third_party/lua-5.3.4.tar.gz -> download_and_build_third_party_libs.sh
+  - src/local_third_party/lua-5.3.5.tar.gz -> download_and_build_third_party_libs.sh
   - src/local_third_party/xz-5.2.3.tar.gz -> download_and_build_third_party_libs.sh
   - src/local_third_party/zlib-1.2.11.tar.gz -> download_and_build_third_party_libs.sh
 
