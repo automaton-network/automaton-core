@@ -16,8 +16,8 @@ for:
     only:
       - image: Visual Studio 2017
   cache:
-  - C:\ProgramData\chocolatey\bin -> download_and_build_third_party_libs_windows.ps1
-  - C:\ProgramData\chocolatey\lib -> download_and_build_third_party_libs_windows.ps1
+  - C:\ProgramData\chocolatey\bin
+  - C:\ProgramData\chocolatey\lib
   - src\local_third_party\lua -> download_and_build_third_party_libs_windows.ps1
   - src\local_third_party\LuaJIT -> download_and_build_third_party_libs_windows.ps1
   - src\local_third_party\replxx -> download_and_build_third_party_libs_windows.ps1
