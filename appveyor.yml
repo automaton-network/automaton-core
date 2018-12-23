@@ -16,33 +16,33 @@ for:
     only:
       - image: Visual Studio 2017
   cache:
-  - C:\ProgramData\chocolatey\bin -> appveyor.yml
-  - C:\ProgramData\chocolatey\lib -> appveyor.yml
-  - src\local_third_party\lua -> appveyor.yml
-  - src\local_third_party\LuaJIT -> appveyor.yml
-  - src\local_third_party\replxx -> appveyor.yml
-  - src\local_third_party\cryptopp -> appveyor.yml
-  - src\local_third_party\easyloggingpp -> appveyor.yml
-  - src\local_third_party\ed25519 -> appveyor.yml
-  - src\local_third_party\googletest -> appveyor.yml
-  - src\local_third_party\protobuf -> appveyor.yml
+  - C:\ProgramData\chocolatey\bin -> download_and_build_third_party_libs_windows.ps1
+  - C:\ProgramData\chocolatey\lib -> download_and_build_third_party_libs_windows.ps1
+  - src\local_third_party\lua -> download_and_build_third_party_libs_windows.ps1
+  - src\local_third_party\LuaJIT -> download_and_build_third_party_libs_windows.ps1
+  - src\local_third_party\replxx -> download_and_build_third_party_libs_windows.ps1
+  - src\local_third_party\cryptopp -> download_and_build_third_party_libs_windows.ps1
+  - src\local_third_party\easyloggingpp -> download_and_build_third_party_libs_windows.ps1
+  - src\local_third_party\ed25519 -> download_and_build_third_party_libs_windows.ps1
+  - src\local_third_party\googletest -> download_and_build_third_party_libs_windows.ps1
+  - src\local_third_party\protobuf -> download_and_build_third_party_libs_windows.ps1
 -
   matrix:
     only:
       - image: Ubuntu1604
   cache:
-  - src/local_third_party/cryptopp -> appveyor.yml
-  - src/local_third_party/LuaJIT -> appveyor.yml
-  - src/local_third_party/sol2 -> appveyor.yml
-  - src/local_third_party/easyloggingpp -> appveyor.yml
-  - src/local_third_party/ed25519 -> appveyor.yml
-  - src/local_third_party/protobuf -> appveyor.yml
-  - src/local_third_party/lua -> appveyor.yml
-  - src/local_third_party/boost_1_68_0.tar.gz -> appveyor.yml
-  - src/local_third_party/bzip2-1.0.6.tar.gz -> appveyor.yml
-  - src/local_third_party/lua-5.3.4.tar.gz -> appveyor.yml
-  - src/local_third_party/xz-5.2.3.tar.gz -> appveyor.yml
-  - src/local_third_party/zlib-1.2.11.tar.gz -> appveyor.yml
+  - src/local_third_party/cryptopp -> download_and_build_third_party_libs.sh
+  - src/local_third_party/LuaJIT -> download_and_build_third_party_libs.sh
+  - src/local_third_party/sol2 -> download_and_build_third_party_libs.sh
+  - src/local_third_party/easyloggingpp -> download_and_build_third_party_libs.sh
+  - src/local_third_party/ed25519 -> download_and_build_third_party_libs.sh
+  - src/local_third_party/protobuf -> download_and_build_third_party_libs.sh
+  - src/local_third_party/lua -> download_and_build_third_party_libs.sh
+  - src/local_third_party/boost_1_68_0.tar.gz -> download_and_build_third_party_libs.sh
+  - src/local_third_party/bzip2-1.0.6.tar.gz -> download_and_build_third_party_libs.sh
+  - src/local_third_party/lua-5.3.4.tar.gz -> download_and_build_third_party_libs.sh
+  - src/local_third_party/xz-5.2.3.tar.gz -> download_and_build_third_party_libs.sh
+  - src/local_third_party/zlib-1.2.11.tar.gz -> download_and_build_third_party_libs.sh
 
 install:
 - cmd: choco install bazel
