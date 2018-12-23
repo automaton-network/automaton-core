@@ -19,7 +19,13 @@ for:
   - C:\ProgramData\chocolatey\bin -> appveyor.yml
   - C:\ProgramData\chocolatey\lib -> appveyor.yml
   - src\local_third_party\lua -> appveyor.yml
+  - src\local_third_party\LuaJIT -> appveyor.yml
   - src\local_third_party\replxx -> appveyor.yml
+  - src\local_third_party\cryptopp -> appveyor.yml
+  - src\local_third_party\easyloggingpp -> appveyor.yml
+  - src\local_third_party\ed25519 -> appveyor.yml
+  - src\local_third_party\googletest -> appveyor.yml
+  - src\local_third_party\protobuf -> appveyor.yml
 -
   matrix:
     only:
@@ -30,6 +36,7 @@ for:
   - src/local_third_party/sol2 -> appveyor.yml
   - src/local_third_party/easyloggingpp -> appveyor.yml
   - src/local_third_party/ed25519 -> appveyor.yml
+  - src/local_third_party/protobuf -> appveyor.yml
   - src/local_third_party/lua -> appveyor.yml
   - src/local_third_party/boost_1_68_0.tar.gz -> appveyor.yml
   - src/local_third_party/bzip2-1.0.6.tar.gz -> appveyor.yml
