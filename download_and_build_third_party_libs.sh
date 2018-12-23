@@ -59,12 +59,14 @@ function get_archive() {
   echo "  Downloading $filename"
   print_separator "=" 80
 
-  [ ! -f $2 ] && wget $1
-
+  [ ! -f $2 ] && wget $1 -O $2
   filesha=$(shasum -a 256 $filename | cut -d' ' -f1)
   [ $filesha == $sha ] || ( echo "Error: Wrong hash [$filesha] Expected [$sha]" && exit 1 )
 
-  echo "Extracting $filename"
+  print_separator "=" 80
+  echo "  Extracting $filename"
+  print_separator "=" 80
+
   tar -xzf $filename
 }
 
@@ -73,21 +75,42 @@ git_repo "https://github.com/LuaJIT/LuaJIT.git" "LuaJIT" "0bf80b07b0672ce874feed
 # git_repo "https://github.com/zeromq/libzmq.git" "libzmq" "d062edd8c142384792955796329baf1e5a3377cd"
 # git_repo "https://github.com/zeromq/cppzmq.git" "cppzmq" "d9f0f016c07046742738c65e1eb84722ae32d7d4"
 # git_repo "https://github.com/zeromq/zmqpp.git" "zmqpp" "f8ff127683dc555aa004c0e6e2b18d2354a375be"
-git_repo "https://github.com/ThePhD/sol2.git" "sol2" "254466eb4b3ae630c731a557987f3adb1a8f86b0"
+# git_repo "https://github.com/ThePhD/sol2.git" "sol2" "254466eb4b3ae630c731a557987f3adb1a8f86b0"
 git_repo "https://github.com/AmokHuginnsson/replxx.git" "replxx" "3cb884e3fb4b1a28efeb716fac75f77eecc7ea3d"
 git_repo "https://github.com/lua/lua.git" "lua" "e354c6355e7f48e087678ec49e340ca0696725b1"
 git_repo "https://github.com/muflihun/easyloggingpp.git" "easyloggingpp" "a5317986d74b6dd3956021cb7fbb0669cce398b2"
-git_repo "https://github.com/weidai11/cryptopp.git" "cryptopp" "c8d8caf70074655a2562ae1ea45cb30e28fee2b4"
+# git_repo "https://github.com/weidai11/cryptopp.git" "cryptopp" "c8d8caf70074655a2562ae1ea45cb30e28fee2b4"
 git_repo "https://github.com/orlp/ed25519.git" "ed25519" "7fa6712ef5d581a6981ec2b08ee623314cd1d1c4"
-git_repo "https://github.com/google/googletest.git" "googletest" "2fe3bd994b3189899d93f1d5a881e725e046fdc2"
+# git_repo "https://github.com/google/googletest.git" "googletest" "2fe3bd994b3189899d93f1d5a881e725e046fdc2"
 # git_repo "https://github.com/nlohmann/json.git" "json" "359f98d14065bf4e53eeb274f5987fd08f16e5bf"
 # git_repo "https://github.com/nelhage/rules_boost.git" "com_github_nelhage_rules_boost" "fe787183c14f2a5c6e5e1e75a7c57d2e799d3d19"
-git_repo "https://github.com/protocolbuffers/protobuf.git" "protobuf" "48cb18e5c419ddd23d9badcfe4e9df7bde1979b2"
+# git_repo "https://github.com/protocolbuffers/protobuf.git" "protobuf" "48cb18e5c419ddd23d9badcfe4e9df7bde1979b2"
 # git_repo "https://github.com/svaarala/duktape.git" "duktape" "d7fdb67f18561a50e06bafd196c6b423af9ad6fe"
+
+[ ! -d googletest ] && \
+  get_archive "https://github.com/google/googletest/archive/release-1.8.1.tar.gz" \
+  "googletest-release-1.8.1.tar.gz" "9bf1fe5182a604b4135edc1a425ae356c9ad15e9b23f9f12a02e80184c3a249c"
+[ -d googletest-release-1.8.1 ] && mv googletest-release-1.8.1 googletest
+
+[ ! -d cryptopp ] && \
+  get_archive "https://github.com/weidai11/cryptopp/archive/CRYPTOPP_7_0_0.tar.gz" \
+  "CRYPTOPP_7_0_0.tar.gz" "3ee97903882b5f58c88b6f9d2ce50fd1000be95479180c7b4681cd3f4c1c7629" && \
+[ -d cryptopp-CRYPTOPP_7_0_0 ] && mv cryptopp-CRYPTOPP_7_0_0 cryptopp
+
+[ ! -d protobuf ] && \
+  get_archive "https://github.com/protocolbuffers/protobuf/archive/v3.6.1.tar.gz" \
+  "v3.6.1.tar.gz" "3d4e589d81b2006ca603c1ab712c9715a76227293032d05b26fca603f90b3f5b"
+[ -d protobuf-3.6.1 ] && mv protobuf-3.6.1 protobuf
 
 [ ! -d json-3.1.2 ] && \
   mkdir json-3.1.2 && \
   wget https://github.com/nlohmann/json/releases/download/v3.2.0/json.hpp -O json-3.1.2/json.hpp
+
+[ ! -d sol2 ] && \
+  mkdir sol2 && \
+  mkdir sol2/single && \
+  mkdir sol2/single/sol && \
+  wget https://github.com/ThePhD/sol2/releases/download/v2.20.6/sol.hpp -O sol2/single/sol/sol.hpp
 
 [ ! -d lua-5.3.4 ] && \
   get_archive "https://github.com/lua/lua/releases/download/v5-3-4/lua-5.3.4.tar.gz" \
