@@ -56,29 +56,32 @@ function get_archive() {
   sha=$3
 
   print_separator "=" 80
-  echo "  Downloading $filename"
+  echo "  Downloading $filename from $url"
   print_separator "=" 80
 
   [ ! -f $2 ] && wget $1 -O $2
   filesha=$(shasum -a 256 $filename | cut -d' ' -f1)
-  [ $filesha == $sha ] || ( echo "Error: Wrong hash [$filesha] Expected [$sha]" && exit 1 )
+  if [ $filesha != $sha ]; then
+    echo "Error: Wrong hash [$filesha] Expected [$sha]"
+    exit 1
+  else
+    print_separator "=" 80
+    echo "  Extracting $filename"
+    print_separator "=" 80
 
-  print_separator "=" 80
-  echo "  Extracting $filename"
-  print_separator "=" 80
-
-  tar -xzf $filename
+    tar -xzf $filename
+  fi;
 }
 
 # Download all libraries
-git_repo "https://github.com/LuaJIT/LuaJIT.git" "LuaJIT" "0bf80b07b0672ce874feedcc777afe1b791ccb5a"
+# git_repo "https://github.com/LuaJIT/LuaJIT.git" "LuaJIT" "0bf80b07b0672ce874feedcc777afe1b791ccb5a"
 # git_repo "https://github.com/zeromq/libzmq.git" "libzmq" "d062edd8c142384792955796329baf1e5a3377cd"
 # git_repo "https://github.com/zeromq/cppzmq.git" "cppzmq" "d9f0f016c07046742738c65e1eb84722ae32d7d4"
 # git_repo "https://github.com/zeromq/zmqpp.git" "zmqpp" "f8ff127683dc555aa004c0e6e2b18d2354a375be"
 # git_repo "https://github.com/ThePhD/sol2.git" "sol2" "254466eb4b3ae630c731a557987f3adb1a8f86b0"
-git_repo "https://github.com/AmokHuginnsson/replxx.git" "replxx" "3cb884e3fb4b1a28efeb716fac75f77eecc7ea3d"
-git_repo "https://github.com/lua/lua.git" "lua" "e354c6355e7f48e087678ec49e340ca0696725b1"
-git_repo "https://github.com/muflihun/easyloggingpp.git" "easyloggingpp" "a5317986d74b6dd3956021cb7fbb0669cce398b2"
+# git_repo "https://github.com/AmokHuginnsson/replxx.git" "replxx" "3cb884e3fb4b1a28efeb716fac75f77eecc7ea3d"
+# git_repo "https://github.com/lua/lua.git" "lua" "e354c6355e7f48e087678ec49e340ca0696725b1"
+# git_repo "https://github.com/muflihun/easyloggingpp.git" "easyloggingpp" "a5317986d74b6dd3956021cb7fbb0669cce398b2"
 # git_repo "https://github.com/weidai11/cryptopp.git" "cryptopp" "c8d8caf70074655a2562ae1ea45cb30e28fee2b4"
 git_repo "https://github.com/orlp/ed25519.git" "ed25519" "7fa6712ef5d581a6981ec2b08ee623314cd1d1c4"
 # git_repo "https://github.com/google/googletest.git" "googletest" "2fe3bd994b3189899d93f1d5a881e725e046fdc2"
@@ -86,6 +89,26 @@ git_repo "https://github.com/orlp/ed25519.git" "ed25519" "7fa6712ef5d581a6981ec2
 # git_repo "https://github.com/nelhage/rules_boost.git" "com_github_nelhage_rules_boost" "fe787183c14f2a5c6e5e1e75a7c57d2e799d3d19"
 # git_repo "https://github.com/protocolbuffers/protobuf.git" "protobuf" "48cb18e5c419ddd23d9badcfe4e9df7bde1979b2"
 # git_repo "https://github.com/svaarala/duktape.git" "duktape" "d7fdb67f18561a50e06bafd196c6b423af9ad6fe"
+
+[ ! -d easyloggingpp ] && \
+  get_archive "https://github.com/zuhd-org/easyloggingpp/archive/v9.96.7.tar.gz" \
+  "easyloggingpp-9.96.7.tar.gz" "237c80072b9b480a9f2942b903b4b0179f65e146e5dcc64864dc91792dedd722"
+[ -d easyloggingpp-9.96.7 ] && mv easyloggingpp-9.96.7 easyloggingpp
+
+[ ! -d replxx ] && \
+  get_archive "https://github.com/AmokHuginnsson/replxx/archive/release-0.0.1.tar.gz" \
+  "replxx-release-0.0.1.tar.gz" "af0576e401e43d88fadabdc193e7cbed20d0a8538ae3d9228732211d1b255348"
+[ -d replxx-release-0.0.1 ] && mv replxx-release-0.0.1 replxx
+
+[ ! -d lua ] && \
+  get_archive "https://www.lua.org/ftp/lua-5.3.5.tar.gz" \
+  "lua-5.3.5.tar.gz" "0c2eed3f960446e1a3e4b9a1ca2f3ff893b6ce41942cf54d5dd59ab4b3b058ac"
+[ -d lua-5.3.5 ] && mv lua-5.3.5/src lua && rm -rf lua-5.3.5
+
+[ ! -d LuaJIT ] && \
+  get_archive "https://github.com/LuaJIT/LuaJIT/archive/v2.0.5.tar.gz" \
+  "LuaJIT-2.0.5.tar.gz" "8bb29d84f06eb23c7ea4aa4794dbb248ede9fcb23b6989cbef81dc79352afc97"
+[ -d LuaJIT-2.0.5 ] && mv LuaJIT-2.0.5 LuaJIT
 
 [ ! -d googletest ] && \
   get_archive "https://github.com/google/googletest/archive/release-1.8.1.tar.gz" \
@@ -112,10 +135,6 @@ git_repo "https://github.com/orlp/ed25519.git" "ed25519" "7fa6712ef5d581a6981ec2
   mkdir sol2/single/sol && \
   wget https://github.com/ThePhD/sol2/releases/download/v2.20.6/sol.hpp -O sol2/single/sol/sol.hpp
 
-[ ! -d lua-5.3.4 ] && \
-  get_archive "https://github.com/lua/lua/releases/download/v5-3-4/lua-5.3.4.tar.gz" \
-  "lua-5.3.4.tar.gz" "f681aa518233bc407e23acf0f5887c884f17436f000d453b2491a9f11a52400c"
-
 [ ! -d boost_1_68_0 ] && \
   get_archive "https://dl.bintray.com/boostorg/release/1.68.0/source/boost_1_68_0.tar.gz" \
   "boost_1_68_0.tar.gz" "da3411ea45622579d419bfda66f45cd0f8c32a181d84adfa936f5688388995cf"
@@ -136,15 +155,15 @@ echo "  BUILDING LuaJIT"
 print_separator "=" 80
 
 # Create hpp file
-cd lua
-cat > lua.hpp << EOL
-extern "C" {
-#include "lua.h"
-#include "lualib.h"
-#include "lauxlib.h"
-}
-EOL
-cd ..
+# cd lua
+# cat > lua.hpp << EOL
+# extern "C" {
+# #include "lua.h"
+# #include "lualib.h"
+# #include "lauxlib.h"
+# }
+# EOL
+# cd ..
 
 cd LuaJIT
 make
