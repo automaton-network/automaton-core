@@ -20,10 +20,6 @@ for:
   - C:\ProgramData\chocolatey\lib -> appveyor.yml
   - src\local_third_party\lua -> appveyor.yml
   - src\local_third_party\replxx -> appveyor.yml
-  - src\local_third_party\bzip2-1.0.6.tar.gz -> appveyor.yml
-  - src\local_third_party\lua-5.3.4.tar.gz -> appveyor.yml
-  - src\local_third_party\xz-5.2.3.tar.gz -> appveyor.yml
-  - src\local_third_party\zlib-1.2.11.tar.gz -> appveyor.yml
 -
   matrix:
     only:
