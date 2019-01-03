@@ -1,7 +1,7 @@
 # To run this script:
 # 1. Stat Developer Command Prompt for VS
 # 2. Type powershell
-# 3. Run the script from its directoryit
+# 3. Run the script from its directory
 
 $LOCAL_3P="local_third_party"
 cd .\src\
