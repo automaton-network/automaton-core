@@ -71,18 +71,18 @@ int main(int argc, char* argv[]) {
 
   node_type.set(sol::call_constructor,
     sol::factories(
-    [&factories](string id,
-       uint32_t update_time_slice,
-       vector<schema*> schemas,
-       vector<string> scripts,
-       vector<string> msgs,
-       vector<string> commands) -> unique_ptr<node> {
-      auto core_factory = make_unique<protobuf_factory>();
-      auto core_ptr = core_factory.get();
-      factories.push_back(std::move(core_factory));
-      return make_unique<node>(
-          id, update_time_slice, schemas, scripts, msgs, commands, *core_ptr);
-    },
+    // [&factories](string id,
+    //    uint32_t update_time_slice,
+    //    vector<schema*> schemas,
+    //    vector<string> scripts,
+    //    vector<string> msgs,
+    //    vector<string> commands) -> unique_ptr<node> {
+    //   auto core_factory = make_unique<protobuf_factory>();
+    //   auto core_ptr = core_factory.get();
+    //   factories.push_back(std::move(core_factory));
+    //   return make_unique<node>(
+    //       id, update_time_slice, schemas, scripts, msgs, commands, *core_ptr);
+    // },
     [&factories](const std::string& id, std::string proto) -> unique_ptr<node> {
       auto core_factory = make_unique<protobuf_factory>();
       auto core_ptr = core_factory.get();
@@ -113,6 +113,16 @@ int main(int argc, char* argv[]) {
     return result;
   });
 
+  node_type.set("get_id", &node::get_id);
+  node_type.set("get_protocol_id", &node::get_protocol_id);
+  node_type.set("get_address", [](node& n) -> std::string {
+    std::shared_ptr<automaton::core::network::acceptor> a = n.get_acceptor();
+    if (a) {
+      return a->get_address();
+    }
+    return "";
+  });
+
   node_type.set("process_cmd", &node::process_cmd);
 
   node_type.set("call", [](node& n, std::string command) {
@@ -132,6 +142,43 @@ int main(int argc, char* argv[]) {
   });
 
   script.set_usertype("node", node_type);
+
+  std::unordered_map<std::string, std::unique_ptr<node> > nodes;
+
+  script.set_function("list_nodes_as_table", [&](){
+    std::vector<std::string> result;
+    for (const auto& n : nodes) {
+      result.push_back(n.first);
+    }
+    return sol::as_table(result);
+  });
+
+  script.set_function("get_node", [&](std::string node_id) -> node* {
+    std::cout << "getting node ... " << std::endl;
+    const auto& n = nodes.find(node_id);
+    if (n != nodes.end()) {
+      return (n->second).get();
+    }
+    return nullptr;
+  });
+
+  script.set_function("launch_node", [&](std::string node_id, std::string protocol_id, std::string address) {
+    std::cout << "launching node ... " << std::endl;
+    auto n = nodes.find(node_id);
+    if (n == nodes.end()) {
+      auto core_factory = make_unique<protobuf_factory>();
+      auto core_ptr = core_factory.get();
+      factories.push_back(std::move(core_factory));
+      nodes[node_id] = std::make_unique<node>(node_id, protocol_id, *core_ptr);
+      bool res = nodes[node_id]->set_acceptor(address.c_str());
+      if (!res) {
+        LOG(ERROR) << "Setting acceptor at address " << address << " failed!";
+        std::cout << "!!! set acceptor failed" << std::endl;
+      }
+    }
+  });
+
+  script.set_function("remove_node", [&](std::string node_id) {});
 
   script.set_function("history_add", [&](std::string cmd){
     cli.history_add(cmd.c_str());

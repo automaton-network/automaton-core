@@ -19,6 +19,7 @@
     {"cmd":"launch_node", "input":"Node", "output":""},
     {"cmd":"list_nodes", "input":"", "output":"NodeIdsList"},
     {"cmd":"get_nodes", "input":"NodesIdsList", "output":"NodesList"},
+    
     {"cmd":"add_peers", "input":"PeersList", "output":""},
     {"cmd":"remove_peers", "input":"PeersList", "output":""},
     {"cmd":"list_known_peers", "input":"", "output":"PeerIdsList"},

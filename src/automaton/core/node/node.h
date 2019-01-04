@@ -37,13 +37,13 @@ struct peer_info {
 class node: public network::connection::connection_handler,
             public network::acceptor::acceptor_handler {
  public:
-  node(std::string id,
-       uint32_t update_time_slice,
-       std::vector<automaton::core::data::schema*> schemas,
-       std::vector<std::string> lua_scripts,
-       std::vector<std::string> wire_msgs,
-       std::vector<std::string> commands,
-       data::factory& factory); // NOLINT
+  // node(std::string id,
+  //      uint32_t update_time_slice,
+  //      std::vector<automaton::core::data::schema*> schemas,
+  //      std::vector<std::string> lua_scripts,
+  //      std::vector<std::string> wire_msgs,
+  //      std::vector<std::string> commands,
+  //      data::factory& factory); // NOLINT
 
   node(const std::string& id, std::string proto_id, data::factory& factory);  // NOLINT
 
@@ -57,6 +57,10 @@ class node: public network::connection::connection_handler,
   void init_worker();
 
   bool get_worker_stop_signal();
+
+  std::string get_id();
+
+  std::string get_protocol_id();
 
   peer_info get_peer_info(peer_id id);
 
@@ -73,6 +77,8 @@ class node: public network::connection::connection_handler,
   bool disconnect(peer_id id);
 
   bool set_acceptor(const char* address);
+
+  std::shared_ptr<network::acceptor> get_acceptor();
 
   peer_id add_peer(const std::string& address);
 
@@ -101,6 +107,7 @@ class node: public network::connection::connection_handler,
 
  private:
   std::string nodeid;
+  std::string protoid;
   peer_id peer_ids;
 
   // Script processing related

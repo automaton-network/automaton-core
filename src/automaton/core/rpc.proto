@@ -16,26 +16,20 @@ message ProtocolsList {
   repeated Protocol protocols = 1;
 }
 
-// -- node commands --
+// -- node messages --
 
 message Node {
-
+  bytes id = 1;
+  bytes protocol_id = 2;
+  bytes address = 3;
 }
 
-message GetNodesRequest {
+message NodeIdsList {
   repeated bytes node_ids = 1;
 }
 
-message GetNodesResponse {
+message NodesList {
   repeated Node nodes = 1;
-}
-
-message StartNodeRequest {
-
-}
-
-message ListNodesResponse {
-
 }
 
 message NodeCmdRequest {
@@ -48,6 +42,22 @@ message NodeCmdResponse {
   bytes response = 1;
 }
 
+message PeerIdsList {
+  bytes node_id = 1;
+  repeated bytes peer_ids = 2;
+}
+
+message PeersList {
+  bytes node_id = 1;
+  repeated Peer peers = 2;
+}
+
+message Peer {
+  uint32 id = 1;
+  bytes address = 2;
+}
+
+//  -- test net messages --
 
 
 

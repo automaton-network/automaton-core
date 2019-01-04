@@ -72,6 +72,53 @@ end
 
 -- NODE RPC COMMON --
 
+function rpc_launch_node(m)
+  local msg = Node()
+  msg:deserialize(m)
+  launch_node(msg.id, msg.protocol_id, msg.address)  -- implemented in core.cc
+end
+
+function list_nodes()
+  local res = NodeIdsList()
+  for _,id in ipairs(list_nodes_as_table()) do
+    res.node_ids = id
+  end
+  return res:serialize()
+end
+
+function rpc_list_nodes()
+  return list_nodes()
+end
+
+function get_nodes(node_ids)
+  local response = NodesList()
+  for _,id in ipairs(node_ids) do
+    local node = get_node(id)
+    if (node ~= nil) then
+      local n = Node()
+      n.id = node:get_id()
+      n.protocol_id = node:get_protocol_id()
+      n.address = node:get_address()
+      print("node " .. n.id .. " -> " .. n.protocol_id .. " -> " .. n.address)
+      response.nodes = n
+    end
+  end
+  return response:serialize()
+end
+
+function rpc_get_nodes(m)
+  local request = NodeIdsList()
+  request:deserialize(m)
+  return get_nodes(request.node_ids)
+end
+
+function remove_nodes(node_ids)
+
+end
+
+function rpc_remove_nodes(m)
+
+end
 
 -- "launch_node", "input":"Node", "output":""},
 -- "list_nodes", "input":"", "output":"NodeIdsList"},

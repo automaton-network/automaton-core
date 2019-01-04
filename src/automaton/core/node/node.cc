@@ -83,22 +83,24 @@ std::string node::debug_html() {
   }
 }
 
-node::node(std::string id,
-           uint32_t update_time_slice,
-           vector<schema*> schemas,
-           vector<string> lua_scripts,
-           vector<string> wire_msgs,
-           vector<string> commands,
-           data::factory& factory)
-    : nodeid(id)
-    , peer_ids(0)
-    , engine(factory)
-    , update_time_slice(update_time_slice)
-    , acceptor_(nullptr) {
-  LOG(DEBUG) << "Node constructor called";
-  init_bindings(std::move(schemas), std::move(lua_scripts), std::move(wire_msgs), std::move(commands));
-  init_worker();
-}
+// node::node(std::string id,
+//            std::string proto_id,
+//            uint32_t update_time_slice,
+//            vector<schema*> schemas,
+//            vector<string> lua_scripts,
+//            vector<string> wire_msgs,
+//            vector<string> commands,
+//            data::factory& factory)
+//     : nodeid(id)
+//     , protoid(proto_id)
+//     , peer_ids(0)
+//     , engine(factory)
+//     , update_time_slice(update_time_slice)
+//     , acceptor_(nullptr) {
+//   LOG(DEBUG) << "Node constructor called";
+//   init_bindings(std::move(schemas), std::move(lua_scripts), std::move(wire_msgs), std::move(commands));
+//   init_worker();
+// }
 
 void node::init_bindings(vector<schema*> schemas,
                          vector<string> lua_scripts,
@@ -228,7 +230,9 @@ void node::init_worker() {
 node::node(const std::string& id,
            std::string proto_id,
            data::factory& factory):
-      peer_ids(0)
+      nodeid(id)
+    , protoid(proto_id)
+    , peer_ids(0)
     , engine(factory)
     , acceptor_(nullptr) {
   LOG(DEBUG) << "Node constructor called";
@@ -277,6 +281,14 @@ string zero_padded(int num, int width) {
   std::ostringstream ss;
   ss << std::setw(width) << std::setfill('0') << num;
   return ss.str();
+}
+
+std::string node::get_id() {
+  return nodeid;
+}
+
+std::string node::get_protocol_id() {
+  return protoid;
 }
 
 void node::log(string logger, string msg) {
@@ -571,6 +583,10 @@ bool node::set_acceptor(const char* address) {
   acceptor_ = new_acceptor;
   new_acceptor->start_accepting();
   return true;
+}
+
+std::shared_ptr<network::acceptor> node::get_acceptor() {
+  return acceptor_;
 }
 
 peer_id node::add_peer(const string& address) {
