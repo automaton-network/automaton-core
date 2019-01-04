@@ -1,10 +1,6 @@
 syntax = "proto3";
 
-message PrintRequest {
-  bytes data = 1;
-}
-
-// --- proto commands ---
+// --- protocol messages ---
 
 message Protocol {
   bytes protocol_id = 1;

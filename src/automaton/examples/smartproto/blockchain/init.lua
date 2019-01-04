@@ -1,6 +1,6 @@
 -- blockchain init.lua
 history_add("testnet(localhost, blockchain_node, 5, 1, \"logs/blockchain/\")")
-history_add("start_mining(get_nodes(\"logs/blockchain/\"))")
+history_add("start_mining(get_nodes_from_testnet(\"logs/blockchain/\"))")
 
 function blockchain_node(id)
   local n = node(id, "automaton/examples/smartproto/blockchain/")

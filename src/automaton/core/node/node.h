@@ -56,6 +56,8 @@ class node: public network::connection::connection_handler,
 
   void init_worker();
 
+  bool get_worker_stop_signal();
+
   peer_info get_peer_info(peer_id id);
 
   bool set_peer_info(peer_id id, const peer_info& info);
@@ -137,6 +139,8 @@ class node: public network::connection::connection_handler,
   std::mutex worker_mutex;
   bool worker_stop_signal;
   std::thread* worker;
+
+  std::mutex script_mutex;
 
   std::mutex tasks_mutex;
   std::deque<std::function<std::string()>> tasks;
