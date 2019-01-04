@@ -1,30 +1,13 @@
-﻿# To run this script: 
-# 1. Stat Developer Command Prompt for VS 
+# To run this script:
+# 1. Stat Developer Command Prompt for VS
 # 2. Type powershell
-# 3. Run the script from its directoryit
+# 3. Run the script from its directory
 
 $LOCAL_3P="local_third_party"
 cd .\src\
 New-Item -ItemType Directory -Path .\$LOCAL_3P
 cd .\$LOCAL_3P
 [Net.ServicePointManager]::SecurityProtocol = "tls12, tls11"
-
-#  ====== Building boost ======
-echo ("="*80)
-echo "  BUILDING boost"
-echo ("="*80)
-
-echo "Moving pre-installed boost into our tree"
-Move-Item -Path C:\Libraries\boost_1_67_0 -Destination .\boost_1_68_0
-cd boost_1_68_0
-mkdir stage
-cd stage
-Move-Item -Path ..\lib64-msvc-14.1 -Destination lib
-cd ..
-# bootstrap.bat
-# b2 --with-filesystem --with-system --with-iostreams cxxstd=14 link=static stage
-cd ..
-echo "Done."
 
 function Get-GitRepo($repo, $dir, $commit) {
   echo ("="*80)
@@ -44,7 +27,7 @@ function Get-GitRepo($repo, $dir, $commit) {
   }
 
   cd ..
- 
+
 }
 
 function Get-Archive($url, $filename, $sha) {
@@ -87,11 +70,6 @@ if(!(Test-Path -Path .\json-3.1.2) -and (New-Item -ItemType Directory -Path .\js
   wget -URI https://github.com/nlohmann/json/releases/download/v3.2.0/json.hpp -OutFile json-3.1.2/json.hpp
 }
 
-#if(!(Test-Path -Path .\boost_1_68_0)) {
-#    Get-Archive "https://dl.bintray.com/boostorg/release/1.68.0/source/boost_1_68_0.zip" `
-#  "boost_1_68_0.zip" "3B1DB0B67079266C40B98329D85916E910BBADFC3DB3E860C049056788D4D5CD"
-#}
-
 if(!(Test-Path -Path .\zlib-1.2.11)) {
     Get-Archive "https://zlib.net/zlib1211.zip" `
   "zlib-1.2.11.zip" "d7510a8ee1918b7d0cad197a089c0a2cd4d6df05fee22389f67f115e738b178d"
@@ -131,9 +109,9 @@ $lua_extern_includes | Out-File -FilePath .\lua\lua.hpp -Encoding utf8
 # cd ..\..
 
 #  ====== Building libzmq ======
-echo ("="*80)
-echo "  BUILDING libzmq"
-echo ("="*80)
+# echo ("="*80)
+# echo "  BUILDING libzmq"
+# echo ("="*80)
 
 #print_separator "=" 80
 #echo "   BUILDING libzmq"
@@ -170,3 +148,29 @@ if (!(Test-Path .\CMakeCache.txt)) {
 }
 msbuild.exe replxx.sln /p:configuration=Release
 cd ..\..
+
+#  ====== Building boost ======
+echo ("="*80)
+echo "  BUILDING boost"
+echo ("="*80)
+
+if ($env:APPVEYOR) {
+  echo "Moving pre-installed boost into our tree"
+  Move-Item -Path C:\Libraries\boost_1_67_0 -Destination .\boost_1_68_0
+  cd boost_1_68_0
+  mkdir stage
+  cd stage
+  Move-Item -Path ..\lib64-msvc-14.1 -Destination lib
+  cd ..\..
+} else {
+  if(!(Test-Path -Path .\boost_1_68_0)) {
+      Get-Archive "https://dl.bintray.com/boostorg/release/1.68.0/source/boost_1_68_0.zip" `
+    "boost_1_68_0.zip" "3B1DB0B67079266C40B98329D85916E910BBADFC3DB3E860C049056788D4D5CD"
+  }
+  cd boost_1_68_0
+  .\bootstrap.bat
+  .\b2 --with-filesystem --with-system --with-iostreams cxxstd=14 link=static stage
+  cd ..
+}
+
+echo "Done."
