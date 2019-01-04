@@ -7,7 +7,7 @@ image:
 only_commits:
   files:
     - appveyor.yml
-    - download_and_build_third_party_libs.*
+    - download_and_build*.*
     - src/
 
 for:
