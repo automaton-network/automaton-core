@@ -154,9 +154,7 @@ echo ("="*80)
 echo "  BUILDING boost"
 echo ("="*80)
 
-echo $APPVEYOR
-
-if ($APPVEYOR) {
+if ($env:APPVEYOR) {
   echo "Moving pre-installed boost into our tree"
   Move-Item -Path C:\Libraries\boost_1_67_0 -Destination .\boost_1_68_0
   cd boost_1_68_0
