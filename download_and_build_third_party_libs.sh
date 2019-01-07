@@ -59,7 +59,7 @@ function get_archive() {
   echo "  Downloading $filename from $url"
   print_separator "=" 80
 
-  [ ! -f $2 ] && wget $1 -O $2
+  [ ! -f $2 ] && curl -L $1 -o $2
   filesha=$(shasum -a 256 $filename | cut -d' ' -f1)
   if [ $filesha != $sha ]; then
     echo "Error: Wrong hash [$filesha] Expected [$sha]"
@@ -127,17 +127,18 @@ git_repo "https://github.com/orlp/ed25519.git" "ed25519" "7fa6712ef5d581a6981ec2
 
 [ ! -d json-3.1.2 ] && \
   mkdir json-3.1.2 && \
-  wget https://github.com/nlohmann/json/releases/download/v3.2.0/json.hpp -O json-3.1.2/json.hpp
+  curl -L https://github.com/nlohmann/json/releases/download/v3.2.0/json.hpp -o json-3.1.2/json.hpp
 
 [ ! -d sol2 ] && \
   mkdir sol2 && \
   mkdir sol2/single && \
   mkdir sol2/single/sol && \
-  wget https://github.com/ThePhD/sol2/releases/download/v2.20.6/sol.hpp -O sol2/single/sol/sol.hpp
+  curl -L https://github.com/ThePhD/sol2/releases/download/v2.20.6/sol.hpp -o sol2/single/sol/sol.hpp
 
 [ ! -d boost_1_68_0 ] && \
   get_archive "https://dl.bintray.com/boostorg/release/1.68.0/source/boost_1_68_0.tar.gz" \
   "boost_1_68_0.tar.gz" "da3411ea45622579d419bfda66f45cd0f8c32a181d84adfa936f5688388995cf"
+[ -d boost_1_68_0 ] && mv boost_1_68_0 boost
 
 [ ! -d zlib-1.2.11 ] && get_archive "https://zlib.net/zlib-1.2.11.tar.gz" \
   "zlib-1.2.11.tar.gz" "c3e5e9fdd5004dcb542feda5ee4f0ff0744628baf8ed2dd5d66f8ca1197cb1a1"
@@ -166,7 +167,11 @@ print_separator "=" 80
 # cd ..
 
 cd LuaJIT
-make
+if $darwin; then
+  make MACOSX_DEPLOYMENT_TARGET=`sw_vers -productVersion`
+else
+  make
+fi
 cd ..
 
 # Build libzmq
@@ -208,7 +213,7 @@ print_separator "=" 80
 echo "  BUILDING boost"
 print_separator "=" 80
 
-cd boost_1_68_0
+cd boost
 [ ! -f b2 ] && ./bootstrap.sh
 [ ! -d stage ] && ./b2 \
   --with-filesystem --with-system --with-iostreams \
