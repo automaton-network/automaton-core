@@ -141,6 +141,10 @@ int main(int argc, char* argv[]) {
     return sol::as_table(n.list_connected_peers());
   });
 
+  node_type.set("get_peer_address", [](node& n, uint32_t pid) {
+    return n.get_peer_info(pid).address;
+  });
+
   script.set_usertype("node", node_type);
 
   std::unordered_map<std::string, std::unique_ptr<node> > nodes;

@@ -120,14 +120,156 @@ function rpc_remove_nodes(m)
 
 end
 
--- "launch_node", "input":"Node", "output":""},
--- "list_nodes", "input":"", "output":"NodeIdsList"},
--- "get_nodes", "input":"NodesIdsList", "output":"NodesList"},
--- "add_peers", "input":"PeersList", "output":""},
--- "remove_peers", "input":"PeersList", "output":""},
--- "list_known_peers", "input":"", "output":"PeerIdsList"},
--- "list_connected_peers", "input":"", "output":"PeerIdsList"},
--- "get_peers", "input":"PeerIdsList", "output":"PeersList"},
--- "connect", "input":"PeerIdsList", "output":""},
--- "disconnect", "input":"PeerIdsList", "output":""},
--- "process_cmd", "input":"NodeCmdRequest", "output":"NodeCmdResponse"},
+-- NODE RPC --
+
+function add_peers(node_id, peer_addresses)
+  local node = get_node(node_id)
+  if node == nil then
+    return ""
+  end
+  local response = PeersList()
+  response.node_id = node_id
+  for _,addr in ipairs(peer_addresses) do
+    local p = Peer()
+    p.id = node:add_peer(addr)
+    print("added " .. tostring(p.id))
+    p.address = addr
+    response.peers = p
+  end
+  return response:serialize()
+end
+
+function rpc_add_peers(m)
+  local request = PeerAddressesList()
+  request:deserialize(m)
+  return add_peers(request.node_id, request.peer_addresses)
+end
+
+function remove_peers(node_id, peer_ids)
+  local node = get_node(node_id)
+  if node == nil then
+    return
+  end
+  for _,id in ipairs(peer_ids) do
+    node:remove_peer(id)
+    print("removed " .. tostring(id))
+  end
+end
+
+function rpc_remove_peers(m)
+  local request = PeerIdsList()
+  request:deserialize(m)
+  remove_peers(request.node_id, request.peer_ids)
+end
+
+function list_known_peers(node_id)
+  local node = get_node(node_id)
+  if node == nil then
+    return ""
+  end
+  local response = PeerIdsList()
+  local list = node:known_peers()
+  print("known peers to " .. node_id .. " ::")
+  for _,id in ipairs(list) do
+    response.peer_ids = id
+    print(id)
+  end
+  return response:serialize()
+end
+
+function rpc_list_known_peers(m)
+  local request = NodeId()
+  request:deserialize(m)
+  return list_known_peers(request.node_id)
+end
+
+function list_connected_peers(node_id)
+  local node = get_node(node_id)
+  if node == nil then
+    return ""
+  end
+  local response = PeerIdsList()
+  local list = node:peers()
+  print("connected peers to " .. node_id .. " ::")
+  for _,id in ipairs(list) do
+    response.peer_ids = id
+    print(id)
+  end
+  return response:serialize()
+end
+
+function rpc_list_connected_peers(m)
+  local request = NodeId()
+  request:deserialize(m)
+  return list_connected_peers(request.node_id)
+end
+
+function get_peers(node_id, peer_ids)
+  local node = get_node(node_id)
+  if node == nil then
+    return ""
+  end
+  local response = PeersList()
+  response.node_id = node_id
+  for _,id in ipairs(peer_ids) do
+    local p = Peer()
+    p.id = id
+    p.address = node:get_peer_address(id)
+    response.peers = p
+  end
+  return response:serialize()
+end
+
+function rpc_get_peers(m)
+  local request = PeerIdsList()
+  request:deserialize(m)
+  return get_peers(request.node_id, request.peer_ids)
+end
+
+function connect(node_id, peer_ids)
+  local node = get_node(node_id)
+  if node == nil then
+    return
+  end
+  for _,id in ipairs(peer_ids) do
+    node:connect(id)
+  end
+end
+
+function rpc_connect(m)
+  local request = PeerIdsList()
+  request:deserialize(m)
+  connect(m.node_id, m.peer_ids)
+end
+
+function disconnect(node_id, peer_ids)
+  local node = get_node(node_id)
+  if node == nil then
+    return
+  end
+  for _,id in ipairs(peer_ids) do
+    node:disconnect(id)
+  end
+end
+
+function rpc_disconnect(m)
+  local request = PeerIdsList()
+  request:deserialize(m)
+  disconnect(m.node_id, m.peer_ids)
+end
+
+function process_cmd(node_id, cmd, params)
+  local node = get_node(node_id)
+  if node == nil then
+    return
+  end
+  local response = NodeCmdResponse()
+  response.response = node:process_cmd(cmd, params)
+  return response:serialize()
+end
+
+function rpc_process_cmd(m)
+  local request = NodeCmdRequest()
+  request:deserialize(m)
+  process_cmd(m.node_id, m.cmd, m.params)
+end

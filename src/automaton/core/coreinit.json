@@ -19,11 +19,11 @@
     {"cmd":"launch_node", "input":"Node", "output":""},
     {"cmd":"list_nodes", "input":"", "output":"NodeIdsList"},
     {"cmd":"get_nodes", "input":"NodesIdsList", "output":"NodesList"},
-    
-    {"cmd":"add_peers", "input":"PeersList", "output":""},
-    {"cmd":"remove_peers", "input":"PeersList", "output":""},
-    {"cmd":"list_known_peers", "input":"", "output":"PeerIdsList"},
-    {"cmd":"list_connected_peers", "input":"", "output":"PeerIdsList"},
+
+    {"cmd":"add_peers", "input":"PeerAddressesList", "output":"PeersList"},
+    {"cmd":"remove_peers", "input":"PeerIdsList", "output":""},
+    {"cmd":"list_known_peers", "input":"NodeId", "output":"PeerIdsList"},
+    {"cmd":"list_connected_peers", "input":"NodeId", "output":"PeerIdsList"},
     {"cmd":"get_peers", "input":"PeerIdsList", "output":"PeersList"},
     {"cmd":"connect", "input":"PeerIdsList", "output":""},
     {"cmd":"disconnect", "input":"PeerIdsList", "output":""},

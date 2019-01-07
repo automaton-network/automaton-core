@@ -291,6 +291,14 @@ std::string node::get_protocol_id() {
   return protoid;
 }
 
+peer_info node::get_peer_info(peer_id pid) {
+  auto it = known_peers.find(pid);
+  if (it == known_peers.end()) {
+    return peer_info();
+  }
+  return it->second;
+}
+
 void node::log(string logger, string msg) {
   lock_guard<mutex> lock(log_mutex);
 

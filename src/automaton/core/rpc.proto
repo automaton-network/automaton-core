@@ -24,6 +24,10 @@ message Node {
   bytes address = 3;
 }
 
+message NodeID {
+  bytes node_id = 1;
+}
+
 message NodeIdsList {
   repeated bytes node_ids = 1;
 }
@@ -44,7 +48,12 @@ message NodeCmdResponse {
 
 message PeerIdsList {
   bytes node_id = 1;
-  repeated bytes peer_ids = 2;
+  repeated uint32 peer_ids = 2;
+}
+
+message PeerAddressesList {
+  bytes node_id = 1;
+  repeated bytes peer_addresses = 2;
 }
 
 message PeersList {
