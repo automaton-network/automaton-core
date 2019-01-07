@@ -98,6 +98,6 @@ local_repository(
 
 new_local_repository(
   name = "localboost",
-  path = "local_third_party/boost_1_68_0",
+  path = "local_third_party/boost",
   build_file = "third_party/localboost.BUILD",
 )
