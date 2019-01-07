@@ -166,7 +166,11 @@ print_separator "=" 80
 # cd ..
 
 cd LuaJIT
-make
+if $darwin; then
+  make MACOSX_DEPLOYMENT_TARGET=`sw_vers -productVersion`
+else
+  make
+fi
 cd ..
 
 # Build libzmq
