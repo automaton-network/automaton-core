@@ -1,7 +1,7 @@
 -- reservation system init.lua
 history_add("testnet(localhost, reservation_system_node, 5, 1, \"logs/hotel/\")")
-history_add("start_random_reservations(get_nodes(\"logs/hotel/\"))")
-history_add("stop_random_reservations(get_nodes(\"logs/hotel/\"))")
+history_add("start_random_reservations(get_nodes_from_testnet(\"logs/hotel/\"))")
+history_add("stop_random_reservations(get_nodes_from_testnet(\"logs/hotel/\"))")
 
 function reservation_system_node(id)
   local n = node(id, "automaton/examples/smartproto/reservationsystem/")

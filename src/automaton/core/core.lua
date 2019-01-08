@@ -6,22 +6,7 @@ history_add("msg = ProtocolsList()")
 history_add("msg = ProtocolIDsList()")
 history_add("msg:deserialize(m)")
 history_add("print(msg:to_string())")
-
--- for test purposes message serialisation and deserialisation is included
-function testprint(text)
-  local m = PrintRequest()
-  m.data = text
-  local str = m:serialize()
-  local m2 = PrintRequest()
-  m2:deserialize(str)
-  print(m2.data)
-end
--- this function is an example only and is not used right now
-function rpc_testprint(serialized_message)
-  local m = PrintRequest()
-  m:deserialize(serialized_message)
-  testprint(m.data)
-end
+history_add("load_protocol(\"automaton/examples/smartproto/chat/\")")
 
 -- PROTOCOLS RPC --
 
@@ -72,9 +57,219 @@ end
 function rpc_list_running_protocols ()
   return list_running_protocols()
 end
--- function load_protocols ()
 
--- end
--- function rpc_load_protocols ()
+function load_protocols (protocol_ids)
+  for _,pid in ipairs(protocol_ids) do
+    load_protocol(pid)
+  end
+end
 
--- end
+function rpc_load_protocols (protos)
+  local request = ProtocolIDsList()
+  request:deserialize(protos)
+  load_protocols(request.protocol_ids)
+end
+
+-- NODE RPC COMMON --
+
+function rpc_launch_node(m)
+  local msg = Node()
+  msg:deserialize(m)
+  launch_node(msg.id, msg.protocol_id, msg.address)  -- implemented in core.cc
+end
+
+function list_nodes()
+  local res = NodeIdsList()
+  for _,id in ipairs(list_nodes_as_table()) do
+    res.node_ids = id
+  end
+  return res:serialize()
+end
+
+function rpc_list_nodes()
+  return list_nodes()
+end
+
+function get_nodes(node_ids)
+  local response = NodesList()
+  for _,id in ipairs(node_ids) do
+    local node = get_node(id)
+    if (node ~= nil) then
+      local n = Node()
+      n.id = node:get_id()
+      n.protocol_id = node:get_protocol_id()
+      n.address = node:get_address()
+      print("node " .. n.id .. " -> " .. n.protocol_id .. " -> " .. n.address)
+      response.nodes = n
+    end
+  end
+  return response:serialize()
+end
+
+function rpc_get_nodes(m)
+  local request = NodeIdsList()
+  request:deserialize(m)
+  return get_nodes(request.node_ids)
+end
+
+function remove_nodes(node_ids)
+
+end
+
+function rpc_remove_nodes(m)
+
+end
+
+-- NODE RPC --
+
+function add_peers(node_id, peer_addresses)
+  local node = get_node(node_id)
+  if node == nil then
+    return ""
+  end
+  local response = PeersList()
+  response.node_id = node_id
+  for _,addr in ipairs(peer_addresses) do
+    local p = Peer()
+    p.id = node:add_peer(addr)
+    print("added " .. tostring(p.id))
+    p.address = addr
+    response.peers = p
+  end
+  return response:serialize()
+end
+
+function rpc_add_peers(m)
+  local request = PeerAddressesList()
+  request:deserialize(m)
+  return add_peers(request.node_id, request.peer_addresses)
+end
+
+function remove_peers(node_id, peer_ids)
+  local node = get_node(node_id)
+  if node == nil then
+    return
+  end
+  for _,id in ipairs(peer_ids) do
+    node:remove_peer(id)
+    print("removed " .. tostring(id))
+  end
+end
+
+function rpc_remove_peers(m)
+  local request = PeerIdsList()
+  request:deserialize(m)
+  remove_peers(request.node_id, request.peer_ids)
+end
+
+function list_known_peers(node_id)
+  local node = get_node(node_id)
+  if node == nil then
+    return ""
+  end
+  local response = PeerIdsList()
+  local list = node:known_peers()
+  print("known peers to " .. node_id .. " ::")
+  for _,id in ipairs(list) do
+    response.peer_ids = id
+    print(id)
+  end
+  return response:serialize()
+end
+
+function rpc_list_known_peers(m)
+  local request = NodeId()
+  request:deserialize(m)
+  return list_known_peers(request.node_id)
+end
+
+function list_connected_peers(node_id)
+  local node = get_node(node_id)
+  if node == nil then
+    return ""
+  end
+  local response = PeerIdsList()
+  local list = node:peers()
+  print("connected peers to " .. node_id .. " ::")
+  for _,id in ipairs(list) do
+    response.peer_ids = id
+    print(id)
+  end
+  return response:serialize()
+end
+
+function rpc_list_connected_peers(m)
+  local request = NodeId()
+  request:deserialize(m)
+  return list_connected_peers(request.node_id)
+end
+
+function get_peers(node_id, peer_ids)
+  local node = get_node(node_id)
+  if node == nil then
+    return ""
+  end
+  local response = PeersList()
+  response.node_id = node_id
+  for _,id in ipairs(peer_ids) do
+    local p = Peer()
+    p.id = id
+    p.address = node:get_peer_address(id)
+    response.peers = p
+  end
+  return response:serialize()
+end
+
+function rpc_get_peers(m)
+  local request = PeerIdsList()
+  request:deserialize(m)
+  return get_peers(request.node_id, request.peer_ids)
+end
+
+function connect(node_id, peer_ids)
+  local node = get_node(node_id)
+  if node == nil then
+    return
+  end
+  for _,id in ipairs(peer_ids) do
+    node:connect(id)
+  end
+end
+
+function rpc_connect(m)
+  local request = PeerIdsList()
+  request:deserialize(m)
+  connect(m.node_id, m.peer_ids)
+end
+
+function disconnect(node_id, peer_ids)
+  local node = get_node(node_id)
+  if node == nil then
+    return
+  end
+  for _,id in ipairs(peer_ids) do
+    node:disconnect(id)
+  end
+end
+
+function rpc_disconnect(m)
+  local request = PeerIdsList()
+  request:deserialize(m)
+  disconnect(m.node_id, m.peer_ids)
+end
+
+function process_cmd(node_id, cmd, params)
+  local node = get_node(node_id)
+  if node == nil then
+    return
+  end
+  local response = NodeCmdResponse()
+  response.response = node:process_cmd(cmd, params)
+  return response:serialize()
+end
+
+function rpc_process_cmd(m)
+  local request = NodeCmdRequest()
+  request:deserialize(m)
+  process_cmd(m.node_id, m.cmd, m.params)
+end
