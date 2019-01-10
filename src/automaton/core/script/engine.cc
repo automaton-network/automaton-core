@@ -17,9 +17,13 @@ namespace automaton {
 namespace core {
 namespace script {
 
-engine::engine(factory& data_factory)
+engine::engine(std::shared_ptr<factory> data_factory)
     : data_factory(data_factory) {
   // TODO(asen): This is convenient, but dangerous! Get rid of it.
+  open_libraries();
+}
+
+engine::engine() {
   open_libraries();
 }
 
@@ -46,15 +50,24 @@ void engine::bind_state() {
 }
 
 void engine::import_schema(data::schema* msg_schema) {
-  data_factory.import_schema(msg_schema, "", "");
-  auto schemas_number = data_factory.get_schemas_number();
-
+  data_factory->import_schema(msg_schema, "", "");
   // Bind schema messages.
   auto msg_names = msg_schema->get_message_names();
   for (auto msg_name : msg_names) {
-    auto msg_id = data_factory.get_schema_id(msg_name);
+    auto msg_id = data_factory->get_schema_id(msg_name);
     set_function(msg_name, [this, msg_name, msg_id]() -> unique_ptr<msg> {
-      return data_factory.new_message_by_id(msg_id);
+      return data_factory->new_message_by_id(msg_id);
+    });
+  }
+}
+
+void engine::set_factory(std::shared_ptr<data::factory> factory) {
+  data_factory = factory;
+  for (uint32_t msg_id = 0; msg_id < data_factory->get_schemas_number(); ++msg_id) {
+    // Bind schema messages.
+    auto msg_name = data_factory->get_schema_name(msg_id);
+    set_function(msg_name, [this, msg_name, msg_id]() -> unique_ptr<msg> {
+      return data_factory->new_message_by_id(msg_id);
     });
   }
 }

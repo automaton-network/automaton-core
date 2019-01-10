@@ -108,9 +108,9 @@ void node::init_bindings(vector<schema*> schemas,
                          vector<string> commands) {
   engine.bind_core();
 
-  for (auto schema : schemas) {
-    engine.import_schema(schema);
-  }
+  // for (auto schema : schemas) {
+  //   engine.import_schema(schema);
+  // }
 
   // Bind node methods.
   engine.set_function("send",
@@ -153,7 +153,7 @@ void node::init_bindings(vector<schema*> schemas,
   // Map wire msg IDs to factory msg IDs and vice versa.
   uint32_t wire_id = 0;
   for (auto wire_msg : wire_msgs) {
-    auto factory_id = engine.get_factory().get_schema_id(wire_msg);
+    auto factory_id = engine.get_factory()->get_schema_id(wire_msg);
     factory_to_wire[factory_id] = wire_id;
     wire_to_factory[wire_id] = factory_id;
     string function_name = "on_" + wire_msg;
@@ -228,15 +228,16 @@ void node::init_worker() {
 }
 
 node::node(const std::string& id,
-           std::string proto_id,
-           data::factory& factory):
+           std::string proto_id):
+           // data::factory& factory):
       nodeid(id)
     , protoid(proto_id)
     , peer_ids(0)
-    , engine(factory)
+    // , engine(factory)
     , acceptor_(nullptr) {
   LOG(DEBUG) << "Node constructor called";
   std::shared_ptr<smart_protocol> proto = smart_protocol::get_protocol(proto_id);
+  engine.set_factory(proto->get_factory());
   init_bindings(proto->get_schemas(), proto->get_scripts(), proto->get_wire_msgs(), proto->get_commands());
   init_worker();
 }
@@ -267,7 +268,7 @@ bool node::get_worker_stop_signal() {
 static string get_date_string(system_clock::time_point t) {
   auto as_time_t = std::chrono::system_clock::to_time_t(t);
   struct tm* tm;
-  if (tm = ::gmtime(&as_time_t)) {
+  if ((tm = ::gmtime(&as_time_t))) {
     char some_buffer[64];
     if (std::strftime(some_buffer, sizeof(some_buffer), "%F %T", tm)) {
       return string{some_buffer};
@@ -417,7 +418,7 @@ void node::s_on_blob_received(peer_id p_id, const string& blob) {
   }
   CHECK_GT(wire_to_factory.count(wire_id), 0);
   auto msg_id = wire_to_factory[wire_id];
-  msg* m = engine.get_factory().new_message_by_id(msg_id).release();
+  msg* m = engine.get_factory()->new_message_by_id(msg_id).release();
   m->deserialize_message(blob.substr(1));
   add_task([this, wire_id, p_id, m, blob]() -> string {
     auto r = fresult("on_" + m->get_message_type(), script_on_msg[wire_id](p_id, m));

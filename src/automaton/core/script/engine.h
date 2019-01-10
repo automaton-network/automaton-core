@@ -22,7 +22,8 @@ namespace script {
 */
 class engine : public sol::state {
  public:
-  explicit engine(data::factory& data_factory); // NOLINT
+  engine();
+  explicit engine(std::shared_ptr<data::factory> data_factory);
   ~engine();
 
   void bind_core() {
@@ -48,12 +49,14 @@ class engine : public sol::state {
 
   void import_schema(data::schema* msg_schema);
 
-  data::factory& get_factory() {
+  void set_factory(std::shared_ptr<data::factory> factory);
+
+  std::shared_ptr<data::factory> get_factory() {
     return data_factory;
   }
 
  private:
-  data::factory& data_factory;
+  std::shared_ptr<data::factory> data_factory;
 
   // Crypto hash functions
   std::unique_ptr<crypto::hash_transformation> ripemd160;

@@ -5,11 +5,12 @@
 
 #include <json.hpp>
 
-#include "automaton/core/data/schema.h"
 #include "automaton/core/data/protobuf/protobuf_schema.h"
+#include "automaton/core/data/protobuf/protobuf_factory.h"
 #include "automaton/core/io/io.h"
 
 using automaton::core::data::protobuf::protobuf_schema;
+using automaton::core::data::protobuf::protobuf_factory;
 using automaton::core::data::schema;
 using automaton::core::io::get_file_contents;
 
@@ -19,7 +20,9 @@ namespace smartproto {
 
 std::unordered_map<std::string, std::shared_ptr<smart_protocol> > smart_protocol::protocols;
 
-smart_protocol::smart_protocol() {}
+smart_protocol::smart_protocol() {
+  factory = std::shared_ptr<data::factory>(new protobuf_factory());
+}
 
 std::shared_ptr<smart_protocol> smart_protocol::get_protocol(std::string proto_id) {
   auto it = protocols.find(proto_id);
@@ -59,6 +62,7 @@ bool smart_protocol::load(std::string path) {
       std::string file_content = get_file_contents((path + schemas_filenames[i]).c_str());
       proto->msgs_defs[schemas_filenames[i]] = file_content;
       proto->schemas.push_back(new protobuf_schema(file_content));
+      proto->factory->import_schema(proto->schemas.back(), "", "");
     }
 
     for (uint32_t i = 0; i < lua_scripts_filenames.size(); ++i) {
@@ -67,6 +71,10 @@ bool smart_protocol::load(std::string path) {
   }
   protocols[path] = proto;
   return true;
+}
+
+std::shared_ptr<data::factory> smart_protocol::get_factory() {
+  return factory;
 }
 
 std::unordered_map<std::string, std::string> smart_protocol::get_msgs_definitions() {

@@ -56,14 +56,15 @@ int main(int argc, char* argv[]) {
   string automaton_ascii_logo(automaton_ascii_logo_cstr);
   string_replace(&automaton_ascii_logo, "@", "\x1b[38;5;");
 
-  vector<unique_ptr<factory>> factories;
+  // vector<std::shared_ptr<factory>> factories;
+  auto core_factory = std::make_shared<protobuf_factory>();
 
 {
   automaton::core::cli::cli cli;
 
-  auto core_factory = make_unique<protobuf_factory>();
-  engine script(*core_factory);
-  factories.push_back(std::move(core_factory));
+  // auto core_factory = std::make_shared<protobuf_factory>();
+  engine script(core_factory);
+  // factories.push_back(core_factory);
   script.bind_core();
 
   // Bind smartproto::node class
@@ -83,11 +84,11 @@ int main(int argc, char* argv[]) {
     //   return make_unique<node>(
     //       id, update_time_slice, schemas, scripts, msgs, commands, *core_ptr);
     // },
-    [&factories](const std::string& id, std::string proto) -> unique_ptr<node> {
-      auto core_factory = make_unique<protobuf_factory>();
-      auto core_ptr = core_factory.get();
-      factories.push_back(std::move(core_factory));
-      return make_unique<node>(id, proto, *core_ptr);
+    [&](const std::string& id, std::string proto) -> unique_ptr<node> {
+      // auto core_factory = make_unique<protobuf_factory>();
+      // auto core_ptr = core_factory.get();
+      // factories.push_back(std::move(core_factory));
+      return make_unique<node>(id, proto);  //, *core_ptr);
     }));
 
   // Bind this node to its own Lua state.
@@ -158,7 +159,6 @@ int main(int argc, char* argv[]) {
   });
 
   script.set_function("get_node", [&](std::string node_id) -> node* {
-    std::cout << "getting node ... " << std::endl;
     const auto& n = nodes.find(node_id);
     if (n != nodes.end()) {
       return (n->second).get();
@@ -170,10 +170,10 @@ int main(int argc, char* argv[]) {
     std::cout << "launching node ... " << std::endl;
     auto n = nodes.find(node_id);
     if (n == nodes.end()) {
-      auto core_factory = make_unique<protobuf_factory>();
-      auto core_ptr = core_factory.get();
-      factories.push_back(std::move(core_factory));
-      nodes[node_id] = std::make_unique<node>(node_id, protocol_id, *core_ptr);
+      // auto core_factory = make_unique<protobuf_factory>();
+      // auto core_ptr = core_factory.get();
+      // factories.push_back(std::move(core_factory));
+      nodes[node_id] = std::make_unique<node>(node_id, protocol_id);  // , *core_ptr);
       bool res = nodes[node_id]->set_acceptor(address.c_str());
       if (!res) {
         LOG(ERROR) << "Setting acceptor at address " << address << " failed!";
@@ -241,7 +241,6 @@ int main(int argc, char* argv[]) {
     }
   }
   i.close();
-
   // Start dump_logs thread.
   std::mutex logger_mutex;
   bool stop_logger = false;
