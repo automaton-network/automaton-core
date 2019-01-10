@@ -43,7 +43,7 @@ using automaton::core::script::engine;
 using std::unique_ptr;
 using std::make_unique;
 
-protobuf_factory factory;
+std::shared_ptr<protobuf_factory> factory;
 
 // prototypes
 Replxx::completions_t hook_completion(std::string const& context, int index, void* user_data);
@@ -69,8 +69,8 @@ Replxx::hints_t hook_hint(std::string const& context, int index, Replxx::Color& 
   std::vector<std::string> examples;
   Replxx::hints_t hints;
 
-  for (auto i = 0; i < factory.get_schemas_number(); i++) {
-    auto name = factory.get_schema_name(i);
+  for (auto i = 0; i < factory->get_schemas_number(); i++) {
+    auto name = factory->get_schema_name(i);
     examples.push_back(name);
   }
 
@@ -164,16 +164,16 @@ int main() {
   // Load proto messages
   auto proto_contents = get_file_contents("automaton/examples/script/blockchain.proto");
   auto proto_schema = new protobuf_schema(proto_contents);
-  factory.import_schema(proto_schema, "", "");
+  factory->import_schema(proto_schema, "", "");
 
   engine script(factory);
 
-  auto add_req_id = factory.get_schema_id("AddRequest");
-  auto add_rep_id = factory.get_schema_id("AddResponse");
+  auto add_req_id = factory->get_schema_id("AddRequest");
+  auto add_rep_id = factory->get_schema_id("AddResponse");
 
   script.set_function("add", [&](int x, int y) {
-    auto req = factory.new_message_by_id(add_req_id);
-    auto rep = factory.new_message_by_id(add_rep_id);
+    auto req = factory->new_message_by_id(add_req_id);
+    auto rep = factory->new_message_by_id(add_rep_id);
     req->set_int32(1, x);
     req->set_int32(2, y);
     rep->set_int32(1, req->get_int32(1) + req->get_int32(2));
