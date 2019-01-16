@@ -83,24 +83,28 @@ std::string node::debug_html() {
   }
 }
 
-// node::node(std::string id,
-//            std::string proto_id,
-//            uint32_t update_time_slice,
-//            vector<schema*> schemas,
-//            vector<string> lua_scripts,
-//            vector<string> wire_msgs,
-//            vector<string> commands,
-//            data::factory& factory)
-//     : nodeid(id)
-//     , protoid(proto_id)
-//     , peer_ids(0)
-//     , engine(factory)
-//     , update_time_slice(update_time_slice)
-//     , acceptor_(nullptr) {
-//   LOG(DEBUG) << "Node constructor called";
-//   init_bindings(std::move(schemas), std::move(lua_scripts), std::move(wire_msgs), std::move(commands));
-//   init_worker();
-// }
+node::node(const std::string& id,
+           std::string proto_id):
+      nodeid(id)
+    , protoid(proto_id)
+    , peer_ids(0)
+    , acceptor_(nullptr) {
+  LOG(DEBUG) << "Node constructor called";
+  std::shared_ptr<smart_protocol> proto = smart_protocol::get_protocol(proto_id);
+  update_time_slice = proto->get_update_time_slice();
+  engine.set_factory(proto->get_factory());
+  init_bindings(proto->get_schemas(), proto->get_scripts(), proto->get_wire_msgs(), proto->get_commands());
+  init_worker();
+}
+
+node::~node() {
+  worker_mutex.lock();
+  worker_stop_signal = true;
+  worker_mutex.unlock();
+
+  worker->join();
+  delete worker;
+}
 
 void node::init_bindings(vector<schema*> schemas,
                          vector<string> lua_scripts,
@@ -226,62 +230,10 @@ void node::init_worker() {
     }
   });
 }
-node::node(const std::string& id,
-           std::string proto_id):
-           // data::factory& factory):
-      nodeid(id)
-    , protoid(proto_id)
-    , peer_ids(0)
-    // , engine(factory)
-    , acceptor_(nullptr) {
-  LOG(DEBUG) << "Node constructor called";
-  std::shared_ptr<smart_protocol> proto = smart_protocol::get_protocol(proto_id);
-  update_time_slice = proto->get_update_time_slice();
-  engine.set_factory(proto->get_factory());
-  init_bindings(proto->get_schemas(), proto->get_scripts(), proto->get_wire_msgs(), proto->get_commands());
-  init_worker();
-}
-
-node::~node() {
-  // LOG(DEBUG) << "Node destructor called";
-  //
-  // vector<peer_id> res = list_known_peers();
-  // LOG(DEBUG) << "Known peers " << res.size();
-  // for (uint32_t i = 0; i < res.size(); ++i) {
-  //   LOG(DEBUG) << "known_peer: " << res[i];
-  // }
-
-  worker_mutex.lock();
-  worker_stop_signal = true;
-  worker_mutex.unlock();
-
-  worker->join();
-  delete worker;
-}
 
 bool node::get_worker_stop_signal() {
   lock_guard<mutex> lock(worker_mutex);
   return worker_stop_signal;
-}
-
-// TODO(kari): move to io?
-static string get_date_string(system_clock::time_point t) {
-  auto as_time_t = std::chrono::system_clock::to_time_t(t);
-  struct tm* tm;
-  if ((tm = ::gmtime(&as_time_t))) {
-    char some_buffer[64];
-    if (std::strftime(some_buffer, sizeof(some_buffer), "%F %T", tm)) {
-      return string{some_buffer};
-    }
-  }
-  throw std::runtime_error("Failed to get current date as string");
-}
-
-// TODO(kari): move to io?
-string zero_padded(int num, int width) {
-  std::ostringstream ss;
-  ss << std::setw(width) << std::setfill('0') << num;
-  return ss.str();
 }
 
 std::string node::get_id() {
@@ -311,7 +263,7 @@ void node::log(string logger, string msg) {
   auto current_time = std::chrono::duration_cast<std::chrono::milliseconds>(
      now.time_since_epoch()).count();
   logs[logger].push_back(
-    "[" + get_date_string(now) + "." + zero_padded(current_time % 1000, 3) + "] " + msg);
+    "[" + io::get_date_string(now) + "." + io::zero_padded(current_time % 1000, 3) + "] " + msg);
 }
 
 void node::dump_logs(string html_file) {
