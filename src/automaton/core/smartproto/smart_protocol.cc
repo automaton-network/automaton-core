@@ -98,6 +98,10 @@ std::vector<std::string> smart_protocol::get_commands() {
   return cmds;
 }
 
+uint32_t smart_protocol::get_update_time_slice() {
+  return update_time_slice;
+}
+
 }  // namespace smartproto
 }  // namespace core
 }  // namespace automaton

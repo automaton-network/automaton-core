@@ -34,6 +34,7 @@ class smart_protocol {
   std::vector<std::string> get_scripts();
   std::vector<std::string> get_wire_msgs();
   std::vector<std::string> get_commands();
+  uint32_t get_update_time_slice();
 
  private:
   smart_protocol();

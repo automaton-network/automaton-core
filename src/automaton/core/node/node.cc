@@ -226,7 +226,6 @@ void node::init_worker() {
     }
   });
 }
-
 node::node(const std::string& id,
            std::string proto_id):
            // data::factory& factory):
@@ -237,6 +236,7 @@ node::node(const std::string& id,
     , acceptor_(nullptr) {
   LOG(DEBUG) << "Node constructor called";
   std::shared_ptr<smart_protocol> proto = smart_protocol::get_protocol(proto_id);
+  update_time_slice = proto->get_update_time_slice();
   engine.set_factory(proto->get_factory());
   init_bindings(proto->get_schemas(), proto->get_scripts(), proto->get_wire_msgs(), proto->get_commands());
   init_worker();
