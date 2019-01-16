@@ -1,5 +1,14 @@
 -- core.lua
 
+--[[ --- TESTING ---
+launch_node("a", "automaton/examples/smartproto/chat/", "tcp://127.0.0.1:12345")
+launch_node("b", "automaton/examples/smartproto/chat/", "tcp://127.0.0.1:12355")
+add_peers("a", {"tcp://127.0.0.1:12355"})
+connect("a", {1})
+process_cmd("a", "get_messages", "")
+disconnect("a", {1})
+]]
+
 history_add("m = get_protocols({\"automaton/examples/smartproto/chat/\",\"automaton/examples/smartproto/blockchain/\",\"automaton/examples/smartproto/reservationsystem/\"})")
 history_add("m = list_supported_protocols()")
 history_add("msg = ProtocolsList()")

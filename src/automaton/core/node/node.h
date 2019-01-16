@@ -45,7 +45,7 @@ class node: public network::connection::connection_handler,
   //      std::vector<std::string> commands,
   //      data::factory& factory); // NOLINT
 
-  node(const std::string& id, std::string proto_id, data::factory& factory);  // NOLINT
+  node(const std::string& id, std::string proto_id);  //, data::factory& factory);  // NOLINT
 
   ~node();
 
@@ -92,11 +92,11 @@ class node: public network::connection::connection_handler,
   void script(std::string command, std::promise<std::string>* result);
 
   uint32_t find_message_id(const char * name) {
-    return engine.get_factory().get_schema_id(name);
+    return engine.get_factory()->get_schema_id(name);
   }
 
   std::unique_ptr<data::msg> create_msg_by_id(uint32_t id) {
-    return engine.get_factory().new_message_by_id(id);
+    return engine.get_factory()->new_message_by_id(id);
   }
 
   void log(std::string logger, std::string msg);

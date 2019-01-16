@@ -6,7 +6,8 @@
 #include <vector>
 #include <memory>
 
-#include "automaton/core/data/protobuf/protobuf_schema.h"
+#include "automaton/core/data/schema.h"
+#include "automaton/core/data/factory.h"
 
 namespace automaton {
 namespace core {
@@ -27,16 +28,19 @@ class smart_protocol {
 
   static bool load(std::string path);
 
+  std::shared_ptr<data::factory> get_factory();
   std::unordered_map<std::string, std::string> get_msgs_definitions();
   std::vector<data::schema*> get_schemas();
   std::vector<std::string> get_scripts();
   std::vector<std::string> get_wire_msgs();
   std::vector<std::string> get_commands();
+  uint32_t get_update_time_slice();
 
  private:
   smart_protocol();
   static std::unordered_map<std::string, std::shared_ptr<smart_protocol>> protocols;
   std::string id;
+  std::shared_ptr<data::factory> factory;
   uint32_t update_time_slice;
 
   std::vector<std::string> lua_scripts;

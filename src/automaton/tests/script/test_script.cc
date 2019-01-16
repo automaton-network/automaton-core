@@ -40,7 +40,7 @@ TEST_F(test_script, module_registration) {
         "47D0D13C5D85F2B0FF8318D2877EEC2F63B931BD47417A81A538327AF927DA3E"},
   };
 
-  protobuf_factory data_factory;
+  std::shared_ptr<protobuf_factory> data_factory;
   script::engine lua(data_factory);
   lua.bind_core();
 
