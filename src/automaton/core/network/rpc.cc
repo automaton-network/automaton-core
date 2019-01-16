@@ -3,9 +3,15 @@
 #include <iostream>
 #include <string>
 #include <thread>
-#include <boost/asio.hpp>  // NOLINT
+#include <boost/asio/basic_stream_socket.hpp>  // NOLINT
+#include <boost/asio/buffer.hpp>  // NOLINT
+#include <boost/asio/error.hpp>  // NOLINT
+#include <boost/asio/io_service.hpp>  // NOLINT
+#include <boost/asio/ip/tcp.hpp>  // NOLINT
+#include <boost/asio/placeholders.hpp>  // NOLINT
+#include <boost/asio/write.hpp>  // NOLINT
 #include <boost/bind.hpp>  // NOLINT
-#include "automaton/core/io/io.h"
+#include "automaton/core/io/io.h"  // NOLINT
 
 using boost::asio::ip::tcp;
 

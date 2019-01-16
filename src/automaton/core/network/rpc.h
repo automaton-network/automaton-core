@@ -5,23 +5,19 @@
 #include <iostream>
 #include <string>
 #include <thread>
-#include <boost/asio.hpp>  // NOLINT
-#include <boost/bind.hpp>  // NOLINT
+#include <boost/asio/io_service.hpp>  // NOLINT
+#include <boost/asio/ip/tcp.hpp>  // NOLINT
 #include "automaton/core/io/io.h"
-
-using boost::asio::ip::tcp;
-
 
 namespace automaton {
 namespace core {
 namespace network {
 
-
 class session {
  public:
   explicit session(boost::asio::io_service& io_service); // NOLINT
 
-  tcp::socket& socket();
+  boost::asio::ip::tcp::socket& socket();
 
   void start();
 
@@ -30,7 +26,7 @@ class session {
   void handle_write(const boost::system::error_code& error);
 
  private:
-  tcp::socket socket_;
+  boost::asio::ip::tcp::socket socket_;
   static const size_t kBufferSize = 1024;
   char data_[kBufferSize];
 };
@@ -46,7 +42,7 @@ class server {
  private:
   std::string (*handler)(std::string json_str);
   boost::asio::io_service io_service;
-  tcp::acceptor acceptor;
+  boost::asio::ip::tcp::acceptor acceptor;
   std::thread* worker;
 };
 
