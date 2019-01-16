@@ -1,9 +1,10 @@
 #include "automaton/core/network/rpc.h"
-#include <cstdlib>
-#include <thread>
-#include <iostream>
 #include <boost/bind.hpp>
 #include <boost/asio.hpp>
+#include <cstdlib>
+#include <string>
+#include <thread>
+#include <iostream>
 #include "automaton/core/io/io.h"
 
 using boost::asio::ip::tcp;
@@ -16,17 +17,16 @@ namespace network {
 
 class session {
  public:
-  session(boost::asio::io_service& io_service)
+  explicit session(boost::asio::io_service& io_service) // NOLINT
     : socket_(io_service) {
   }
 
-  tcp::socket& socket()
-  {
+  tcp::socket& socket() {
     return socket_;
   }
 
   void start() {
-    socket_.async_read_some(boost::asio::buffer(data_, buffer_size),
+    socket_.async_read_some(boost::asio::buffer(data_, kBufferSize),
       boost::bind(&session::handle_read, this,
         boost::asio::placeholders::error,
         boost::asio::placeholders::bytes_transferred));
@@ -47,7 +47,7 @@ class session {
 
   void handle_write(const boost::system::error_code& error) {
     if (!error) {
-      socket_.async_read_some(boost::asio::buffer(data_, buffer_size),
+      socket_.async_read_some(boost::asio::buffer(data_, kBufferSize),
         boost::bind(&session::handle_read, this,
           boost::asio::placeholders::error,
           boost::asio::placeholders::bytes_transferred));
@@ -56,10 +56,11 @@ class session {
       delete this;
     }
   }
+
  private:
   tcp::socket socket_;
-  const static uint32_t buffer_size = 1024;
-  char data_[buffer_size];
+  static const int kBufferSize = 1024;
+  char data_[kBufferSize];
 };
 
 
@@ -81,8 +82,7 @@ class server {
       acceptor.async_accept(new_session->socket(),
         boost::bind(&server::handle_accept, this, new_session,
           boost::asio::placeholders::error));
-    }
-    else {
+    } else {
       LOG(ERROR) << "Error in handle_accept, deleting connection";
       delete new_session;
     }
@@ -93,8 +93,7 @@ class server {
       try {
         io_service.run();
       }
-      catch (std::exception& e)
-      {
+      catch (std::exception& e) {
         LOG(ERROR) << "Could not run io_service";
         throw std::exception("Could not run io_service");
       }
@@ -117,3 +116,4 @@ class server {
 }  // namespace network
 }  // namespace core
 }  // namespace automaton
+

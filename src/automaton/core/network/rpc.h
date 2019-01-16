@@ -2,6 +2,18 @@
 #define AUTOMATON_CORE_NETWORK_RPC_H_
 
 
+namespace automaton {
+namespace core {
+namespace network {
+
+
+
+
+
+}  // namespace network
+}  // namespace core
+}  // namespace automaton
+
 
 
 
