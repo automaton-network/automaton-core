@@ -59,7 +59,7 @@ class session {
 
  private:
   tcp::socket socket_;
-  static const int kBufferSize = 1024;
+  static const size_t kBufferSize = 1024;
   char data_[kBufferSize];
 };
 
