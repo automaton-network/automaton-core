@@ -3,9 +3,9 @@
 #include <iostream>
 #include <string>
 #include <thread>
+#include <boost/asio.hpp>  // NOLINT
+#include <boost/bind.hpp>  // NOLINT
 #include "automaton/core/io/io.h"
-#include "boost/asio.hpp"
-#include "boost/bind.hpp"
 
 using boost::asio::ip::tcp;
 
