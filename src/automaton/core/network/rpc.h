@@ -18,3 +18,4 @@ namespace network {
 
 
 #endif  // AUTOMATON_CORE_NETWORK_RPC_H_
+

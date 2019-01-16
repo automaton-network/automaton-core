@@ -1,11 +1,11 @@
 #include "automaton/core/network/rpc.h"
-#include <boost/bind.hpp>
-#include <boost/asio.hpp>
 #include <cstdlib>
+#include <iostream>
 #include <string>
 #include <thread>
-#include <iostream>
 #include "automaton/core/io/io.h"
+#include "boost/asio.hpp"
+#include "boost/bind.hpp"
 
 using boost::asio::ip::tcp;
 
@@ -116,4 +116,3 @@ class server {
 }  // namespace network
 }  // namespace core
 }  // namespace automaton
-
