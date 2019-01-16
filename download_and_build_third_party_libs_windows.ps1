@@ -156,18 +156,19 @@ echo ("="*80)
 
 if ($env:APPVEYOR) {
   echo "Moving pre-installed boost into our tree"
-  Move-Item -Path C:\Libraries\boost_1_67_0 -Destination .\boost_1_68_0
-  cd boost_1_68_0
+  Move-Item -Path C:\Libraries\boost_1_67_0 -Destination .\boost
+  cd boost
   mkdir stage
   cd stage
   Move-Item -Path ..\lib64-msvc-14.1 -Destination lib
   cd ..\..
 } else {
-  if(!(Test-Path -Path .\boost_1_68_0)) {
+  if(!(Test-Path -Path .\boost)) {
       Get-Archive "https://dl.bintray.com/boostorg/release/1.68.0/source/boost_1_68_0.zip" `
     "boost_1_68_0.zip" "3B1DB0B67079266C40B98329D85916E910BBADFC3DB3E860C049056788D4D5CD"
   }
-  cd boost_1_68_0
+  Move-Item -Path .\boost_1_68_0 -Destination .\boost
+  cd boost
   .\bootstrap.bat
   .\b2 --with-filesystem --with-system --with-iostreams cxxstd=14 link=static stage
   cd ..

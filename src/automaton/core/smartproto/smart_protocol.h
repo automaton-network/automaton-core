@@ -4,6 +4,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <memory>
 
 #include "automaton/core/data/protobuf/protobuf_schema.h"
 

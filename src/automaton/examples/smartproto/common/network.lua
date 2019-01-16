@@ -168,10 +168,10 @@ function set_lag(min_lag, max_lag)
   end
 end
 
-function get_nodes(path)
-  if networks[path] ~= nil then
-    return networks[path]["nodes"]
+function get_nodes_from_testnet(testnet_id)
+  if networks[testnet_id] ~= nil then
+    return networks[testnet_id]["nodes"]
   end
-  print("NO NODES @ PATH " .. path)
+  print("NO NODES @ PATH " .. testnet_id)
   return nil
 end

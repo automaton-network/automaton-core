@@ -24,8 +24,8 @@ function sent(peer_id, msg_id, success)
 end
 
 function on_Msg(peer_id, m)
-  hash = hex(sha3(m.author .. m.msg))
-  msg = string.format("<%s>: %s [FROM %s] [%s]",
+  local hash = hex(sha3(m.author .. m.msg))
+  local msg = string.format("<%s>: %s [FROM %s] [%s]",
       m.author, m.msg, peers[peer_id].name, hash)
   if msgs[hash] == nil then
     msgs[hash] = m.msg
@@ -42,19 +42,19 @@ function update(timestamp)
   wait = wait - 1
   if wait <= 0 then
     wait = math.random(200,1000)
-    m = Msg()
+    local m = Msg()
     msg_index = msg_index + 1
     local idx = ((msg_index - 1) % #msg_contents) + 1
 
     m.sequence = msg_index
-    m.author = nodeid;
+    m.author = nodeid
     m.msg = msg_contents[idx] .. " (" .. tostring(msg_index) .. ")"
     on_Msg(0, m)
   end
 end
 
 function get_peers()
-  response = Peers()
+  local response = Peers()
   for k,v in pairs(peers) do
     response:set_repeated_blob(1, v.name, -1)
   end
@@ -62,9 +62,9 @@ function get_peers()
 end
 
 function get_messages()
-  response = Messages()
+  local response = Messages()
   for k,v in pairs(msgs) do
-    m = ReceivedMsg()
+    local m = ReceivedMsg()
     m.hash = k
     m.data = v
     response:set_repeated_msg(1, m, -1)
