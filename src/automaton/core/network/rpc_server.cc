@@ -64,7 +64,7 @@ void session::handle_write(const boost::system::error_code& error) {
 
 server::server(uint16_t port, std::string(*rpc_handler)(std::string))
   : acceptor(io_service, tcp::endpoint(tcp::v4(), port)),
-    handler(handler) {
+    handler(rpc_handler) {
   session* new_session = new session(io_service);
   acceptor.async_accept(new_session->socket(),
     boost::bind(&server::handle_accept, this, new_session,
