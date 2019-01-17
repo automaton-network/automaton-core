@@ -1,5 +1,5 @@
-#ifndef AUTOMATON_CORE_NETWORK_RPC_H_
-#define AUTOMATON_CORE_NETWORK_RPC_H_
+#ifndef AUTOMATON_CORE_NETWORK_RPC_SERVER_H_
+#define AUTOMATON_CORE_NETWORK_RPC_SERVER_H_
 
 #include <cstdlib>
 #include <iostream>
@@ -50,4 +50,4 @@ class server {
 }  // namespace core
 }  // namespace automaton
 
-#endif  // AUTOMATON_CORE_NETWORK_RPC_H_
+#endif  // AUTOMATON_CORE_NETWORK_RPC_SERVER_H_

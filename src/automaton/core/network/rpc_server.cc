@@ -1,17 +1,17 @@
-#include "automaton/core/network/rpc.h"
+#include "automaton/core/network/rpc_server.h"
 #include <cstdlib>
 #include <iostream>
 #include <string>
 #include <thread>
-#include <boost/asio/basic_stream_socket.hpp>  // NOLINT
-#include <boost/asio/buffer.hpp>  // NOLINT
-#include <boost/asio/error.hpp>  // NOLINT
-#include <boost/asio/io_service.hpp>  // NOLINT
-#include <boost/asio/ip/tcp.hpp>  // NOLINT
-#include <boost/asio/placeholders.hpp>  // NOLINT
-#include <boost/asio/write.hpp>  // NOLINT
-#include <boost/bind.hpp>  // NOLINT
-#include "automaton/core/io/io.h"  // NOLINT
+#include <boost/asio/basic_stream_socket.hpp>
+#include <boost/asio/buffer.hpp>
+#include <boost/asio/error.hpp>
+#include <boost/asio/io_service.hpp>
+#include <boost/asio/ip/tcp.hpp>
+#include <boost/asio/placeholders.hpp>
+#include <boost/asio/write.hpp>
+#include <boost/bind.hpp>
+#include "automaton/core/io/io.h"
 
 using boost::asio::ip::tcp;
 
