@@ -214,7 +214,7 @@ int main(int argc, char* argv[]) {
     i >> j;
     i.close();
     std::vector<std::string> paths = j["protocols"];
-    for (auto p : paths) {
+    for (auto& p : paths) {
       script.safe_script(get_file_contents((p + "init.lua").c_str()));
       smart_protocol::load(p);
     }
@@ -227,15 +227,15 @@ int main(int argc, char* argv[]) {
     });
 
     std::vector<std::string> rpc_protos = j["command_definitions"];
-    for (auto p : rpc_protos) {
+    for (auto& p : rpc_protos) {
       schema* rpc_schema = new protobuf_schema(get_file_contents(p.c_str()));
       script.import_schema(rpc_schema);
     }
     std::vector<std::string> rpc_luas = j["command_implementations"];
-    for (auto p : rpc_luas) {
+    for (auto& p : rpc_luas) {
       script.safe_script(get_file_contents(p.c_str()));
     }
-    for (auto c : j["commands"]) {
+    for (auto& c : j["commands"]) {
       std::cout << "loaded rpc command: " << c["cmd"] << std::endl;
       rpc_commands[c["cmd"]] = std::make_pair(c["input"], c["output"]);
     }

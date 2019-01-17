@@ -817,7 +817,7 @@ void protobuf_msg::set_message(uint32_t field_tag, const msg& sub_message) {
     throw std::invalid_argument(msg.str());
   }
   string message_type = fdesc->message_type()->full_name();  // Error
-  auto& sub_m = dynamic_cast<const protobuf_msg&>(sub_message);
+  auto& sub_m = reinterpret_cast<const protobuf_msg&>(sub_message);
   string sub_message_type = sub_m.m->GetDescriptor()->full_name();
   if (message_type.compare(sub_message_type)) {
     std::stringstream msg;
