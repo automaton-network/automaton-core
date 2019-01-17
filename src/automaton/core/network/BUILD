@@ -83,7 +83,8 @@ cc_library(
 #     "//conditions:linux": ["-lpthread",],
 #     "//conditions:default": [],
 #   }),
-#   linkstatic=True,defines = select({
+#   linkstatic=True,
+#   defines = select({
 #       "//conditions:windows": ["BOOST_ALL_NO_LIB"],
 #       "//conditions:default": [],
 #   }),
