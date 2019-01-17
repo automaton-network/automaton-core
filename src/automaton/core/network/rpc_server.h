@@ -34,7 +34,7 @@ class session {
 
 class server {
  public:
-  server(uint16_t port, std::string(*func)(std::string));
+  server(uint16_t port, std::string(*rpc_handler)(std::string));
   void handle_accept(session* new_session, const boost::system::error_code& error);
   void run();
   void stop();

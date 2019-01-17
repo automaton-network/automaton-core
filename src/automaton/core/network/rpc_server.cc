@@ -62,7 +62,7 @@ void session::handle_write(const boost::system::error_code& error) {
 }
 
 
-server::server(uint16_t port, std::string(*func)(std::string))
+server::server(uint16_t port, std::string(*rpc_handler)(std::string))
   : acceptor(io_service, tcp::endpoint(tcp::v4(), port)),
     handler(handler) {
   session* new_session = new session(io_service);
