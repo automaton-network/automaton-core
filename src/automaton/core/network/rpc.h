@@ -5,8 +5,8 @@
 #include <iostream>
 #include <string>
 #include <thread>
-#include <boost/asio/io_service.hpp>  // NOLINT
-#include <boost/asio/ip/tcp.hpp>  // NOLINT
+#include <boost/asio/io_service.hpp>
+#include <boost/asio/ip/tcp.hpp>
 #include "automaton/core/io/io.h"
 
 namespace automaton {
