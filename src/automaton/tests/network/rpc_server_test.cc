@@ -1,17 +1,16 @@
 #include "automaton/core/network/rpc_server.h"
-#include "automaton/core/network/tcp_implementation.h"
 #include <memory>
 #include <string>
-//#include <cstdint>
 #include "gtest/gtest.h"
+#include "automaton/core/network/tcp_implementation.h"
 
 static const uint32_t PORT = 33445;
 static const char* SERVER_ADDRESS = "127.0.0.1:33445";
-using namespace automaton::core::network;
+using namespace automaton::core::network;  //  NOLINT
 
 std::shared_ptr<connection> connection_c;
 
-std::string server_handler(std::string test_str){
+std::string server_handler(std::string test_str) {
   return test_str + "response";
 }
 
