@@ -94,6 +94,7 @@ void server::run() {
     }
     catch (std::exception& e) {
       LOG(ERROR) << "Could not run io_service in server";
+    }
     LOG(DEBUG) << "server stopped.";
   });
 }
