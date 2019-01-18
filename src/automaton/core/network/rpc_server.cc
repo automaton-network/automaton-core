@@ -15,14 +15,13 @@
 
 using boost::asio::ip::tcp;
 
-
 namespace automaton {
 namespace core {
 namespace network {
 
-
-session::session(boost::asio::io_service& io_service) // NOLINT
-  : socket_(io_service) {
+session::session(boost::asio::io_service& io_service, std::string(*handler)(std::string)) // NOLINT
+  : socket_(io_service),
+    handler(handler)  {
 }
 
 tcp::socket& session::socket() {
@@ -38,13 +37,15 @@ void session::start() {
 
 void session::handle_read(const boost::system::error_code& error, size_t bytes_transferred) {
   if (!error) {
-    std::cout << std::string(data_, bytes_transferred) << std::endl;
+    std::string response = handler(std::string(data_, bytes_transferred));
     boost::asio::async_write(socket_,
-      boost::asio::buffer(data_, bytes_transferred),
+      boost::asio::buffer(response.c_str(), response.size()),
       boost::bind(&session::handle_write, this,
         boost::asio::placeholders::error));
+  } else if (error == boost::asio::error::eof) {
+    LOG(ERROR) << "Peer has closed the connection";
   } else {
-    LOG(ERROR) << "Error in handle_read, deleting connection";
+    LOG(ERROR) << "Server error in handle_read, deleting connection";
     delete this;
   }
 }
@@ -55,17 +56,18 @@ void session::handle_write(const boost::system::error_code& error) {
       boost::bind(&session::handle_read, this,
         boost::asio::placeholders::error,
         boost::asio::placeholders::bytes_transferred));
+  } else if (error == boost::asio::error::eof) {
+    LOG(ERROR) << "Peer has closed the connection";
   } else {
-    LOG(ERROR) << "Error in handle_write, deleting connection";
+    LOG(ERROR) << "Server error in handle_write, deleting connection";
     delete this;
   }
 }
 
-
-server::server(uint16_t port, std::string(*rpc_handler)(std::string))
+server::server(uint16_t port, std::string(*handler)(std::string))
   : acceptor(io_service, tcp::endpoint(tcp::v4(), port)),
-    handler(rpc_handler) {
-  session* new_session = new session(io_service);
+    handler(handler) {
+  session* new_session = new session(io_service, handler);
   acceptor.async_accept(new_session->socket(),
     boost::bind(&server::handle_accept, this, new_session,
       boost::asio::placeholders::error));
@@ -74,26 +76,27 @@ server::server(uint16_t port, std::string(*rpc_handler)(std::string))
 void server::handle_accept(session* new_session, const boost::system::error_code& error) {
   if (!error) {
     new_session->start();
-    new_session = new session(io_service);
+    new_session = new session(io_service, handler);
     acceptor.async_accept(new_session->socket(),
       boost::bind(&server::handle_accept, this, new_session,
         boost::asio::placeholders::error));
   } else {
-    LOG(ERROR) << "Error in handle_accept, deleting connection";
+    LOG(ERROR) << "Server error in handle_accept, deleting connection";
     delete new_session;
   }
 }
 
 void server::run() {
+  LOG(DEBUG) << "server starting.";
   worker = new std::thread([this]() {
     try {
       io_service.run();
     }
     catch (std::exception& e) {
-      LOG(ERROR) << "Could not run io_service";
-      throw std::exception("Could not run io_service");
+      LOG(ERROR) << "Could not run io_service in server";
+      throw std::exception("Could not run io_service in server");
     }
-    LOG(DEBUG) << "asio_io_service stopped.";
+    LOG(DEBUG) << "server stopped.";
   });
 }
 
@@ -101,7 +104,6 @@ void server::stop() {
   io_service.stop();
   worker->join();
 }
-
 }  // namespace network
 }  // namespace core
 }  // namespace automaton

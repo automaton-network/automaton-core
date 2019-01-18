@@ -15,7 +15,7 @@ namespace network {
 
 class session {
  public:
-  explicit session(boost::asio::io_service& io_service); // NOLINT
+  explicit session(boost::asio::io_service& io_service, std::string(*handler)(std::string)); // NOLINT
 
   boost::asio::ip::tcp::socket& socket();
 
@@ -26,6 +26,7 @@ class session {
   void handle_write(const boost::system::error_code& error);
 
  private:
+  std::string (*handler)(std::string json_str);
   boost::asio::ip::tcp::socket socket_;
   static const size_t kBufferSize = 1024;
   char data_[kBufferSize];
@@ -34,7 +35,7 @@ class session {
 
 class server {
  public:
-  server(uint16_t port, std::string(*rpc_handler)(std::string));
+  server(uint16_t port, std::string(*handler)(std::string));
   void handle_accept(session* new_session, const boost::system::error_code& error);
   void run();
   void stop();
@@ -45,7 +46,6 @@ class server {
   boost::asio::ip::tcp::acceptor acceptor;
   std::thread* worker;
 };
-
 }  // namespace network
 }  // namespace core
 }  // namespace automaton

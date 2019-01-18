@@ -72,8 +72,8 @@ cc_library(
 cc_library(
   name = "rpc_server",
   srcs = [
-    "rpc.h",
-    "rpc.cc",
+    "rpc_server.h",
+    "rpc_server.cc",
   ],
   deps = [
     "@localboost//:asio",
