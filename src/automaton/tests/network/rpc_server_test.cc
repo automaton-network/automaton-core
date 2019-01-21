@@ -6,20 +6,25 @@
 
 static const uint32_t PORT = 33445;
 static const char* SERVER_ADDRESS = "127.0.0.1:33445";
-using namespace automaton::core::network;  //  NOLINT
+using namespace automaton::core::network;  // NOLINT
 
 std::shared_ptr<connection> connection_c;
 
-std::string server_handler(std::string test_str) {
-  return test_str + "response";
-}
+class test_server_handler: public server::server_handler {
+ public:
+  test_server_handler() {}
+  std::string handle(std::string s) {
+    return s + "response";
+  }
+};
 
 class client_handler:public connection::connection_handler {
  public:
   void on_message_received(connection_id c, char* buffer, uint32_t bytes_read, uint32_t mid) {
     std::string message = std::string(buffer, bytes_read);
     LOG(INFO) << "Message \"" << message << "\" received from server";
-    connection_c->async_read(buffer, 256, 0, 0);
+    EXPECT_EQ(message, "requestresponse");
+    // connection_c->async_read(buffer, 256, 0, 0);
   }
   void on_message_sent(connection_id c, uint32_t mid, const automaton::core::common::status& s) {
     if (s.code != automaton::core::common::status::OK) {
@@ -53,11 +58,9 @@ void client() {
     connection_c -> connect();
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
     connection_c -> async_read(buffer_c, 256, 0, 0);
-    std::this_thread::sleep_for(std::chrono::milliseconds(500));
-    connection_c -> async_send("firstrequest", 0);
-    std::this_thread::sleep_for(std::chrono::milliseconds(500));
-    connection_c -> async_send("secondrequest", 0);
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    std::this_thread::sleep_for(std::chrono::milliseconds(150));
+    connection_c -> async_send("request", 0);
+    std::this_thread::sleep_for(std::chrono::milliseconds(2000));
     connection_c -> disconnect();
   } else {
     LOG(ERROR) << "Connection init failed!";
@@ -66,7 +69,8 @@ void client() {
 
 TEST(rpc_echo, basic_test) {
   automaton::core::network::tcp_init();
-  automaton::core::network::server rpc(PORT, &server_handler);
+  std::shared_ptr<server::server_handler> handler(new test_server_handler());
+  automaton::core::network::server rpc(PORT, handler);
   rpc.run();
   client();
   rpc.stop();

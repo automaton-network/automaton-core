@@ -72,23 +72,8 @@ int main(int argc, char* argv[]) {
 
   node_type.set(sol::call_constructor,
     sol::factories(
-    // [&factories](string id,
-    //    uint32_t update_time_slice,
-    //    vector<schema*> schemas,
-    //    vector<string> scripts,
-    //    vector<string> msgs,
-    //    vector<string> commands) -> unique_ptr<node> {
-    //   auto core_factory = make_unique<protobuf_factory>();
-    //   auto core_ptr = core_factory.get();
-    //   factories.push_back(std::move(core_factory));
-    //   return make_unique<node>(
-    //       id, update_time_slice, schemas, scripts, msgs, commands, *core_ptr);
-    // },
     [&](const std::string& id, std::string proto) -> unique_ptr<node> {
-      // auto core_factory = make_unique<protobuf_factory>();
-      // auto core_ptr = core_factory.get();
-      // factories.push_back(std::move(core_factory));
-      return make_unique<node>(id, proto);  //, *core_ptr);
+      return make_unique<node>(id, proto);
     }));
 
   // Bind this node to its own Lua state.
@@ -170,10 +155,7 @@ int main(int argc, char* argv[]) {
     std::cout << "launching node ... " << std::endl;
     auto n = nodes.find(node_id);
     if (n == nodes.end()) {
-      // auto core_factory = make_unique<protobuf_factory>();
-      // auto core_ptr = core_factory.get();
-      // factories.push_back(std::move(core_factory));
-      nodes[node_id] = std::make_unique<node>(node_id, protocol_id);  // , *core_ptr);
+      nodes[node_id] = std::make_unique<node>(node_id, protocol_id);
       bool res = nodes[node_id]->set_acceptor(address.c_str());
       if (!res) {
         LOG(ERROR) << "Setting acceptor at address " << address << " failed!";
@@ -271,7 +253,6 @@ int main(int argc, char* argv[]) {
   });
 
   while (1) {
-    // auto input = cli.input("\x1b[38;5;15m\x1b[1m 🄰 \x1b[0m ");
     auto input = cli.input("\x1b[38;5;15m\x1b[1m|A|\x1b[0m ");
     if (input == nullptr) {
       cli.print("\n");

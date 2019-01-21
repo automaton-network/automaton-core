@@ -19,9 +19,9 @@ namespace automaton {
 namespace core {
 namespace network {
 
-session::session(boost::asio::io_service& io_service, std::string(*handler)(std::string)) // NOLINT
+session::session(boost::asio::io_service& io_service, std::shared_ptr<server::server_handler> sh)
   : socket_(io_service),
-    handler(handler)  {
+    handler(sh)  {
 }
 
 tcp::socket& session::socket() {
@@ -37,7 +37,7 @@ void session::start() {
 
 void session::handle_read(const boost::system::error_code& error, size_t bytes_transferred) {
   if (!error) {
-    std::string response = handler(std::string(data_, bytes_transferred));
+    std::string response = handler->handle(std::string(data_, bytes_transferred));
     boost::asio::async_write(socket_,
       boost::asio::buffer(response.c_str(), response.size()),
       boost::bind(&session::handle_write, this,
@@ -64,13 +64,16 @@ void session::handle_write(const boost::system::error_code& error) {
   }
 }
 
-server::server(uint16_t port, std::string(*handler)(std::string))
-  : acceptor(io_service, tcp::endpoint(tcp::v4(), port)),
-    handler(handler) {
+server::server(uint16_t port, std::shared_ptr<server_handler> sh) :
+    io_service(),
+    acceptor(io_service, tcp::endpoint(tcp::v4(), port))
+  {
+  LOG(INFO) << "Server constructor";
+  handler = sh;
   session* new_session = new session(io_service, handler);
   acceptor.async_accept(new_session->socket(),
     boost::bind(&server::handle_accept, this, new_session,
-      boost::asio::placeholders::error));
+    boost::asio::placeholders::error));
 }
 
 void server::handle_accept(session* new_session, const boost::system::error_code& error) {

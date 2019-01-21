@@ -19,7 +19,7 @@ cc_binary(
   ],
 )
 
-cc_binary(
+cc_test(
   name = "rpc_server_test",
   srcs = [
     "rpc_server_test.cc",
