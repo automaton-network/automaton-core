@@ -72,23 +72,8 @@ int main(int argc, char* argv[]) {
 
   node_type.set(sol::call_constructor,
     sol::factories(
-    // [&factories](string id,
-    //    uint32_t update_time_slice,
-    //    vector<schema*> schemas,
-    //    vector<string> scripts,
-    //    vector<string> msgs,
-    //    vector<string> commands) -> unique_ptr<node> {
-    //   auto core_factory = make_unique<protobuf_factory>();
-    //   auto core_ptr = core_factory.get();
-    //   factories.push_back(std::move(core_factory));
-    //   return make_unique<node>(
-    //       id, update_time_slice, schemas, scripts, msgs, commands, *core_ptr);
-    // },
     [&](const std::string& id, std::string proto) -> unique_ptr<node> {
-      // auto core_factory = make_unique<protobuf_factory>();
-      // auto core_ptr = core_factory.get();
-      // factories.push_back(std::move(core_factory));
-      return make_unique<node>(id, proto);  //, *core_ptr);
+      return make_unique<node>(id, proto);
     }));
 
   // Bind this node to its own Lua state.
@@ -170,10 +155,7 @@ int main(int argc, char* argv[]) {
     std::cout << "launching node ... " << std::endl;
     auto n = nodes.find(node_id);
     if (n == nodes.end()) {
-      // auto core_factory = make_unique<protobuf_factory>();
-      // auto core_ptr = core_factory.get();
-      // factories.push_back(std::move(core_factory));
-      nodes[node_id] = std::make_unique<node>(node_id, protocol_id);  // , *core_ptr);
+      nodes[node_id] = std::make_unique<node>(node_id, protocol_id);
       bool res = nodes[node_id]->set_acceptor(address.c_str());
       if (!res) {
         LOG(ERROR) << "Setting acceptor at address " << address << " failed!";
@@ -214,7 +196,7 @@ int main(int argc, char* argv[]) {
     i >> j;
     i.close();
     std::vector<std::string> paths = j["protocols"];
-    for (auto p : paths) {
+    for (auto& p : paths) {
       script.safe_script(get_file_contents((p + "init.lua").c_str()));
       smart_protocol::load(p);
     }
@@ -227,15 +209,15 @@ int main(int argc, char* argv[]) {
     });
 
     std::vector<std::string> rpc_protos = j["command_definitions"];
-    for (auto p : rpc_protos) {
+    for (auto& p : rpc_protos) {
       schema* rpc_schema = new protobuf_schema(get_file_contents(p.c_str()));
       script.import_schema(rpc_schema);
     }
     std::vector<std::string> rpc_luas = j["command_implementations"];
-    for (auto p : rpc_luas) {
+    for (auto& p : rpc_luas) {
       script.safe_script(get_file_contents(p.c_str()));
     }
-    for (auto c : j["commands"]) {
+    for (auto& c : j["commands"]) {
       std::cout << "loaded rpc command: " << c["cmd"] << std::endl;
       rpc_commands[c["cmd"]] = std::make_pair(c["input"], c["output"]);
     }
@@ -271,7 +253,6 @@ int main(int argc, char* argv[]) {
   });
 
   while (1) {
-    // auto input = cli.input("\x1b[38;5;15m\x1b[1m 🄰 \x1b[0m ");
     auto input = cli.input("\x1b[38;5;15m\x1b[1m|A|\x1b[0m ");
     if (input == nullptr) {
       cli.print("\n");

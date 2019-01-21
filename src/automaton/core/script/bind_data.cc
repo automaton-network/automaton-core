@@ -22,7 +22,6 @@ void engine::bind_data() {
     [this](sol::this_state L, msg& m, std::string key) -> sol::object {
       VLOG(9) << "Getting key: " << key;
       sol::state_view lua(L);
-      auto schema_id = m.get_schema_id();
       auto tag_id = m.get_field_tag(key);
       auto fi = m.get_field_info_by_tag(tag_id);
       auto ftype = fi.type;
@@ -109,7 +108,6 @@ void engine::bind_data() {
   msg_type.set(sol::meta_function::new_index,
     [this](sol::this_state L, msg& m, std::string key, sol::object value) {
       VLOG(9) << "Setting key:" << key << " value: " << value.as<std::string>();
-      auto schema_id = m.get_schema_id();
       auto tag_id = m.get_field_tag(key);
       auto fi = m.get_field_info_by_tag(tag_id);
       auto ftype = fi.type;

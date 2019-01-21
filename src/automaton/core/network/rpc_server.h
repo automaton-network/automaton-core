@@ -3,6 +3,7 @@
 
 #include <cstdlib>
 #include <iostream>
+#include <memory>
 #include <string>
 #include <thread>
 #include <boost/asio/io_service.hpp>
@@ -13,9 +14,31 @@ namespace automaton {
 namespace core {
 namespace network {
 
+class session;
+
+class server {
+ public:
+  class server_handler {
+   public:
+    server_handler() {}
+    ~server_handler() {}
+    virtual std::string handle(std::string) = 0;
+  };
+  server(uint16_t port, std::shared_ptr<server_handler>);
+  void handle_accept(session* new_session, const boost::system::error_code& error);
+  void run();
+  void stop();
+
+ private:
+  boost::asio::io_service io_service;
+  boost::asio::ip::tcp::acceptor acceptor;
+  std::shared_ptr<server_handler> handler;
+  std::thread* worker;
+};
+
 class session {
  public:
-  explicit session(boost::asio::io_service& io_service, std::string(*handler)(std::string)); // NOLINT
+  session(boost::asio::io_service& io_service, std::shared_ptr<server::server_handler>);  // NOLINT
 
   boost::asio::ip::tcp::socket& socket();
 
@@ -26,25 +49,10 @@ class session {
   void handle_write(const boost::system::error_code& error);
 
  private:
-  std::string (*handler)(std::string json_str);
   boost::asio::ip::tcp::socket socket_;
+  std::shared_ptr<server::server_handler> handler;
   static const size_t kBufferSize = 1024;
   char data_[kBufferSize];
-};
-
-
-class server {
- public:
-  server(uint16_t port, std::string(*handler)(std::string));
-  void handle_accept(session* new_session, const boost::system::error_code& error);
-  void run();
-  void stop();
-
- private:
-  std::string (*handler)(std::string json_str);
-  boost::asio::io_service io_service;
-  boost::asio::ip::tcp::acceptor acceptor;
-  std::thread* worker;
 };
 }  // namespace network
 }  // namespace core
