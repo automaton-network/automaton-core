@@ -18,3 +18,16 @@ cc_binary(
     "//automaton/core/network:simulated_connection",
   ],
 )
+
+cc_binary(
+  name = "rpc_server_test",
+  srcs = [
+    "rpc_server_test.cc",
+  ],
+  deps = [
+    "//automaton/core/io",
+    "//automaton/core/network:rpc_server",
+    "//automaton/core/network:network_tcp",
+    "@gtest//:gtest_main",
+  ],
+)
