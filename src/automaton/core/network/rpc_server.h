@@ -38,7 +38,7 @@ class server {
 
 class session {
  public:
-  session(boost::asio::io_service& io_service, std::shared_ptr<server::server_handler>);
+  session(boost::asio::io_service& io_service, std::shared_ptr<server::server_handler>);  // NOLINT
 
   boost::asio::ip::tcp::socket& socket();
 

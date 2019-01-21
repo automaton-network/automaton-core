@@ -66,8 +66,7 @@ void session::handle_write(const boost::system::error_code& error) {
 
 server::server(uint16_t port, std::shared_ptr<server_handler> sh) :
     io_service(),
-    acceptor(io_service, tcp::endpoint(tcp::v4(), port))
-  {
+    acceptor(io_service, tcp::endpoint(tcp::v4(), port)) {
   LOG(INFO) << "Server constructor";
   handler = sh;
   session* new_session = new session(io_service, handler);
