@@ -44,7 +44,7 @@ void http_session::read_header() {
   if (pos == -1) {
     socket_.async_read_some(boost::asio::buffer(buffer, kBufferSize),
         [this](const boost::system::error_code& error, size_t bytes_transferred) {
-          if(!error) {
+          if (!error) {
             header = header + std::string(buffer, bytes_transferred);
             read_header();
           } else if (error == boost::asio::error::eof) {
@@ -63,7 +63,7 @@ void http_session::read_header() {
     std::stringstream ss(header);
     std::string line;
     uint32_t body_size = 0;
-    while(std::getline(ss, line)) {
+    while (std::getline(ss, line)) {
       if (line.substr(0, 16) == "Content-Length: ") {
         body_size = std::stoi(line.substr(16));
         break;
@@ -81,7 +81,8 @@ void http_session::read_header() {
 void http_session::read_body(uint32_t body_size) {
   uint32_t sz = body.size();
   if (sz < body_size) {
-    boost::asio::async_read(socket_, boost::asio::buffer(buffer, kBufferSize), boost::asio::transfer_exactly(body_size - sz),
+    boost::asio::async_read(socket_, boost::asio::buffer(buffer, kBufferSize),
+      boost::asio::transfer_exactly(body_size - sz),
       [this, body_size](const boost::system::error_code& error, size_t bytes_transferred) {
         if (!error) {
           body = body + std::string(buffer, bytes_transferred);
