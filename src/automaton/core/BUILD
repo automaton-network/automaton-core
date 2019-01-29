@@ -13,12 +13,23 @@ cc_binary(
     "//automaton/core/io",
     "//automaton/core/network",
     "//automaton/core/network:network_tcp",
-    # "//automaton/core/network:network_zmq",
+    "//automaton/core/network:http_server",
     "//automaton/core/network:simulated_connection",
     "//automaton/core/smartproto",
     "//automaton/core/node",
     "//automaton/core/state",
     "@json//:json",
+  ],
+  linkstatic = True,
+)
+
+cc_binary(
+  name = "rpc_test",
+  srcs = [
+    "rpc_server_core_test.cc",
+  ],
+  deps = [
+    "//automaton/core/network:network_tcp",
   ],
   linkstatic = True,
 )

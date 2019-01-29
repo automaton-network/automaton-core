@@ -116,7 +116,7 @@ void http_session::read_body(uint32_t body_size) {
   }
 }
 
-std::string http_session::add_http_header(const std::string& data) {
+std::string http_session::add_http_header(const std::string& data) const {
   std::stringstream ss;
   ss << "HTTP/1.0 200 OK\r\n";
   ss << "Content-Length: " << data.size() << "\r\n";

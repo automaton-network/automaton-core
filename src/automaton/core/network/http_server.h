@@ -48,14 +48,13 @@ class http_session {
 
   void read_body(uint32_t body_size);
 
-  std::string add_http_header(const std::string& body);
+  std::string add_http_header(const std::string& body) const;
 
  private:
   boost::asio::ip::tcp::socket socket_;
   std::shared_ptr<http_server::server_handler> handler;
   static const size_t kBufferSize = 1024;
   char buffer[kBufferSize];
-  // std::string buffer;
   std::string header;
   std::string body;
 };
