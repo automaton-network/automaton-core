@@ -56,8 +56,8 @@ static const char* automaton_ascii_logo_cstr =
 
 class rpc_server_handler: public automaton::core::network::http_server::server_handler {
   engine* script;
-public:
-    rpc_server_handler(engine* en): script(en) {}
+ public:
+    explicit rpc_server_handler(engine* en): script(en) {}
     std::string handle(std::string json_cmd) {
       // TODO(kari): parse json
       std::cout << "Server received command: " << json_cmd << std::endl;
@@ -70,7 +70,7 @@ public:
       std::string result = pfr;
       std::cout << "RESULT: " << result << std::endl;
       return result;
-    };
+    }
 };
 
 int main(int argc, char* argv[]) {
