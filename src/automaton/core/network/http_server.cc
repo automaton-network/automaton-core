@@ -186,6 +186,7 @@ void http_session::read_body(uint32_t body_size) {
 std::string http_session::add_http_header(const std::string& data, http_server::status_code s) const {
   std::stringstream ss;
   ss << http_server::status_to_string.at(s);
+  ss << "Access-Control-Allow-Origin: *\r\n";
   ss << "Content-Length: " << data.size() << "\r\n";
   ss << "Content-Type: text/plain\r\n";
   ss << "\r\n" << data;
