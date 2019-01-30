@@ -60,16 +60,19 @@ class rpc_server_handler: public automaton::core::network::http_server::server_h
     explicit rpc_server_handler(engine* en): script(en) {}
     std::string handle(std::string json_cmd) {
       // TODO(kari): parse json
-      std::cout << "Server received command: " << json_cmd << std::endl;
-      sol::protected_function_result pfr = script->safe_script(json_cmd);
-      if (!pfr.valid()) {
-        sol::error err = pfr;
-        std::cout << "ERROR in rpc server handler: " << err.what() << std::endl;
-        return "";
-      }
-      std::string result = pfr;
-      std::cout << "RESULT: " << result << std::endl;
-      return result;
+      // std::cout << "Server received command: " << json_cmd << std::endl;
+      // sol::protected_function_result pfr = script->safe_script(json_cmd);
+      // if (!pfr.valid()) {
+      //   sol::error err = pfr;
+      //   std::cout << "ERROR in rpc server handler: " << err.what() << std::endl;
+      //   return "";
+      // }
+      // std::string result = pfr;
+      // std::cout << "RESULT: " << result << std::endl;
+      // return result;
+
+      // Returning same data until sol::protected_function_result bug is fixed
+      return json_cmd;
     }
 };
 
@@ -203,6 +206,7 @@ int main(int argc, char* argv[]) {
   script.safe_script(get_file_contents("automaton/examples/smartproto/common/show_states.lua"));
 
   std::unordered_map<std::string, std::pair<std::string, std::string> > rpc_commands;
+  uint32_t rpc_port = 0;
 
   std::ifstream i("automaton/core/coreinit.json");
   if (!i.is_open()) {
@@ -237,6 +241,7 @@ int main(int argc, char* argv[]) {
       std::cout << "loaded rpc command: " << c["cmd"] << std::endl;
       rpc_commands[c["cmd"]] = std::make_pair(c["input"], c["output"]);
     }
+    rpc_port = j["rpc_config"]["default_port"];
   }
   i.close();
   // Start dump_logs thread.
@@ -269,7 +274,7 @@ int main(int argc, char* argv[]) {
   });
 
   std::shared_ptr<automaton::core::network::http_server::server_handler> s_handler(new rpc_server_handler(&script));
-  http_server rpc_server(55666, s_handler);
+  http_server rpc_server(rpc_port, s_handler);
   rpc_server.run();
 
   while (1) {
