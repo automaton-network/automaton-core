@@ -45,7 +45,7 @@ message SecondMessage{
 
   <script>
   parsed = false;
-  //test_web_client();
+  test_web_client();
 
   function reqListener() {
     console.log(this.responseText);
@@ -54,11 +54,11 @@ message SecondMessage{
   function test_web_client(body) {
       var req =  new XMLHttpRequest();
       req.addEventListener("load", reqListener);
-      req.open("GET", "http://127.0.0.1:5151");
+      req.open("POST", "http://127.0.0.1:33777");
       //req.open("GET", "http://httpbin.org/get");
       req.send(body);
   }
-
+  test_web_client("{json : hey}");
   function json_protobuf() {
     if(!parsed){
       read_and_parse();
