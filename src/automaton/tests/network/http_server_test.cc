@@ -12,8 +12,9 @@ std::shared_ptr<connection> connection_c;
 class test_server_handler: public http_server::server_handler {
  public:
   test_server_handler() {}
-  std::string handle(std::string s) {
-    return s + "response";
+  std::string handle(std::string request, http_server::status_code* s) {
+    *s = http_server::status_code::OK;
+    return request + "response";
   }
 };
 

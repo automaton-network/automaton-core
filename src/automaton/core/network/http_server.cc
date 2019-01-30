@@ -24,6 +24,72 @@ namespace automaton {
 namespace core {
 namespace network {
 
+// HTTP SERVER
+
+const char* http_server::ok = "HTTP/1.0 200 OK\r\n";
+const char* http_server::no_content = "HTTP/1.0 204 No Content\r\n";
+const char* http_server::bad_request = "HTTP/1.0 400 Bad Request\r\n";
+const char* http_server::unauthorized = "HTTP/1.0 401 Unauthorized\r\n";
+const char* http_server::forbidden = "HTTP/1.0 403 Forbidden\r\n";
+const char* http_server::internal_server_error = "HTTP/1.0 500 Internal Server Error\r\n";
+const char* http_server::not_implemented = "HTTP/1.0 501 Not Implemented\r\n";
+const char* http_server::service_unavailable = "HTTP/1.0 503 Service Unavailable\r\n";
+
+const std::map<uint32_t, const char*> http_server::status_to_string {
+  {OK, ok},
+  {NO_CONTENT, no_content},
+  {BAD_REQUEST, bad_request},
+  {UNAUTHORIZED, unauthorized},
+  {FORBIDDEN, forbidden},
+  {INTERNAL_SERVER_ERROR, internal_server_error},
+  {NOT_IMPLEMENTED, not_implemented},
+  {SERVICE_UNAVAILABLE, service_unavailable}
+};
+
+http_server::http_server(uint16_t port, std::shared_ptr<server_handler> sh) :
+    io_service(),
+    acceptor(io_service, tcp::endpoint(tcp::v4(), port)) {
+  LOG(INFO) << "Server constructor";
+  handler = sh;
+  http_session* new_session = new http_session(io_service, handler);
+  acceptor.async_accept(new_session->socket(),
+    boost::bind(&http_server::handle_accept, this, new_session,
+    boost::asio::placeholders::error));
+}
+
+void http_server::handle_accept(http_session* new_session, const boost::system::error_code& error) {
+  if (!error) {
+    new_session->start();
+    new_session = new http_session(io_service, handler);
+    acceptor.async_accept(new_session->socket(),
+      boost::bind(&http_server::handle_accept, this, new_session,
+        boost::asio::placeholders::error));
+  } else {
+    LOG(ERROR) << "Server error in handle_accept, deleting connection";
+    delete new_session;
+  }
+}
+
+void http_server::run() {
+  LOG(DEBUG) << "server starting.";
+  worker = new std::thread([this]() {
+    try {
+      io_service.run();
+    }
+    catch (std::exception& e) {
+      LOG(ERROR) << "Could not run io_service in server";
+    }
+    LOG(DEBUG) << "server stopped.";
+  });
+}
+
+void http_server::stop() {
+  io_service.stop();
+  worker->join();
+}
+
+// HTTP SESSION
+
 http_session::http_session(boost::asio::io_service& io_service, std::shared_ptr<http_server::server_handler> sh)
   : socket_(io_service),
     handler(sh)  {
@@ -99,9 +165,10 @@ void http_session::read_body(uint32_t body_size) {
     body.erase(body_size);
     read_body(body_size);
   } else {
-    std::string data = handler->handle(body);
+    http_server::status_code s;
+    std::string data = handler->handle(body, &s);
     body = "";
-    std::string response = add_http_header(data);
+    std::string response = add_http_header(data, s);
     boost::asio::async_write(socket_, boost::asio::buffer(response.c_str(), response.size()),
         [this](const boost::system::error_code& error, size_t bytes_transferred) {
           if (!error) {
@@ -116,57 +183,15 @@ void http_session::read_body(uint32_t body_size) {
   }
 }
 
-std::string http_session::add_http_header(const std::string& data) const {
+std::string http_session::add_http_header(const std::string& data, http_server::status_code s) const {
   std::stringstream ss;
-  ss << "HTTP/1.0 200 OK\r\n";
+  ss << http_server::status_to_string.at(s);
   ss << "Content-Length: " << data.size() << "\r\n";
   ss << "Content-Type: text/plain\r\n";
-  ss << "Connection: Closed\r\n";
   ss << "\r\n" << data;
   return ss.str();
 }
 
-http_server::http_server(uint16_t port, std::shared_ptr<server_handler> sh) :
-    io_service(),
-    acceptor(io_service, tcp::endpoint(tcp::v4(), port)) {
-  LOG(INFO) << "Server constructor";
-  handler = sh;
-  http_session* new_session = new http_session(io_service, handler);
-  acceptor.async_accept(new_session->socket(),
-    boost::bind(&http_server::handle_accept, this, new_session,
-    boost::asio::placeholders::error));
-}
-
-void http_server::handle_accept(http_session* new_session, const boost::system::error_code& error) {
-  if (!error) {
-    new_session->start();
-    new_session = new http_session(io_service, handler);
-    acceptor.async_accept(new_session->socket(),
-      boost::bind(&http_server::handle_accept, this, new_session,
-        boost::asio::placeholders::error));
-  } else {
-    LOG(ERROR) << "Server error in handle_accept, deleting connection";
-    delete new_session;
-  }
-}
-
-void http_server::run() {
-  LOG(DEBUG) << "server starting.";
-  worker = new std::thread([this]() {
-    try {
-      io_service.run();
-    }
-    catch (std::exception& e) {
-      LOG(ERROR) << "Could not run io_service in server";
-    }
-    LOG(DEBUG) << "server stopped.";
-  });
-}
-
-void http_server::stop() {
-  io_service.stop();
-  worker->join();
-}
 }  // namespace network
 }  // namespace core
 }  // namespace automaton
