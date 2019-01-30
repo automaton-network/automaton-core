@@ -3,6 +3,7 @@
 
 #include <easylogging++.h>
 
+#include <chrono>
 #include <string>
 
 namespace automaton {
@@ -32,6 +33,14 @@ std::string bin2hex(const std::string& input);
   Creates a binary byte buffer from hex string representation.
 */
 std::string hex2bin(const std::string& input);
+
+
+/**
+  Returns string representation of a date.
+*/
+std::string get_date_string(std::chrono::system_clock::time_point t);
+
+std::string zero_padded(int num, int width);
 
 /// Ensures initialization of the logger prior to calling main(...)
 extern bool _init_logger;

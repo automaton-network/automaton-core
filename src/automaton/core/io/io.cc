@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cerrno>
 #include <fstream>
+#include <iomanip>
 #include <string>
 
 INITIALIZE_EASYLOGGINGPP
@@ -78,6 +79,24 @@ std::string hex2bin(const std::string& input) {
   }
 
   return output;
+}
+
+std::string get_date_string(std::chrono::system_clock::time_point t) {
+  auto as_time_t = std::chrono::system_clock::to_time_t(t);
+  struct tm* tm;
+  if ((tm = ::gmtime(&as_time_t))) {
+    char some_buffer[64];
+    if (std::strftime(some_buffer, sizeof(some_buffer), "%F %T", tm)) {
+      return std::string{some_buffer};
+    }
+  }
+  throw std::runtime_error("Failed to get current date as string");
+}
+
+std::string zero_padded(int num, int width) {
+  std::ostringstream ss;
+  ss << std::setw(width) << std::setfill('0') << num;
+  return ss.str();
 }
 
 // *** LOGGING ***

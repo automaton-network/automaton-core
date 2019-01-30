@@ -1,7 +1,6 @@
-#include "automaton/core/network/rpc_server.h"
+#include "automaton/core/network/http_server.h"
 #include <memory>
 #include <string>
-#include "gtest/gtest.h"
 #include "automaton/core/network/tcp_implementation.h"
 
 static const uint32_t PORT = 33445;
@@ -10,11 +9,12 @@ using namespace automaton::core::network;  // NOLINT
 
 std::shared_ptr<connection> connection_c;
 
-class test_server_handler: public server::server_handler {
+class test_server_handler: public http_server::server_handler {
  public:
   test_server_handler() {}
-  std::string handle(std::string s) {
-    return s + "response";
+  std::string handle(std::string request, http_server::status_code* s) {
+    *s = http_server::status_code::OK;
+    return request + "response";
   }
 };
 
@@ -23,7 +23,6 @@ class client_handler:public connection::connection_handler {
   void on_message_received(connection_id c, char* buffer, uint32_t bytes_read, uint32_t mid) {
     std::string message = std::string(buffer, bytes_read);
     LOG(INFO) << "Message \"" << message << "\" received from server";
-    EXPECT_EQ(message, "requestresponse");
     // connection_c->async_read(buffer, 256, 0, 0);
   }
   void on_message_sent(connection_id c, uint32_t mid, const automaton::core::common::status& s) {
@@ -59,7 +58,18 @@ void client() {
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
     connection_c -> async_read(buffer_c, 256, 0, 0);
     std::this_thread::sleep_for(std::chrono::milliseconds(150));
-    connection_c -> async_send("request", 0);
+
+    std::stringstream ss;
+    ss << "GET /hello.htm HTTP/1.1\r\n";
+    ss << "User-Agent: Mozilla/4.0 (compatible; MSIE5.01; Windows NT)\r\n";
+    ss << "Host: localhost\r\n";
+    ss << "Accept-Language: en-us\r\n";
+    ss << "Accept-Encoding: gzip, deflate\r\n";
+    ss << "Content-Length: 7\r\n";
+    ss << "Connection: Keep-Alive\r\n";
+    ss << "\r\n" << "request";
+
+    connection_c -> async_send(ss.str(), 0);
     std::this_thread::sleep_for(std::chrono::milliseconds(2000));
     connection_c -> disconnect();
   } else {
@@ -67,13 +77,14 @@ void client() {
   }
 }
 
-TEST(rpc_echo, basic_test) {
+int main() {
   automaton::core::network::tcp_init();
-  std::shared_ptr<server::server_handler> handler(new test_server_handler());
-  automaton::core::network::server rpc(PORT, handler);
+  std::shared_ptr<http_server::server_handler> handler(new test_server_handler());
+  automaton::core::network::http_server rpc(PORT, handler);
   rpc.run();
   client();
   rpc.stop();
   automaton::core::network::tcp_release();
   delete [] buffer_c;
+  return 0;
 }
