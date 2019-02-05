@@ -56,6 +56,7 @@ static const char* automaton_ascii_logo_cstr =
 
 class rpc_server_handler: public automaton::core::network::http_server::server_handler {
   engine* script;
+
  public:
     explicit rpc_server_handler(engine* en): script(en) {}
     std::string handle(std::string json_cmd, http_server::status_code* s) {
@@ -72,7 +73,11 @@ class rpc_server_handler: public automaton::core::network::http_server::server_h
       // return result;
 
       // Returning same data until sol::protected_function_result bug is fixed
-      *s = http_server::status_code::OK;
+      if (s != nullptr) {
+        *s = http_server::status_code::OK;
+      } else {
+        LOG(ERROR) << "Status code variable is missing";
+      }
       return json_cmd;
     }
 };
