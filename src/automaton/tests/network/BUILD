@@ -31,3 +31,15 @@ cc_test(
     "@gtest//:gtest_main",
   ],
 )
+
+cc_binary(
+  name = "http_server_test",
+  srcs = [
+    "http_server_test.cc",
+  ],
+  deps = [
+    "//automaton/core/io",
+    "//automaton/core/network:http_server",
+    "//automaton/core/network:network_tcp",
+  ],
+)

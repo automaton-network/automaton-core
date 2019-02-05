@@ -12,6 +12,7 @@
 #include "automaton/core/data/protobuf/protobuf_schema.h"
 #include "automaton/core/io/io.h"
 #include "automaton/core/network/simulated_connection.h"
+#include "automaton/core/network/http_server.h"
 #include "automaton/core/script/engine.h"
 #include "automaton/core/node/node.h"
 #include "automaton/core/smartproto/smart_protocol.h"
@@ -21,6 +22,7 @@ using automaton::core::data::protobuf::protobuf_factory;
 using automaton::core::data::protobuf::protobuf_schema;
 using automaton::core::data::schema;
 using automaton::core::io::get_file_contents;
+using automaton::core::network::http_server;
 using automaton::core::script::engine;
 using automaton::core::smartproto::node;
 using automaton::core::smartproto::smart_protocol;
@@ -52,19 +54,42 @@ static const char* automaton_ascii_logo_cstr =
   "                                                                     " "\x1b[0m\n@0m"
   "▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀" "\x1b[0m\n";
 
+class rpc_server_handler: public automaton::core::network::http_server::server_handler {
+  engine* script;
+
+ public:
+    explicit rpc_server_handler(engine* en): script(en) {}
+    std::string handle(std::string json_cmd, http_server::status_code* s) {
+      // TODO(kari): parse json
+      // std::cout << "Server received command: " << json_cmd << std::endl;
+      // sol::protected_function_result pfr = script->safe_script(json_cmd);
+      // if (!pfr.valid()) {
+      //   sol::error err = pfr;
+      //   std::cout << "ERROR in rpc server handler: " << err.what() << std::endl;
+      //   return "";
+      // }
+      // std::string result = pfr;
+      // std::cout << "RESULT: " << result << std::endl;
+      // return result;
+
+      // Returning same data until sol::protected_function_result bug is fixed
+      if (s != nullptr) {
+        *s = http_server::status_code::OK;
+      } else {
+        LOG(ERROR) << "Status code variable is missing";
+      }
+      return json_cmd;
+    }
+};
+
 int main(int argc, char* argv[]) {
   string automaton_ascii_logo(automaton_ascii_logo_cstr);
   string_replace(&automaton_ascii_logo, "@", "\x1b[38;5;");
-
-  // vector<std::shared_ptr<factory>> factories;
   auto core_factory = std::make_shared<protobuf_factory>();
 
 {
   automaton::core::cli::cli cli;
-
-  // auto core_factory = std::make_shared<protobuf_factory>();
   engine script(core_factory);
-  // factories.push_back(core_factory);
   script.bind_core();
 
   // Bind smartproto::node class
@@ -187,6 +212,7 @@ int main(int argc, char* argv[]) {
   script.safe_script(get_file_contents("automaton/examples/smartproto/common/show_states.lua"));
 
   std::unordered_map<std::string, std::pair<std::string, std::string> > rpc_commands;
+  uint32_t rpc_port = 0;
 
   std::ifstream i("automaton/core/coreinit.json");
   if (!i.is_open()) {
@@ -221,6 +247,7 @@ int main(int argc, char* argv[]) {
       std::cout << "loaded rpc command: " << c["cmd"] << std::endl;
       rpc_commands[c["cmd"]] = std::make_pair(c["input"], c["output"]);
     }
+    rpc_port = j["rpc_config"]["default_port"];
   }
   i.close();
   // Start dump_logs thread.
@@ -252,6 +279,10 @@ int main(int argc, char* argv[]) {
     }
   });
 
+  std::shared_ptr<automaton::core::network::http_server::server_handler> s_handler(new rpc_server_handler(&script));
+  http_server rpc_server(rpc_port, s_handler);
+  rpc_server.run();
+
   while (1) {
     auto input = cli.input("\x1b[38;5;15m\x1b[1m|A|\x1b[0m ");
     if (input == nullptr) {
@@ -263,14 +294,19 @@ int main(int argc, char* argv[]) {
     cli.history_add(cmd.c_str());
 
     logger_mutex.lock();
-    sol::protected_function_result pfr = script.safe_script(cmd);
+    sol::protected_function_result pfr = script.safe_script(cmd, &sol::script_pass_on_error);
     logger_mutex.unlock();
 
     if (!pfr.valid()) {
       sol::error err = pfr;
-      std::cout << "\n" << err.what() << "\n";
+      LOG(ERROR) << "Error while executing command: " << err.what();
+    } else {
+      std::string res = pfr;
+      std::cout << res << std::endl;
     }
   }
+
+  rpc_server.stop();
 
   stop_logger = true;
   logger.join();

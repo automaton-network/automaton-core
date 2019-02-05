@@ -31,7 +31,7 @@ class schema {
   **/
   enum field_type {
     unknown = 0,
-    message_type =  1,
+    message_type = 1,
     enum_type = 2,
     blob = 4,
     int32 = 5,
