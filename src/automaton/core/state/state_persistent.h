@@ -1,13 +1,14 @@
 #ifndef AUTOMATON_CORE_STATE_STATE_PERSISTENT_H__
 #define AUTOMATON_CORE_STATE_STATE_PERSISTENT_H__
 
-#include <stdint.h>
-#include <string>
+#include <cstdint>
 #include <map>
-#include <vector>
 #include <set>
-#include "automaton/core/state/state.h"
+#include <string>
+#include <vector>
+
 #include "automaton/core/crypto/hash_transformation.h"
+#include "automaton/core/state/state.h"
 #include "automaton/core/storage/persistent_blobstore.h"
 #include "automaton/core/storage/persistent_vector.h"
 

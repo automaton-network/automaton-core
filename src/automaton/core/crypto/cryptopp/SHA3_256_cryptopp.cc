@@ -1,7 +1,9 @@
 #include "automaton/core/crypto/cryptopp/SHA3_256_cryptopp.h"
-#include "automaton/core/crypto/hash_transformation.h"
+
 #include "cryptlib.h"  // NOLINT
 #include "sha3.h"  // NOLINT
+
+#include "automaton/core/crypto/hash_transformation.h"
 
 namespace automaton {
 namespace core {

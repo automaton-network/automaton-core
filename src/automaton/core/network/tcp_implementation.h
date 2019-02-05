@@ -2,21 +2,21 @@
 #define AUTOMATON_CORE_NETWORK_TCP_IMPLEMENTATION_H_
 
 #include <iostream>
-#include <string>
-#include <vector>
-#include <utility>
 #include <memory>
 #include <mutex>
+#include <string>
+#include <utility>
+#include <vector>
 
-#include <boost/asio/io_service.hpp>
 #include <boost/asio/basic_stream_socket.hpp>
-#include <boost/asio/write.hpp>
-#include <boost/asio/error.hpp>
 #include <boost/asio/buffer.hpp>
+#include <boost/asio/error.hpp>
+#include <boost/asio/io_service.hpp>
 #include <boost/asio/ip/tcp.hpp>
+#include <boost/asio/write.hpp>
 
-#include "automaton/core/network/connection.h"
 #include "automaton/core/network/acceptor.h"
+#include "automaton/core/network/connection.h"
 
 namespace automaton {
 namespace core {

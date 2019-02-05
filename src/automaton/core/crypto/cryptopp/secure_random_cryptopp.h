@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <osrng.h>
+
 #include "automaton/core/crypto/secure_random.h"
 
 namespace automaton {

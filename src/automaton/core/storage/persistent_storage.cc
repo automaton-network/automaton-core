@@ -1,7 +1,9 @@
 #include "automaton/core/storage/persistent_storage.h"
+
 #include <string>
-#include <boost/iostreams/device/mapped_file.hpp>
+
 #include <boost/filesystem.hpp>
+#include <boost/iostreams/device/mapped_file.hpp>
 
 
 namespace automaton {

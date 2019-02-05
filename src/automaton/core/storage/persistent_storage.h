@@ -2,6 +2,7 @@
 #define AUTOMATON_CORE_STORAGE_PERSISTENT_STORAGE_H__
 
 #include <string>
+
 #include <boost/iostreams/device/mapped_file.hpp>
 
 namespace automaton {

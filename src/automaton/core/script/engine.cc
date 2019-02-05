@@ -2,11 +2,11 @@
 
 #include <iomanip>
 
-#include "automaton/core/io/io.h"
 #include "automaton/core/data/factory.h"
 #include "automaton/core/data/msg.h"
-#include "automaton/core/data/schema.h"
 #include "automaton/core/data/protobuf/protobuf_factory.h"
+#include "automaton/core/data/schema.h"
+#include "automaton/core/io/io.h"
 
 using automaton::core::data::factory;
 using automaton::core::data::msg;

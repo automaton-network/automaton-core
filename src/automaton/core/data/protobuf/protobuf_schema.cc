@@ -1,8 +1,9 @@
+#include "automaton/core/data/protobuf/protobuf_schema.h"
+
 #include <google/protobuf/compiler/parser.h>
 #include <google/protobuf/util/json_util.h>
 
 #include "automaton/core/data/protobuf/protobuf_factory.h"
-#include "automaton/core/data/protobuf/protobuf_schema.h"
 #include "automaton/core/io/io.h"
 
 using google::protobuf::Descriptor;

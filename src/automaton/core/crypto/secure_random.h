@@ -1,7 +1,7 @@
 #ifndef AUTOMATON_CORE_CRYPTO_SECURE_RANDOM_H__
 #define AUTOMATON_CORE_CRYPTO_SECURE_RANDOM_H__
 
-#include <stdint.h>
+#include <cstdint>
 #include <map>
 #include <string>
 

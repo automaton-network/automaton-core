@@ -1,7 +1,9 @@
 #include "automaton/core/crypto/cryptopp/Keccak_256_cryptopp.h"
-#include "automaton/core/crypto/hash_transformation.h"
+
 #include "cryptlib.h"  // NOLINT
 #include "keccak.h"  // NOLINT
+
+#include "automaton/core/crypto/hash_transformation.h"
 
 namespace automaton {
 namespace core {

@@ -1,14 +1,14 @@
 #ifndef AUTOMATON_CORE_DATA_PROTOBUF_PROTOBUF_MSG_H_
 #define AUTOMATON_CORE_DATA_PROTOBUF_PROTOBUF_MSG_H_
 
+#include <google/protobuf/compiler/parser.h>
 #include <google/protobuf/descriptor.h>
 #include <google/protobuf/descriptor.pb.h>
-#include <google/protobuf/message.h>
-#include <google/protobuf/map.h>
-#include <google/protobuf/compiler/parser.h>
 #include <google/protobuf/dynamic_message.h>
 #include <google/protobuf/io/tokenizer.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
+#include <google/protobuf/map.h>
+#include <google/protobuf/message.h>
 
 #include <memory>
 #include <string>
