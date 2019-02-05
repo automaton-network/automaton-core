@@ -121,9 +121,9 @@ git_repo "https://github.com/orlp/ed25519.git" "ed25519" "7fa6712ef5d581a6981ec2
 [ -d cryptopp-CRYPTOPP_7_0_0 ] && mv cryptopp-CRYPTOPP_7_0_0 cryptopp
 
 [ ! -d protobuf ] && \
-  get_archive "https://github.com/protocolbuffers/protobuf/archive/v3.6.1.tar.gz" \
-  "v3.6.1.tar.gz" "3d4e589d81b2006ca603c1ab712c9715a76227293032d05b26fca603f90b3f5b"
-[ -d protobuf-3.6.1 ] && mv protobuf-3.6.1 protobuf
+  get_archive "https://github.com/protocolbuffers/protobuf/archive/v3.6.1.2.tar.gz" \
+  "v3.6.1.2.tar.gz" "2244b0308846bb22b4ff0bcc675e99290ff9f1115553ae9671eba1030af31bc0"
+[ -d protobuf-3.6.1.2 ] && mv protobuf-3.6.1.2 protobuf
 
 [ ! -d json-3.1.2 ] && \
   mkdir json-3.1.2 && \
