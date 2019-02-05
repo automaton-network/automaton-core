@@ -45,7 +45,6 @@ class protobuf_schema: public schema {
 
   /**
     Returns the id of the created message_schema.
-    TODO(kari): Check for name collisions.
     Only creates empty message schema and name it. Fields and/or nested
     enums/messages should be added to the message (using add_* and
     add_*_field) and then add_message() so the created message schema is added
@@ -55,7 +54,6 @@ class protobuf_schema: public schema {
 
   /**
     Returns the id of the created enum_schema.
-    TODO(kari): Check for name collisions.
     Only creates empty enum schema and name it. Values should be added to the
     enum (using add_enum_value) and then add_enum() so the created enum schema
     is added to the schema.
@@ -75,7 +73,6 @@ class protobuf_schema: public schema {
     sub_message_id will be added as a nested message to the other.
     *** Nested message is different from message field. It is like an inner
     class, NOT like a reference to an object ***
-    TODO(kari): Check for name collisions
     TODO(kari): Decide if duplicate values are allowed.
   **/
   void add_nested_message(int32_t message_id, uint32_t sub_message_id);
