@@ -65,11 +65,11 @@ class rpc_server_handler: public automaton::core::network::http_server::server_h
       sol::protected_function_result pfr = (*script)[json_cmd]();
       if (!pfr.valid()) {
         sol::error err = pfr;
-        LOG(ERROR) << "ERROR in rpc server handler: " << err.what() << std::endl;
+        LOG(ERROR) << "ERROR in rpc server handler: " << err.what();
+        *s = http_server::status_code::INTERNAL_SERVER_ERROR;
         return "";
       }
       std::string result = pfr;
-      // Returning same data until sol::protected_function_result bug is fixed
       if (s != nullptr) {
         *s = http_server::status_code::OK;
       } else {
