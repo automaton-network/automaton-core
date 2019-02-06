@@ -61,24 +61,21 @@ class rpc_server_handler: public automaton::core::network::http_server::server_h
     explicit rpc_server_handler(engine* en): script(en) {}
     std::string handle(std::string json_cmd, http_server::status_code* s) {
       // TODO(Samir): parse json
-      // std::cout << "Server received command: " << json_cmd << std::endl;
-      // sol::protected_function_result pfr = script->safe_script(json_cmd);
-      // if (!pfr.valid()) {
-      //   sol::error err = pfr;
-      //   std::cout << "ERROR in rpc server handler: " << err.what() << std::endl;
-      //   return "";
-      // }
-      // std::string result = pfr;
-      // std::cout << "RESULT: " << result << std::endl;
-      // return result;
-
+      std::cout << "Server received command: " << json_cmd << std::endl;
+      sol::protected_function_result pfr = (*script)[json_cmd]();
+      if (!pfr.valid()) {
+        sol::error err = pfr;
+        LOG(ERROR) << "ERROR in rpc server handler: " << err.what() << std::endl;
+        return "";
+      }
+      std::string result = pfr;
       // Returning same data until sol::protected_function_result bug is fixed
       if (s != nullptr) {
         *s = http_server::status_code::OK;
       } else {
         LOG(ERROR) << "Status code variable is missing";
       }
-      return json_cmd;
+      return result;
     }
 };
 
@@ -300,9 +297,6 @@ int main(int argc, char* argv[]) {
     if (!pfr.valid()) {
       sol::error err = pfr;
       LOG(ERROR) << "Error while executing command: " << err.what();
-    } else {
-      std::string res = pfr;
-      std::cout << res << std::endl;
     }
   }
 
