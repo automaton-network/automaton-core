@@ -1,12 +1,14 @@
 #include "automaton/core/crypto/cryptopp/secp256k1_cryptopp.h"
+
 #include <cryptlib.h>
 #include <eccrypto.h>
 #include <integer.h>
 #include <oids.h>
-#include <randpool.h>
 #include <osrng.h>
-#include <string>
+#include <randpool.h>
 #include <iostream>
+#include <string>
+
 #include "automaton/core/crypto/digital_signature.h"
 
 namespace automaton {

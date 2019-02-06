@@ -2,8 +2,9 @@
 #define AUTOMATON_CORE_STORAGE_PERSISTENT_BLOBSTORE_H__
 
 #include <string>
-#include "automaton/core/storage/blobstore.h"
+
 #include <boost/iostreams/device/mapped_file.hpp>
+#include "automaton/core/storage/blobstore.h"
 
 namespace automaton {
 namespace core {

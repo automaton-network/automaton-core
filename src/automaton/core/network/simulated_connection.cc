@@ -1,7 +1,7 @@
 #include "automaton/core/network/simulated_connection.h"
 
-#include <cstring>
 #include <cstdlib>
+#include <cstring>
 #include <iostream>
 #include <map>
 #include <memory>

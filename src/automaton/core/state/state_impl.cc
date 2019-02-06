@@ -1,12 +1,14 @@
 #include "automaton/core/state/state_impl.h"
-#include <map>
+
 #include <algorithm>
 #include <iomanip>
-#include <string>
-#include <sstream>
-#include <vector>
+#include <map>
 #include <set>
+#include <sstream>
+#include <string>
 #include <utility>
+#include <vector>
+
 #include "automaton/core/crypto/hash_transformation.h"
 #include "automaton/core/io/io.h"
 

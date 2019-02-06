@@ -2,6 +2,7 @@
 #define AUTOMATON_CORE_CRYPTO_CRYPTOPP_SHA256_CRYPTOPP_H_
 
 #include "automaton/core/crypto/hash_transformation.h"
+
 #include "cryptlib.h"  // NOLINT
 #include "sha.h"  // NOLINT
 

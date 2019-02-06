@@ -2,6 +2,7 @@
 #define AUTOMATON_CORE_CRYPTO_CRYPTOPP_SHA3_256_CRYPTOPP_H_
 
 #include "automaton/core/crypto/hash_transformation.h"
+
 #include "sha3.h"  // NOLINT
 
 namespace automaton {

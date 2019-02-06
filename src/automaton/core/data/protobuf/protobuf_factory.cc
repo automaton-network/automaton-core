@@ -2,8 +2,8 @@
 
 #include <sstream>
 
-#include "automaton/core/data/protobuf/protobuf_schema.h"
 #include "automaton/core/data/protobuf/protobuf_msg.h"
+#include "automaton/core/data/protobuf/protobuf_schema.h"
 #include "automaton/core/io/io.h"
 
 using std::string;
@@ -35,28 +35,36 @@ class proto_error_collector : public
   proto_error_collector();
 
   /**
-    TODO(kari): document here
+    This function is used by protobuf.
+
+      @param filename File name in which the error occurred.
+      @param element_name Full name of the erroneous element.
+      @param descriptor Descriptor of the erroneous element.
+      @param location One of the location constants, above.
+      @param message Human-readable error message.
   */
   void AddError(
-      const std::string& filename,  // File name in which the error occurred.
-      const std::string& element_name,  // Full name of the erroneous element.
-      const google::protobuf::Message* descriptor,  // Descriptor of the
-          // erroneous element.
+      const std::string& filename,
+      const std::string& element_name,
+      const google::protobuf::Message* descriptor,
       google::protobuf::DescriptorPool::ErrorCollector::ErrorLocation location,
-            // One of the location constants, above.
-      const std::string& message);  // Human-readable error message.
+      const std::string& message);
 
   /**
-    TODO(kari): document here
+  This function is used by protobuf.
+
+    @param filename File name in which the error occurred.
+    @param element_name Full name of the erroneous element.
+    @param descriptor Descriptor of the erroneous element.
+    @param location One of the location constants, above.
+    @param message Human-readable error message.
   */
   void AddWarning(
-      const std::string& filename,  // File name in which the error occurred.
-      const std::string& element_name,  // Full name of the erroneous element.
-      const google::protobuf::Message* descriptor,  // Descriptor of the
-          // erroneous element.
+      const std::string& filename,
+      const std::string& element_name,
+      const google::protobuf::Message* descriptor,
       google::protobuf::DescriptorPool::ErrorCollector::ErrorLocation location,
-      // One of the location constants, above.
-      const std::string& message);  // Human-readable error message.
+      const std::string& message);
 
   void clear_errors();
 

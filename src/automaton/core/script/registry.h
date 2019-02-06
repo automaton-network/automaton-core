@@ -7,6 +7,7 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+
 #include <boost/regex.hpp>
 
 #include "automaton/core/data/factory.h"

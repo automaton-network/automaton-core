@@ -1,5 +1,7 @@
 #include "automaton/core/state/dummy_state.h"
+
 #include <glog/logging.h>
+
 #include <string>
 #include <vector>
 #include <utility>

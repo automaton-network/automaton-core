@@ -4,6 +4,7 @@
 #include <map>
 #include <string>
 #include <vector>
+
 #include "automaton/core/crypto/hash_transformation.h"
 #include "automaton/core/state/state.h"
 

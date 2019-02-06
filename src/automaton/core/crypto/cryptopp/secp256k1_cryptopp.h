@@ -2,6 +2,7 @@
 #define AUTOMATON_CORE_CRYPTO_CRYPTOPP_SECP256K1_CRYPTOPP_H_
 
 #include "automaton/core/crypto/digital_signature.h"
+
 #include "eccrypto.h"  // NOLINT
 
 namespace automaton {

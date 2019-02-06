@@ -1,13 +1,14 @@
 #ifndef AUTOMATON_CORE_STATE_STATE_IMPL_H_
 #define AUTOMATON_CORE_STATE_STATE_IMPL_H_
 
-#include <stdint.h>
-#include <string>
+#include <cstdint>
 #include <map>
-#include <vector>
 #include <set>
-#include "automaton/core/state/state.h"
+#include <string>
+#include <vector>
+
 #include "automaton/core/crypto/hash_transformation.h"
+#include "automaton/core/state/state.h"
 
 namespace automaton {
 namespace core {

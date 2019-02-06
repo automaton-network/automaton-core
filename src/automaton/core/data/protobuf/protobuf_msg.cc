@@ -65,12 +65,12 @@ uint32_t protobuf_msg::get_repeated_field_size(uint32_t field_tag) const {
 bool protobuf_msg::serialize_message(string* output) const {
   CHECK_NOTNULL(output);
   CHECK_NOTNULL(m);
-  return m->SerializeToString(output);  // TODO(kari): Handle errors.
+  return m->SerializeToString(output);
 }
 
 bool protobuf_msg::deserialize_message(const string& input) {
   CHECK_NOTNULL(m);
-  return m->ParseFromString(input);  // TODO(kari): Handle errors.
+  return m->ParseFromString(input);
 }
 
 bool protobuf_msg::to_json(string* output) const {
@@ -79,9 +79,10 @@ bool protobuf_msg::to_json(string* output) const {
   auto status = MessageToJsonString(*m, output);
   if (!status.ok()) {
     // TODO(asen): Needs better error handling
-    std::cout << status.error_message() << std::endl;
+    LOG(ERROR) << status.error_message();
+    return false;
   }
-  return status.ok();
+  return true;
 }
 
 bool protobuf_msg::from_json(const string& input) {
@@ -89,9 +90,10 @@ bool protobuf_msg::from_json(const string& input) {
   auto status = JsonStringToMessage(input, m.get());
   if (!status.ok()) {
     // TODO(asen): Needs better error handling
-    std::cout << status.error_message() << std::endl;
+    LOG(ERROR) << status.error_message();
+    return false;
   }
-  return status.ok();
+  return true;
 }
 
 string protobuf_msg::to_string() const {
