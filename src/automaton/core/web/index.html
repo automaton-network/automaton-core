@@ -121,7 +121,7 @@ message Peer {
   }
 
   function send_request(body) {
-      var req =  new XMLHttpRequest();
+      var req = new XMLHttpRequest();
       req.addEventListener("load", reqListener);
       req.open("POST", "http://127.0.0.1:33777");
       req.send(body);
@@ -137,7 +137,7 @@ message Peer {
       }
       return window.btoa( binary );
   }
-  create_and_send_command()
+
   function create_and_send_command() {
     if(!parsed){
       read_and_parse();
@@ -149,9 +149,13 @@ message Peer {
       if(k == "method") {
         body += '"method": "' + input_json[k] + '", ';
       } else if (k == "Msg") {
-        var proto_msg =  new_proto_msg(input_json[k]);
-        console.log(proto_msg);
-        body +=  '"msg": "' + _arrayBufferToBase64(proto_msg) + '"';
+        if (input_json[k] == "") {
+          body +=  '"msg": ""';
+        } else {
+          var proto_msg =  new_proto_msg(input_json[k]);
+          console.log(proto_msg);
+          body +=  '"msg": "' + _arrayBufferToBase64(proto_msg) + '"';
+        }
       }
       // console.log(body);
       // console.log(k);

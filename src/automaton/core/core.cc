@@ -3,6 +3,8 @@
 #include <regex>
 #include <string>
 
+#include "base64.h"  // NOLINT
+#include "filters.h"  // NOLINT
 #include <json.hpp>
 
 #include "automaton/core/cli/cli.h"
@@ -60,9 +62,30 @@ class rpc_server_handler: public automaton::core::network::http_server::server_h
  public:
     explicit rpc_server_handler(engine* en): script(en) {}
     std::string handle(std::string json_cmd, http_server::status_code* s) {
-      // TODO(Samir): parse json
-      std::cout << "Server received command: " << json_cmd << std::endl;
-      sol::protected_function_result pfr = (*script)[json_cmd]();
+      std::stringstream sstr(json_cmd);
+      nlohmann::json j;
+      sstr >> j;
+      std::string cmd = "";
+      std::string msg = "";
+      if (j.find("method") != j.end() && j.find("msg") != j.end()) {
+        cmd = j["method"];
+        msg = j["msg"];
+      } else {
+        LOG(ERROR) << "ERROR in rpc server handler: Invalid request";
+        *s = http_server::status_code::BAD_REQUEST;
+        return "";
+      }
+      std::string params = "";
+      LOG(INFO) << "Server received command: " << cmd << " -> " << automaton::core::io::bin2hex(msg);
+      if (msg.size() > 0) {
+        CryptoPP::StringSource ss(msg, true, new CryptoPP::Base64Decoder(new CryptoPP::StringSink(params)));
+      }
+      if ((*script)[cmd] == nullptr) {
+        LOG(ERROR) << "ERROR in rpc server handler: Invalid request";
+        *s = http_server::status_code::BAD_REQUEST;
+        return "";
+      }
+      sol::protected_function_result pfr = (*script)[cmd](params);
       if (!pfr.valid()) {
         sol::error err = pfr;
         LOG(ERROR) << "ERROR in rpc server handler: " << err.what();
