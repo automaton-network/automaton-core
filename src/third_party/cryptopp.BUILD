@@ -17,7 +17,7 @@ cc_library(
     "asn.cpp",
     "authenc.cpp",
     # "base32.cpp",
-    # "base64.cpp",
+    "base64.cpp",
     "basecode.cpp",
     "bfinit.cpp",
     # "blake2-simd.cpp",
