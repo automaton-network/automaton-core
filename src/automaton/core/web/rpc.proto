@@ -1,0 +1,129 @@
+syntax = "proto3";
+
+// --- protocol messages ---
+
+message Protocol {
+  bytes protocol_id = 1;
+  repeated bytes file_names = 2;
+  repeated bytes files = 3;
+}
+
+message ProtocolIDsList {
+  repeated bytes protocol_ids = 1;
+}
+
+message ProtocolsList {
+  repeated Protocol protocols = 1;
+}
+
+// -- node messages --
+
+message Node {
+  bytes id = 1;
+  bytes protocol_id = 2;
+  bytes address = 3;
+}
+
+message NodeID {
+  bytes node_id = 1;
+}
+
+message NodeIdsList {
+  repeated bytes node_ids = 1;
+}
+
+message NodesList {
+  repeated Node nodes = 1;
+}
+
+message NodeCmdRequest {
+  bytes node_id = 1;
+  bytes cmd = 2;
+  bytes params = 3;
+}
+
+message NodeCmdResponse {
+  bytes response = 1;
+}
+
+message PeerIdsList {
+  bytes node_id = 1;
+  repeated uint32 peer_ids = 2;
+}
+
+message PeerAddressesList {
+  bytes node_id = 1;
+  repeated bytes peer_addresses = 2;
+}
+
+message PeersList {
+  bytes node_id = 1;
+  repeated Peer peers = 2;
+}
+
+message Peer {
+  uint32 id = 1;
+  bytes address = 2;
+}
+
+//  -- test net messages --
+
+
+
+
+
+
+
+
+
+
+
+
+// message Node {
+//   bytes node_id = 1;
+//   bytes protocol_id = 2;
+// }
+//
+// message TestNetwork {
+//   bytes network_id = 1;
+//   bytes protocol_id = 2;
+//   repeated bytes node_ids = 3;
+// }
+//
+// message GetTestnets {
+//  repeated bytes network_ids = 1;
+// }
+//
+// message GetAllRunningProtocols {
+//   repeated bytes protocol_ids = 1;
+// }
+//
+// message GetNodes {
+//   repeated Node nodes;
+// }
+//
+// message StartNode {
+//   bytes protocol_id = 1;
+//   bytes params = 2; // ????????
+// }
+//
+// message TestNetworkParams {
+//   protocol
+//   #nodes
+//   #peers
+//   addresses with params
+//   discovery
+// }
+//
+// message StartNetwork {
+//   TestNetworkParams params = 1;
+// }
+//
+// message NodeCMD {
+//   bytes node = 1;
+//   bytes command = 2;
+//   bytes params = 3;
+// }
+//
+// message
+//
