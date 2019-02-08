@@ -2,6 +2,7 @@
 #define AUTOMATON_CORE_STORAGE_PERSISTENT_VECTOR_H__
 
 #include <string>
+
 #include "automaton/core/storage/persistent_storage.h"
 
 namespace automaton {
@@ -45,9 +46,10 @@ void persistent_vector<T>::push_back(const T & val) {
 template<typename T>
 inline bool persistent_vector<T>::map_file(std::string path) {
   if (!persistent_storage::map_file(path, sizeof(T))) {
-    throw "could not map file";
+    return false;
   }
   next_free = header[8];
+  return true;
 }
 
 template<typename T>

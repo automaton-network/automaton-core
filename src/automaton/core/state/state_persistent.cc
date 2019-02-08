@@ -1,4 +1,5 @@
 #include "automaton/core/state/state_persistent.h"
+
 #include <algorithm>
 #include <iomanip>
 #include <map>
@@ -7,6 +8,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+
 #include "automaton/core/crypto/hash_transformation.h"
 #include "automaton/core/io/io.h"
 

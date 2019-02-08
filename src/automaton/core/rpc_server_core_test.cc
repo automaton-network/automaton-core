@@ -3,7 +3,7 @@
 
 #include "automaton/core/network/tcp_implementation.h"
 
-static const char* SERVER_ADDRESS = "127.0.0.1:55666";
+static const char* SERVER_ADDRESS = "127.0.0.1:33777";
 using namespace automaton::core::network;  //  NOLINT
 
 std::shared_ptr<connection> connection_c;

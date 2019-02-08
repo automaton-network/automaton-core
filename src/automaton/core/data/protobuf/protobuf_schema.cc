@@ -1,8 +1,9 @@
+#include "automaton/core/data/protobuf/protobuf_schema.h"
+
 #include <google/protobuf/compiler/parser.h>
 #include <google/protobuf/util/json_util.h>
 
 #include "automaton/core/data/protobuf/protobuf_factory.h"
-#include "automaton/core/data/protobuf/protobuf_schema.h"
 #include "automaton/core/io/io.h"
 
 using google::protobuf::Descriptor;
@@ -100,14 +101,8 @@ protobuf_schema::protobuf_schema(const std::string& proto_def) {
   }
   Parser parser;
   parser.RecordErrorsTo(&io_error_collector_);
-  if (io_error_collector_.get_number_errors() > 0) {
-    std::stringstream msg;
-    msg << io_error_collector_.get_all_errors();
-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
-    throw std::runtime_error(msg.str());
-  }
   VLOG(9) << "Parsing tokenized proto";
-  parser.Parse(&tok, file_descriptor_proto.get());  // TODO(kari): Handle errors.
+  parser.Parse(&tok, file_descriptor_proto.get());
   if (io_error_collector_.get_number_errors() > 0) {
     std::stringstream msg;
     msg << "Errors while parsing:\n" << io_error_collector_.get_all_errors();

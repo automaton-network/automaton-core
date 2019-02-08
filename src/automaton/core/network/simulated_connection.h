@@ -1,14 +1,14 @@
 #ifndef AUTOMATON_CORE_NETWORK_SIMULATED_CONNECTION_H_
 #define AUTOMATON_CORE_NETWORK_SIMULATED_CONNECTION_H_
 
-#include <mutex>
-#include <memory>
-#include <string>
-#include <queue>
-#include <vector>
-#include <unordered_map>
 #include <functional>
+#include <memory>
+#include <mutex>
+#include <queue>
+#include <string>
+#include <unordered_map>
 #include <utility>
+#include <vector>
 
 #include "automaton/core/network/acceptor.h"
 #include "automaton/core/network/connection.h"

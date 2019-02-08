@@ -1,13 +1,13 @@
 #ifndef AUTOMATON_CORE_SMARTPROTO_SMART_PROTOCOL_H_
 #define AUTOMATON_CORE_SMARTPROTO_SMART_PROTOCOL_H_
 
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <memory>
 
-#include "automaton/core/data/schema.h"
 #include "automaton/core/data/factory.h"
+#include "automaton/core/data/schema.h"
 
 namespace automaton {
 namespace core {

@@ -1,4 +1,5 @@
 #include "automaton/core/storage/blobstore.h"
+
 #include <cstring>
 
 namespace automaton {

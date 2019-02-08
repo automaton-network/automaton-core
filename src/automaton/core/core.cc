@@ -5,16 +5,16 @@
 
 #include <json.hpp>
 
-#include "automaton/core/network/tcp_implementation.h"
 #include "automaton/core/cli/cli.h"
 #include "automaton/core/data/factory.h"
 #include "automaton/core/data/protobuf/protobuf_factory.h"
 #include "automaton/core/data/protobuf/protobuf_schema.h"
 #include "automaton/core/io/io.h"
-#include "automaton/core/network/simulated_connection.h"
 #include "automaton/core/network/http_server.h"
-#include "automaton/core/script/engine.h"
+#include "automaton/core/network/simulated_connection.h"
+#include "automaton/core/network/tcp_implementation.h"
 #include "automaton/core/node/node.h"
+#include "automaton/core/script/engine.h"
 #include "automaton/core/smartproto/smart_protocol.h"
 
 using automaton::core::data::factory;
@@ -56,24 +56,26 @@ static const char* automaton_ascii_logo_cstr =
 
 class rpc_server_handler: public automaton::core::network::http_server::server_handler {
   engine* script;
+
  public:
     explicit rpc_server_handler(engine* en): script(en) {}
     std::string handle(std::string json_cmd, http_server::status_code* s) {
-      // TODO(kari): parse json
-      // std::cout << "Server received command: " << json_cmd << std::endl;
-      // sol::protected_function_result pfr = script->safe_script(json_cmd);
-      // if (!pfr.valid()) {
-      //   sol::error err = pfr;
-      //   std::cout << "ERROR in rpc server handler: " << err.what() << std::endl;
-      //   return "";
-      // }
-      // std::string result = pfr;
-      // std::cout << "RESULT: " << result << std::endl;
-      // return result;
-
-      // Returning same data until sol::protected_function_result bug is fixed
-      *s = http_server::status_code::OK;
-      return json_cmd;
+      // TODO(Samir): parse json
+      std::cout << "Server received command: " << json_cmd << std::endl;
+      sol::protected_function_result pfr = (*script)[json_cmd]();
+      if (!pfr.valid()) {
+        sol::error err = pfr;
+        LOG(ERROR) << "ERROR in rpc server handler: " << err.what();
+        *s = http_server::status_code::INTERNAL_SERVER_ERROR;
+        return "";
+      }
+      std::string result = pfr;
+      if (s != nullptr) {
+        *s = http_server::status_code::OK;
+      } else {
+        LOG(ERROR) << "Status code variable is missing";
+      }
+      return result;
     }
 };
 
@@ -295,9 +297,6 @@ int main(int argc, char* argv[]) {
     if (!pfr.valid()) {
       sol::error err = pfr;
       LOG(ERROR) << "Error while executing command: " << err.what();
-    } else {
-      std::string res = pfr;
-      std::cout << res << std::endl;
     }
   }
 
