@@ -65,12 +65,27 @@ class rpc_server_handler: public automaton::core::network::http_server::server_h
       std::stringstream sstr(json_cmd);
       nlohmann::json j;
       sstr >> j;
-      std::string cmd = j["method"];
-      std::string msg = j["msg"];
-      std::string params;
-      std::cout << "Server received command: " << cmd << " -> " << msg << std::endl;
-      CryptoPP::StringSource ss(msg, true, new CryptoPP::Base64Decoder(new CryptoPP::StringSink(params)));
-      sol::protected_function_result pfr = (*script)[cmd](msg);
+      std::string cmd = "";
+      std::string msg = "";
+      if (j.find("method") != j.end() && j.find("msg") != j.end()) {
+        cmd = j["method"];
+        msg = j["msg"];
+      } else {
+        LOG(ERROR) << "ERROR in rpc server handler: Invalid request";
+        *s = http_server::status_code::BAD_REQUEST;
+        return "";
+      }
+      std::string params = "";
+      LOG(INFO) << "Server received command: " << cmd << " -> " << automaton::core::io::bin2hex(msg);
+      if (msg.size() > 0) {
+        CryptoPP::StringSource ss(msg, true, new CryptoPP::Base64Decoder(new CryptoPP::StringSink(params)));
+      }
+      if ((*script)[cmd] == nullptr) {
+        LOG(ERROR) << "ERROR in rpc server handler: Invalid request";
+        *s = http_server::status_code::BAD_REQUEST;
+        return "";
+      }
+      sol::protected_function_result pfr = (*script)[cmd](params);
       if (!pfr.valid()) {
         sol::error err = pfr;
         LOG(ERROR) << "ERROR in rpc server handler: " << err.what();
