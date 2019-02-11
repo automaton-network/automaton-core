@@ -41,6 +41,7 @@ function create_and_send_command() {
   var req =  new XMLHttpRequest();
   req.addEventListener("load", reqListener);
   req.open("POST", "http://127.0.0.1:33777");
+  console.log("Sending: " + body);
   req.send(body);
 }
 
@@ -111,4 +112,11 @@ function buffer_to_json(buffer) {
     read_and_parse();
   }
   document.getElementById("buffer_to_json").value = root.toJSON(buffer);
+}
+
+function base64_encode() {
+  var input = document.getElementById("base64_encoder").value;
+  var result = window.btoa(input);
+  console.log(result);
+  document.getElementById("base64_encoder").value = result;
 }
