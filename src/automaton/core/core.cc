@@ -17,7 +17,7 @@
 #include "automaton/core/node/node.h"
 #include "automaton/core/script/engine.h"
 #include "automaton/core/smartproto/smart_protocol.h"
-#include "automaton/core/io/io.h" //  IO needs to be included after boost
+#include "automaton/core/io/io.h"  //  IO needs to be included after boost
 
 using automaton::core::data::factory;
 using automaton::core::data::protobuf::protobuf_factory;
