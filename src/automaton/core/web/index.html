@@ -31,7 +31,7 @@ message ProtocolsList {
 message Node {
   bytes id = 1;
   bytes protocol_id = 2;
-  repeated string address = 3;
+  bytes address = 3;
 }
 
 message NodeID {
@@ -86,7 +86,7 @@ message Peer {
     "Node": {
       "id": "1231j2",
       "protocol_id": "213123",
-      "address": ["theaddress", "second"]
+      "address": "theaddress"
     }
 }
   </textarea>
