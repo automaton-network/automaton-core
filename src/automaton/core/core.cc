@@ -3,21 +3,22 @@
 #include <regex>
 #include <string>
 
-#include "base64.h"  // NOLINT
-#include "filters.h"  // NOLINT
 #include <json.hpp>
+#include <base64.h>
+#include <cryptlib.h>
+#include <filters.h>
 
 #include "automaton/core/cli/cli.h"
 #include "automaton/core/data/factory.h"
 #include "automaton/core/data/protobuf/protobuf_factory.h"
 #include "automaton/core/data/protobuf/protobuf_schema.h"
-#include "automaton/core/io/io.h"
 #include "automaton/core/network/http_server.h"
 #include "automaton/core/network/simulated_connection.h"
 #include "automaton/core/network/tcp_implementation.h"
 #include "automaton/core/node/node.h"
 #include "automaton/core/script/engine.h"
 #include "automaton/core/smartproto/smart_protocol.h"
+#include "automaton/core/io/io.h" //  IO needs to be included after boost
 
 using automaton::core::data::factory;
 using automaton::core::data::protobuf::protobuf_factory;
@@ -56,51 +57,38 @@ static const char* automaton_ascii_logo_cstr =
   "                                                                     " "\x1b[0m\n@0m"
   "▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀" "\x1b[0m\n";
 
-class rpc_server_handler: public automaton::core::network::http_server::server_handler {
-  engine* script;
+  class rpc_server_handler: public automaton::core::network::http_server::server_handler {
+    engine* script;
 
- public:
-    explicit rpc_server_handler(engine* en): script(en) {}
-    std::string handle(std::string json_cmd, http_server::status_code* s) {
-      std::stringstream sstr(json_cmd);
-      nlohmann::json j;
-      sstr >> j;
-      std::string cmd = "";
-      std::string msg = "";
-      if (j.find("method") != j.end() && j.find("msg") != j.end()) {
-        cmd = j["method"];
-        msg = j["msg"];
-      } else {
-        LOG(ERROR) << "ERROR in rpc server handler: Invalid request";
-        *s = http_server::status_code::BAD_REQUEST;
-        return "";
-      }
-      std::string params = "";
-      LOG(INFO) << "Server received command: " << cmd << " -> " << automaton::core::io::bin2hex(msg);
-      if (msg.size() > 0) {
+   public:
+      explicit rpc_server_handler(engine* en): script(en) {}
+      std::string handle(std::string json_cmd, http_server::status_code* s) {
+        std::stringstream sstr(json_cmd);
+        nlohmann::json j;
+        sstr >> j;
+        std::string cmd = j["method"];
+        std::string msg = j["msg"];
+        std::string params;
         CryptoPP::StringSource ss(msg, true, new CryptoPP::Base64Decoder(new CryptoPP::StringSink(params)));
+        std::cout << "Server received command: " << cmd << " -> " << msg << std::endl;
+        // Decode base64
+        sol::protected_function_result pfr = (*script)[cmd](msg);
+        if (!pfr.valid()) {
+          sol::error err = pfr;
+          LOG(ERROR) << "ERROR in rpc server handler: " << err.what();
+          *s = http_server::status_code::INTERNAL_SERVER_ERROR;
+          return "";
+        }
+        std::string result = pfr;
+        if (s != nullptr) {
+          *s = http_server::status_code::OK;
+        } else {
+          LOG(ERROR) << "Status code variable is missing";
+        }
+        return result;
       }
-      if ((*script)[cmd] == nullptr) {
-        LOG(ERROR) << "ERROR in rpc server handler: Invalid request";
-        *s = http_server::status_code::BAD_REQUEST;
-        return "";
-      }
-      sol::protected_function_result pfr = (*script)[cmd](params);
-      if (!pfr.valid()) {
-        sol::error err = pfr;
-        LOG(ERROR) << "ERROR in rpc server handler: " << err.what();
-        *s = http_server::status_code::INTERNAL_SERVER_ERROR;
-        return "";
-      }
-      std::string result = pfr;
-      if (s != nullptr) {
-        *s = http_server::status_code::OK;
-      } else {
-        LOG(ERROR) << "Status code variable is missing";
-      }
-      return result;
-    }
-};
+  };
+
 
 int main(int argc, char* argv[]) {
   string automaton_ascii_logo(automaton_ascii_logo_cstr);
