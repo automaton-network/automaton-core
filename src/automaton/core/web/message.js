@@ -82,7 +82,7 @@ function create_msg() {
       //Encode
       var buffer = msg.encode(message).finish();
       //Log and send
-      //console.log(buffer);
+      console.log(buffer);
       send_request(buffer);
     }
   }
@@ -97,11 +97,18 @@ function read_and_parse() {
   }
   try {
     proto_contents = document.getElementById(".proto").value;
-    parsed_proto = protobuf.parse(proto_contents)
+    parsed_proto = protobuf.parse(proto_contents, { keepCase: true })
     root = parsed_proto.root
     parsed = true;
   }
   catch(err) {
     document.getElementById(".proto").value = err;
   }
+}
+
+function buffer_to_json(buffer) {
+  if(!parsed){
+    read_and_parse();
+  }
+  document.getElementById("buffer_to_json").value = root.toJSON(buffer);
 }
