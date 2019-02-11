@@ -175,6 +175,7 @@ void http_session::read_body(uint32_t body_size) {
             read_header();
           } else if (error == boost::asio::error::eof) {
             LOG(ERROR) << "Client has closed the connection";
+            delete this;
           } else {
             LOG(ERROR) << "Server error while returning response to client, deleting connection";
             delete this;
