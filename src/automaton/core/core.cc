@@ -11,13 +11,13 @@
 #include "automaton/core/data/factory.h"
 #include "automaton/core/data/protobuf/protobuf_factory.h"
 #include "automaton/core/data/protobuf/protobuf_schema.h"
-#include "automaton/core/io/io.h"
 #include "automaton/core/network/http_server.h"
 #include "automaton/core/network/simulated_connection.h"
 #include "automaton/core/network/tcp_implementation.h"
 #include "automaton/core/node/node.h"
 #include "automaton/core/script/engine.h"
 #include "automaton/core/smartproto/smart_protocol.h"
+#include "automaton/core/io/io.h" //  IO needs to be included after boost
 
 using automaton::core::data::factory;
 using automaton::core::data::protobuf::protobuf_factory;
