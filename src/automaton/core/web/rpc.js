@@ -408,7 +408,7 @@ function list_known_peers() {
   var msg = `{
   "method" : "list_known_peers",
     "Msg" :  {
-      "NodeId" : {
+      "NodeID" : {
         "node_id" : "`
         + window.btoa(node) +
         `"
@@ -426,7 +426,7 @@ function list_connected_peers() {
   var msg = `{
   "method" : "list_connected_peers",
     "Msg" : {
-      "NodeId" : {
+      "NodeID" : {
         "node_id" : "`
         + window.btoa(node) +
         `"
