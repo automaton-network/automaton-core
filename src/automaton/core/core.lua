@@ -60,6 +60,7 @@ function list_running_protocols ()
   -- local response = ListProtocolsResponse()
   -- need to store and get info
   print("This function is not yet supported")
+  return ""
   -- return response:serialize()
 end
 
@@ -71,12 +72,13 @@ function load_protocols (protocol_ids)
   for _,pid in ipairs(protocol_ids) do
     load_protocol(pid)
   end
+  return ""
 end
 
 function rpc_load_protocols (protos)
   local request = ProtocolIDsList()
   request:deserialize(protos)
-  load_protocols(request.protocol_ids)
+  return load_protocols(request.protocol_ids)
 end
 
 -- NODE RPC COMMON --
@@ -84,7 +86,7 @@ end
 function rpc_launch_node(m)
   local msg = Node()
   msg:deserialize(m)
-  launch_node(msg.id, msg.protocol_id, msg.address)  -- implemented in core.cc
+  return launch_node(msg.id, msg.protocol_id, msg.address)  -- implemented in core.cc
 end
 
 function list_nodes()
@@ -157,18 +159,19 @@ end
 function remove_peers(node_id, peer_ids)
   local node = get_node(node_id)
   if node == nil then
-    return
+    return ""
   end
   for _,id in ipairs(peer_ids) do
     node:remove_peer(id)
     print("removed " .. tostring(id))
   end
+    return ""
 end
 
 function rpc_remove_peers(m)
   local request = PeerIdsList()
   request:deserialize(m)
-  remove_peers(request.node_id, request.peer_ids)
+  return remove_peers(request.node_id, request.peer_ids)
 end
 
 function list_known_peers(node_id)
@@ -236,41 +239,44 @@ function rpc_get_peers(m)
 end
 
 function connect(node_id, peer_ids)
+  print("getting node " .. node_id)
   local node = get_node(node_id)
   if node == nil then
-    return
+    return ""
   end
   for _,id in ipairs(peer_ids) do
     node:connect(id)
   end
+    return ""
 end
 
 function rpc_connect(m)
   local request = PeerIdsList()
   request:deserialize(m)
-  connect(m.node_id, m.peer_ids)
+  return connect(request.node_id, request.peer_ids)
 end
 
 function disconnect(node_id, peer_ids)
   local node = get_node(node_id)
   if node == nil then
-    return
+    return ""
   end
   for _,id in ipairs(peer_ids) do
     node:disconnect(id)
   end
+    return ""
 end
 
 function rpc_disconnect(m)
   local request = PeerIdsList()
   request:deserialize(m)
-  disconnect(m.node_id, m.peer_ids)
+  return disconnect(request.node_id, request.peer_ids)
 end
 
 function process_cmd(node_id, cmd, params)
   local node = get_node(node_id)
   if node == nil then
-    return
+    return ""
   end
   local response = NodeCmdResponse()
   response.response = node:process_cmd(cmd, params)
@@ -280,5 +286,5 @@ end
 function rpc_process_cmd(m)
   local request = NodeCmdRequest()
   request:deserialize(m)
-  process_cmd(m.node_id, m.cmd, m.params)
+  return process_cmd(request.node_id, request.cmd, request.params)
 end

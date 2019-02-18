@@ -388,10 +388,10 @@ std::string node::process_cmd(std::string cmd, std::string msg) {
   script_mutex.lock();
   try {
     if (msg != "") {
-      std::cout << "calling script func " << cmd << " with msg " << msg << std::endl;
+      LOG(INFO) << "calling script func " << cmd << " with msg " << msg;
       pfr = script_on_cmd[cmd](msg);
     } else {
-      std::cout << "calling script func " << cmd << " without msg" << std::endl;
+      LOG(INFO) << "calling script func " << cmd << " without msg";
       pfr = script_on_cmd[cmd]();
     }
   } catch (const std::exception& e) {
@@ -407,7 +407,6 @@ std::string node::process_cmd(std::string cmd, std::string msg) {
     return "";
   }
   std::string result = pfr;
-  std::cout << "RESULT: " << io::bin2hex(result) << std::endl;
   return result;
 }
 
@@ -520,7 +519,7 @@ bool node::disconnect(peer_id p_id) {
   return false;
 }
 
-bool node::set_acceptor(const char* address) {
+bool node::set_acceptor(const std::string& address) {
   std::shared_ptr<acceptor> new_acceptor;
   try {
     string protocol, addr;
