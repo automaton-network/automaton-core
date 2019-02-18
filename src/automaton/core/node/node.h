@@ -76,7 +76,7 @@ class node: public network::connection::connection_handler,
 
   bool disconnect(peer_id id);
 
-  bool set_acceptor(const char* address);
+  bool set_acceptor(const std::string& address);
 
   std::shared_ptr<network::acceptor> get_acceptor();
 
@@ -91,7 +91,7 @@ class node: public network::connection::connection_handler,
   // Execute a script which returns corresponding type
   void script(std::string command, std::promise<std::string>* result);
 
-  uint32_t find_message_id(const char * name) {
+  uint32_t find_message_id(const std::string& name) {
     return engine.get_factory()->get_schema_id(name);
   }
 

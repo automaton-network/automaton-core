@@ -77,7 +77,7 @@ void http_server::run() {
       io_service.run();
     }
     catch (std::exception& e) {
-      LOG(ERROR) << "Could not run io_service in server";
+      LOG(ERROR) << "HTTP server error: " << e.what();
     }
     LOG(DEBUG) << "server stopped.";
   });

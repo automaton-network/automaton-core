@@ -65,10 +65,10 @@ class rpc_server_handler: public automaton::core::network::http_server::server_h
       std::stringstream sstr(json_cmd);
       nlohmann::json j;
       sstr >> j;
-      std::string cmd = "";
+      std::string cmd = "rpc_";
       std::string msg = "";
       if (j.find("method") != j.end() && j.find("msg") != j.end()) {
-        cmd = j["method"];
+        cmd += j["method"];
         msg = j["msg"];
       } else {
         LOG(ERROR) << "ERROR in rpc server handler: Invalid request";
@@ -98,7 +98,10 @@ class rpc_server_handler: public automaton::core::network::http_server::server_h
       } else {
         LOG(ERROR) << "Status code variable is missing";
       }
-      return result;
+      std::string encoded;
+      CryptoPP::StringSource ss(reinterpret_cast<const unsigned char*>(result.c_str()), result.size(), true,
+          new CryptoPP::Base64Encoder(new CryptoPP::StringSink(encoded)));
+      return encoded;
     }
 };
 
@@ -197,16 +200,17 @@ int main(int argc, char* argv[]) {
   });
 
   script.set_function("launch_node", [&](std::string node_id, std::string protocol_id, std::string address) {
-    std::cout << "launching node ... " << std::endl;
+    LOG(INFO) << "launching node ... " << node_id << " on " << protocol_id << " @ " << address;
     auto n = nodes.find(node_id);
     if (n == nodes.end()) {
       nodes[node_id] = std::make_unique<node>(node_id, protocol_id);
-      bool res = nodes[node_id]->set_acceptor(address.c_str());
+      bool res = nodes.at(node_id)->set_acceptor(address);
       if (!res) {
         LOG(ERROR) << "Setting acceptor at address " << address << " failed!";
         std::cout << "!!! set acceptor failed" << std::endl;
       }
     }
+    return "";
   });
 
   script.set_function("remove_node", [&](std::string node_id) {});
