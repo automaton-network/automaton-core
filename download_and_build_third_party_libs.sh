@@ -135,7 +135,7 @@ git_repo "https://github.com/orlp/ed25519.git" "ed25519" "7fa6712ef5d581a6981ec2
   mkdir sol2/single/sol && \
   curl -L https://github.com/ThePhD/sol2/releases/download/v2.20.6/sol.hpp -o sol2/single/sol/sol.hpp
 
-[ ! -d boost_1_68_0 ] && \
+[ ! -d boost ] && \
   get_archive "https://dl.bintray.com/boostorg/release/1.68.0/source/boost_1_68_0.tar.gz" \
   "boost_1_68_0.tar.gz" "da3411ea45622579d419bfda66f45cd0f8c32a181d84adfa936f5688388995cf"
 [ -d boost_1_68_0 ] && mv boost_1_68_0 boost
@@ -150,6 +150,10 @@ git_repo "https://github.com/orlp/ed25519.git" "ed25519" "7fa6712ef5d581a6981ec2
   get_archive "http://phoenixnap.dl.sourceforge.net/project/lzmautils/xz-5.2.3.tar.gz" \
   "xz-5.2.3.tar.gz" "71928b357d0a09a12a4b4c5fafca8c31c19b0e7d3b8ebb19622e96f26dbf28cb"
 
+[ ! -d bitcoin ] && \
+  get_archive "https://github.com/bitcoin/bitcoin/archive/v0.17.1.tar.gz" \
+  "v0.17.1.tar.gz" "d51bae80fc0a460ce752d04097c4a1271a66b55260d53165d82313488117d290"
+[ -d bitcoin-0.17.1 ] && mv bitcoin-0.17.1 bitcoin
 # Build LuaJIT
 print_separator "=" 80
 echo "  BUILDING LuaJIT"
@@ -207,6 +211,13 @@ mkdir -p build && cd build
 [ ! -f CMakeCache.txt ] && cmake -DCMAKE_BUILD_TYPE=Release ..
 make replxx
 cd ../..
+
+cd bitcoin/src/secp256k1
+./autogen.sh
+./configure
+make
+./tests
+cd ../../..
 
 # Build boost
 print_separator "=" 80
