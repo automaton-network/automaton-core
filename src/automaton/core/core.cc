@@ -253,7 +253,9 @@ int main(int argc, char* argv[]) {
     script.set_function("get_core_supported_protocols", [&](){
       std::unordered_map<std::string, std::unordered_map<std::string, std::string> > protocols;
       for (std::string proto : smart_protocol::list_protocols()) {
-        protocols[proto] = smart_protocol::get_protocol(proto)->get_msgs_definitions();
+        auto p = smart_protocol::get_protocol(proto);
+        protocols[proto] = p->get_msgs_definitions();
+        protocols[proto]["config"] = p->get_configuration_file();
       }
       return sol::as_table(protocols);
     });
