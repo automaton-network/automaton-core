@@ -65,3 +65,13 @@ message Peer {
   uint32 id = 1;
   bytes address = 2;
 }
+
+// -- network messages --
+
+message Network {
+  bytes protocol_id = 1;
+  uint32 number_nodes = 2;
+  uint32 number_peers_per_node = 3;
+  bool is_localhost = 4;  // true -> tcp, false -> sim
+  bytes logging_path = 5;
+}

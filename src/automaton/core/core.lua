@@ -288,3 +288,14 @@ function rpc_process_cmd(m)
   request:deserialize(m)
   return process_cmd(request.node_id, request.cmd, request.params)
 end
+
+function rpc_start_testnet(m)
+  local request = Network()
+  request:deserialize(m)
+  if (request.is_localhost) then
+    testnet(localhost, _G[request.protocol_id], request.number_nodes, request.number_peers_per_node, request.logging_path)
+  else
+    testnet(localhost, _G[request.protocol_id], request.number_nodes, request.number_peers_per_node, request.logging_path)
+  end
+  return ""
+end

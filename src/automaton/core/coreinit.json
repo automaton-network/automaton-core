@@ -27,7 +27,9 @@
     {"cmd":"get_peers", "input":"PeerIdsList", "output":"PeersList"},
     {"cmd":"connect", "input":"PeerIdsList", "output":""},
     {"cmd":"disconnect", "input":"PeerIdsList", "output":""},
-    {"cmd":"process_cmd", "input":"NodeCmdRequest", "output":"NodeCmdResponse"}
+    {"cmd":"process_cmd", "input":"NodeCmdRequest", "output":"NodeCmdResponse"},
+
+    {"cmd":"start_testnet", "input":"Network", "output":""}
   ],
   "rpc_config" : {
     "default_port" : 33777,

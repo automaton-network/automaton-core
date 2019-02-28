@@ -68,13 +68,14 @@ message Peer {
   bytes address = 2;
 }
 
-message Test {
-  uint32 i = 1;
-}
+// -- network messages --
 
-message Test2 {
-  uint32 a = 1;
-  Test b = 2;
+message Network {
+  bytes protocol_id = 1;
+  uint32 number_nodes = 2;
+  uint32 number_peers_per_node = 3;
+  bool is_localhost = 4;  // true -> tcp, false -> sim
+  bytes logging_path = 5;
 }`;
 
 // TODO(kari): Works for only one .proto file per protocol -> FIX THAT
@@ -279,7 +280,8 @@ function read_and_parse() {
       ["get_peers", ["PeerIdsList", "PeersList"]],
       ["connect", ["PeerIdsList", ""]],
       ["disconnect", ["PeerIdsList", ""]],
-      ["process_cmd", ["NodeCmdRequest", "NodeCmdResponse"]]
+      ["process_cmd", ["NodeCmdRequest", "NodeCmdResponse"]],
+      ["start_testnet", ["Network", ""]]
     ]
 
     var protocol_struct = {
@@ -485,23 +487,19 @@ function load_protocols() {
 
 function launch_node() {
   var protocol = document.getElementById("selected_protocol").value;
-  if (protocol === "none") {
-    document.getElementById("send_command_text_field").value = "ERROR: Select protocol first!";
-  } else {
-    var msg = `{
-    "method" : "launch_node",
-      "Msg" :  {
-        "Node" : {
-          "id" : "",
-          "protocol_id" : "`
-          + window.btoa(protocol) +
-          `",
-          "address" : ""
-        }
+  var msg = `{
+  "method" : "launch_node",
+    "Msg" :  {
+      "Node" : {
+        "id" : "",
+        "protocol_id" : "`
+        + window.btoa(protocol) +
+        `",
+        "address" : ""
       }
-    }`;
-    document.getElementById("send_command_text_field").value = msg;
-  }
+    }
+  }`;
+  document.getElementById("send_command_text_field").value = msg;
 }
 
 function list_nodes() {
@@ -669,6 +667,23 @@ function disconnect() {
         + window.btoa(node) +
         `",
         "peer_ids" : []
+      }
+    }
+  }`;
+  document.getElementById("send_command_text_field").value = msg;
+}
+
+function start_testnet() {
+  var protocol = document.getElementById("selected_protocol").value;
+  var msg = `{
+  "method" : "start_testnet",
+    "Msg" :  {
+      "Network" : {
+        "protocol_id" : "",
+        "number_nodes" : 50,
+        "number_peers_per_node" : 3,
+        "is_localhost" : true,
+        "logging_path" : ,
       }
     }
   }`;
