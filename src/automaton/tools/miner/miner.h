@@ -8,10 +8,10 @@
 #include <sstream>
 #include <string>
 
-#include "secp256k1\include\secp256k1_recovery.h"  //  NOLINT
-#include "secp256k1\include\secp256k1.h"  //  NOLINT
-#include "secp256k1\src\hash_impl.h"  //  NOLINT
-#include "secp256k1\src\hash.h"  //  NOLINT
+#include "secp256k1/include/secp256k1_recovery.h"
+#include "secp256k1/include/secp256k1.h"
+#include "secp256k1/src/hash_impl.h"
+#include "secp256k1/src/hash.h"
 
 // will need tests, so we need to make it library,
 // but we also need it to be executable printing the information
@@ -60,9 +60,9 @@ bool mine_key(unsigned char* mask, unsigned char* difficulty) {
     size_t outLen = 65;
     secp256k1_ec_pubkey_serialize(context, pub_key_serialized, &outLen, pubkey, SECP256K1_EC_UNCOMPRESSED);
 
-    std::string pub_key_uncompressed((char*)(pub_key_serialized), 65);
-    std::string pub_key_x((char*)(pub_key_serialized+1), 32);
-    std::string pub_key_y((char*)(pub_key_serialized+33), 32);
+    std::string pub_key_uncompressed(reinterpret_cast<char*>(pub_key_serialized), 65);
+    std::string pub_key_x(reinterpret_cast<char*>(pub_key_serialized+1), 32);
+    std::string pub_key_y(reinterpret_cast<char*>(pub_key_serialized+33), 32);
 
     for (int i = 0; i < pub_key_x.size(); i++) {
       pub_key_after_mask[i] = pub_key_x[i] ^ mask[i];
@@ -78,6 +78,7 @@ bool mine_key(unsigned char* mask, unsigned char* difficulty) {
       break;
     }
   }
+  return 0;
 }
 
 

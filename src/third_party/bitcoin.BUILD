@@ -8,6 +8,7 @@ cc_library(
     "src/secp256k1/src/*.h",
   ]),
   includes = [
+    "./src",
     "./src/secp256k1",
     "./src/secp256k1/include",
   ],
