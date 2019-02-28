@@ -1,5 +1,5 @@
-#ifndef AUTOMATON_TOOLS_MINER_H__
-#define AUTOMATON_TOOLS_MINER_H__
+#ifndef AUTOMATON_TOOLS_MINER_MINER_H_
+#define AUTOMATON_TOOLS_MINER_MINER_H_
 
 #include <assert.h>
 #include <iomanip>
@@ -7,10 +7,11 @@
 #include <random>
 #include <sstream>
 #include <string>
-#include "secp256k1\include\secp256k1_recovery.h"
-#include "secp256k1\include\secp256k1.h"
-#include "secp256k1\src\hash_impl.h"
-#include "secp256k1\src\hash.h"
+
+#include "secp256k1\include\secp256k1_recovery.h"  //  NOLINT
+#include "secp256k1\include\secp256k1.h"  //  NOLINT
+#include "secp256k1\src\hash_impl.h"  //  NOLINT
+#include "secp256k1\src\hash.h"  //  NOLINT
 
 // will need tests, so we need to make it library,
 // but we also need it to be executable printing the information
@@ -29,7 +30,6 @@ std::string str_tohex(std::string s) {
 }
 
 bool mine_key(unsigned char* mask, unsigned char* difficulty) {
-
   secp256k1_context* context = secp256k1_context_create(SECP256K1_CONTEXT_SIGN | SECP256K1_CONTEXT_VERIFY);
   secp256k1_pubkey* pubkey = new secp256k1_pubkey();
   std::string pub_key_after_mask(32, '0');
@@ -51,7 +51,6 @@ bool mine_key(unsigned char* mask, unsigned char* difficulty) {
 
 
   while (!found) {
-    // TODO(Samir): Check the speed if we create the key outside and just change 1 bit inside
     for (int i = 0; i < 32; i++) {
       priv_key[i] = engine();
     }
@@ -84,6 +83,6 @@ bool mine_key(unsigned char* mask, unsigned char* difficulty) {
 
 }  // namespace miner
 }  // namespace tools
-}  // namespace miner
+}  // namespace automaton
 
-#endif  //  AUTOMATON_TOOLS_MINER_H__
+#endif  //  AUTOMATON_TOOLS_MINER_MINER_H_
