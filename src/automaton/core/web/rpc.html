@@ -23,7 +23,7 @@
   </div>
 
   <div style="height:65%;width:48%;background-color:lightgrey;color:black;float:right;border-radius:18px;">
-    <div style="height:35%;width:100%;float:top;border-radius:18px;">
+    <div style="height:20%;width:100%;float:top;border-radius:18px;">
       <button class="button2" onclick="list_supported_protocols()">List protocols</button>
       <button class="button2" onclick="get_protocols()">Get protocols</button>
       <button class="button2" onclick="load_protocols()">Load protocols</button>
@@ -44,21 +44,36 @@
 
     <div style="height:15%;width:100%;color:black;">
       <label>Select protocol:</label>
-      <select id="selected_protocol">
-         <option value="none" selected>None</option>
+      <select id="selected_protocol" onchange="load_commands()"">
+         <option value="rpc" selected>rpc</option>
       </select>
 
       <label>Select node:</label>
       <select id="selected_node">
          <option value="none" selected>None</option>
       </select>
+
+      <label>Select command:</label>
+      <select id="selected_cmd" onchange="show_command()">
+         <option value="none" selected>None</option>
+      </select>
     </div>
 
-    <div style="height:50%;width:100%;float:bottom;border-radius:18px;">
+    <div style="height:25%;width:100%;float:bottom;border-radius:18px;">
       <textarea id="send_command_text_field" rows="10" cols="80"></textarea>
       <button id="send_command_button" type="button"
         onclick="create_and_send_command_from_string(document.getElementById('send_command_text_field').value)">
         Send command
+      </button>
+    </div>
+
+    <div style="height:25%;width:100%;border-radius:18px;">
+      <textarea id="message_encoder" rows="10" cols="80"></textarea>
+      <textarea id="message_encoded" rows="1" cols="80"></textarea>
+      <button type="button" onclick="document.getElementById('message_encoded').value =
+          new_proto_msg(document.getElementById('selected_protocol').value,
+          JSON.parse(document.getElementById('message_encoder').value))">
+      Message encode
       </button>
     </div>
   </div>
@@ -67,13 +82,16 @@
     <label>Select file:</label>
     <select id="selected_file" onchange="show_file()">
        <option value="none" selected>None</option>
+       <option value="rpc.proto">rpc.proto</option>
     </select>
     <div id="file"></div>
   </div>
 
   <div style="height:25%;width:48%;background-color:lightgrey;color:black;float:right;margin-top:3%;border-radius:18px;">
     <textarea id="base64_encoder" rows="10" cols="80"></textarea>
-    <button type="button" onclick="base64_encode()">base64 encode</button>
+    <button type="button" onclick="base64_encode()">string to base64</button>
+    <button type="button" onclick="document.getElementById('base64_encoder').value =
+        array_to_base64(string_to_uint8array(document.getElementById('base64_encoder').value))">array to base64</button>
     <br>
   </div>
 </body>

@@ -46,6 +46,8 @@ bool smart_protocol::load(std::string path) {
     LOG(ERROR) << "Error while opening " << path << "config.json";
     return false;
   } else {
+    proto->config_json = std::string(std::istreambuf_iterator<char>(i), {});
+    i.seekg(0);
     nlohmann::json j;
     i >> j;
     i.close();
@@ -96,6 +98,10 @@ std::vector<std::string> smart_protocol::get_commands() {
     cmds.push_back(c.name);
   }
   return cmds;
+}
+
+std::string smart_protocol::get_configuration_file() {
+  return config_json;
 }
 
 uint32_t smart_protocol::get_update_time_slice() {

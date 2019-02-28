@@ -34,6 +34,7 @@ class smart_protocol {
   std::vector<std::string> get_scripts();
   std::vector<std::string> get_wire_msgs();
   std::vector<std::string> get_commands();
+  std::string get_configuration_file();
   uint32_t get_update_time_slice();
 
  private:
@@ -48,6 +49,7 @@ class smart_protocol {
   std::vector<data::schema*> schemas;
   std::vector<std::string> wire_msgs;
   std::vector<cmd> commands;
+  std::string config_json;
 };
 
 }  // namespace smartproto
