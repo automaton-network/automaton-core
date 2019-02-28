@@ -11,7 +11,7 @@ cc_library(
     "miner.h",
   ],
   deps = [
-    "//automaton/core/data",
+    "@bitcoin//:secp256k1",
     "//automaton/core/io",
   ],
   linkstatic=True,
