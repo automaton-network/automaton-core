@@ -69,7 +69,7 @@ class rpc_server_handler: public automaton::core::network::http_server::server_h
       std::string msg = "";
       if (j.find("method") != j.end() && j.find("msg") != j.end()) {
         cmd += j["method"].get<std::string>();
-        msg = j["msg"];
+        msg = j["msg"].get<std::string>();
       } else {
         LOG(ERROR) << "ERROR in rpc server handler: Invalid request";
         *s = http_server::status_code::BAD_REQUEST;
