@@ -68,8 +68,8 @@ class rpc_server_handler: public automaton::core::network::http_server::server_h
       std::string cmd = "rpc_";
       std::string msg = "";
       if (j.find("method") != j.end() && j.find("msg") != j.end()) {
-        cmd += j["method"];
-        msg = j["msg"];
+        cmd += j["method"].get<std::string>();
+        msg = j["msg"].get<std::string>();
       } else {
         LOG(ERROR) << "ERROR in rpc server handler: Invalid request";
         *s = http_server::status_code::BAD_REQUEST;
@@ -270,7 +270,6 @@ int main(int argc, char* argv[]) {
       script.safe_script(get_file_contents(p.c_str()));
     }
     for (auto& c : j["commands"]) {
-      std::cout << "loaded rpc command: " << c["cmd"] << std::endl;
       rpc_commands[c["cmd"]] = std::make_pair(c["input"], c["output"]);
     }
     rpc_port = j["rpc_config"]["default_port"];

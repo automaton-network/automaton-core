@@ -23,16 +23,16 @@
   </div>
 
   <div style="height:65%;width:48%;background-color:lightgrey;color:black;float:right;border-radius:18px;">
-    <div style="height:20%;width:100%;float:top;border-radius:18px;">
+    <div style="width:100%;float:top;border-radius:18px;">
       <button class="button2" onclick="list_supported_protocols()">List protocols</button>
       <button class="button2" onclick="get_protocols()">Get protocols</button>
       <button class="button2" onclick="load_protocols()">Load protocols</button>
-
+      <br>
       <button class="button2" onclick="launch_node()">Launch node</button>
       <button class="button2" onclick="list_nodes()">List nodes</button>
       <button class="button2" onclick="get_nodes()">Get nodes</button>
       <button class="button2" onclick="process_cmd()">Process cmd</button>
-
+      <br>
       <button class="button2" onclick="add_peers()">Add peers</button>
       <button class="button2" onclick="remove_peers()">Remove peers</button>
       <button class="button2" onclick="list_known_peers()">List known peers</button>
@@ -40,9 +40,11 @@
       <button class="button2" onclick="get_peers()">Get peers</button>
       <button class="button2" onclick="connect()">Connect</button>
       <button class="button2" onclick="disconnect()">Disconnect</button>
+      <br>
+      <button class="button2" onclick="start_testnet()">Start testnet</button>
     </div>
 
-    <div style="height:15%;width:100%;color:black;">
+    <div style="width:100%;color:black;">
       <label>Select protocol:</label>
       <select id="selected_protocol" onchange="load_commands()"">
          <option value="rpc" selected>rpc</option>
@@ -59,7 +61,7 @@
       </select>
     </div>
 
-    <div style="height:25%;width:100%;float:bottom;border-radius:18px;">
+    <div style=";width:100%;float:bottom;border-radius:18px;">
       <textarea id="send_command_text_field" rows="10" cols="80"></textarea>
       <button id="send_command_button" type="button"
         onclick="create_and_send_command_from_string(document.getElementById('send_command_text_field').value)">
@@ -67,7 +69,7 @@
       </button>
     </div>
 
-    <div style="height:25%;width:100%;border-radius:18px;">
+    <div style="width:100%;border-radius:18px;">
       <textarea id="message_encoder" rows="10" cols="80"></textarea>
       <textarea id="message_encoded" rows="1" cols="80"></textarea>
       <button type="button" onclick="document.getElementById('message_encoded').value =
