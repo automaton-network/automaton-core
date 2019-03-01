@@ -295,7 +295,7 @@ function rpc_start_testnet(m)
   if (request.is_localhost) then
     testnet(localhost, _G[request.protocol_id], request.number_nodes, request.number_peers_per_node, request.logging_path)
   else
-    testnet(localhost, _G[request.protocol_id], request.number_nodes, request.number_peers_per_node, request.logging_path)
+    testnet(simulation, _G[request.protocol_id], request.number_nodes, request.number_peers_per_node, request.logging_path)
   end
   return ""
 end
