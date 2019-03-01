@@ -42,5 +42,4 @@ TEST(miner, generate_valid_key) {
   }
 
   EXPECT_EQ(memcmp(difficulty, pub_key_after_mask.data(), 32), -1);
-
 }
