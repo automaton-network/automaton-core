@@ -42,5 +42,5 @@ TEST(miner, generate_valid_key) {
       pub_key_after_mask[i] = pub_key_uncompressed[i+1] ^ mask[i];
   }
 
-  EXPECT_EQ(memcmp(difficulty, pub_key_after_mask.data(), 32), -1);
+  EXPECT_LT(memcmp(difficulty, pub_key_after_mask.data(), 32), 0);
 }
