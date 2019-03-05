@@ -4,12 +4,12 @@ cc_library(
   name = "secp256k1",
   srcs = glob(["src/secp256k1/src/secp256k1.c"]),
   hdrs = glob([
-    "src/secp256k1/include/*.h",
-    "src/secp256k1/src/*.h",
+    "src/secp256k1/**/*.h",
   ]),
   includes = [
     "./src",
     "./src/secp256k1",
+    "./src/secp256k1/src",
     "./src/secp256k1/include",
   ],
   defines = [
