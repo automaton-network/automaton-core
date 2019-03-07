@@ -20,7 +20,8 @@ class smart_protocol {
     std::string input_type;
     std::string output_type;
 
-    cmd(const std::string& nm, const std::string& input, const std::string& output):name(nm), input_type(input), output_type(output) {}
+    cmd(const std::string& nm, const std::string& input, const std::string& output):
+        name(nm), input_type(input), output_type(output) {}
   };
 
   static std::shared_ptr<smart_protocol> get_protocol(const std::string& proto_id);
