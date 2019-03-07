@@ -30,7 +30,7 @@ namespace miner {
 // OUT: pr_key:   mined private key
 bool mine_key(unsigned char* mask, unsigned char* difficulty,  unsigned char* pr_key);
 
-std::string sign(unsigned char* priv_key, unsigned char* hash);
+std::string sign(unsigned char* priv_key, unsigned char* msg_hash);
 
 }  // namespace miner
 }  // namespace tools
