@@ -466,7 +466,7 @@ function get_protocols() {
   "method" : "get_protocols",
   "Msg" :  {
     "ProtocolIDsList" : {
-      "protocol_ids" : ["YXV0b21hdG9uL2V4YW1wbGVzL3NtYXJ0cHJvdG8vY2hhdC8="]
+      "protocol_ids" : [""]
     }
   }
   }`;
@@ -479,7 +479,7 @@ function load_protocols() {
   "Msg" :  {
     "ProtocolsList" : {
       "protocols" : [
-         {"protocol_id": "Y2hhdA==", "path": "YXV0b21hdG9uL2V4YW1wbGVzL3NtYXJ0cHJvdG8vY2hhdC8="}
+         {"protocol_id": "", "path": ""}
       ]
     }
   }
