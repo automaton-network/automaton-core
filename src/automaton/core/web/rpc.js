@@ -6,8 +6,9 @@ var rpc_proto =
 
 message Protocol {
   bytes protocol_id = 1;
-  repeated bytes file_names = 2;
-  repeated bytes files = 3;
+  bytes path = 2;
+  repeated bytes file_names = 3;
+  repeated bytes files = 4;
 }
 
 message ProtocolIDsList {
@@ -173,9 +174,6 @@ function result_handler(protocol_id, cmd) {
 }
 
 function protocols_handler() {
-  if(!loaded_protocols.has("rpc")){
-    read_and_parse();
-  }
   var root = loaded_protocols.get("rpc").root;
   var decoded = window.atob(this.response);
   document.getElementById("status").innerHTML = this.statusText;
@@ -186,9 +184,6 @@ function protocols_handler() {
 }
 
 function nodes_handler() {
-  if(!loaded_protocols.has("rpc")){
-    read_and_parse();
-  }
   var root = loaded_protocols.get("rpc").root;
   var decoded = window.atob(this.response);
   document.getElementById("status").innerHTML = this.statusText;
@@ -199,9 +194,6 @@ function nodes_handler() {
 }
 
 function create_and_send_command_from_string(input) {
-  if(!loaded_protocols.has("rpc")){
-    read_and_parse();
-  }
   var input_json = JSON.parse(input);
   var body = "{";
   var method = "";
@@ -236,9 +228,6 @@ function create_and_send_command_from_string(input) {
 }
 
 function new_proto_msg(protocol, json_data) {
-  if(protocol == "rpc" && !loaded_protocols.has(protocol)){
-    read_and_parse();
-  }
   if (!loaded_protocols.has(protocol)) {
     return;
   }
@@ -269,7 +258,7 @@ function read_and_parse() {
       ["list_supported_protocols", ["", "ProtocolIDsList"]],
       ["list_running_protocols", ["", "ProtocolIDsList"]],
       ["get_protocols", ["ProtocolIDsList", "ProtocolsList"]],
-      ["load_protocols", ["ProtocolIDsList", ""]],
+      ["load_protocols", ["ProtocolsList", ""]],
       ["launch_node", ["Node", ""]],
       ["list_nodes", ["", "NodeIdsList"]],
       ["get_nodes", ["NodesIdsList", "NodesList"]],
@@ -311,7 +300,7 @@ function load_protos(protocols) {
   }
   var proto_list = document.getElementById("selected_protocol");
   var file_list = document.getElementById("selected_file");
-  for(var i = proto_list.options.length - 1 ; i > 0 ; i--) {
+  for(var i = proto_list.options.length - 1 ; i > 1 ; i--) {
     proto_list.remove(i);
   }
   for(var i = file_list.options.length - 1 ; i > 1 ; i--) {
@@ -333,14 +322,14 @@ function load_protos(protocols) {
     proto_list.appendChild(opt);
 
     for (var j = 0; j < p.file_names.length; j++) {
-      var file_name = pid + new TextDecoder("utf-8").decode(p.file_names[j]);
+      var file_name = pid + '/' + new TextDecoder("utf-8").decode(p.file_names[j]);
       var file = new TextDecoder("utf-8").decode(p.files[j]);
       files.set(file_name, file);
       var o = document.createElement('option');
       o.value = file_name;
       o.innerHTML = file_name;
       file_list.appendChild(o);
-      if (file_name === (pid + "config")) {
+      if (file_name === (pid + "/config")) {
         var config_file = file;
       } else {
         var proto_file = file;
@@ -392,11 +381,12 @@ function load_nodes(nodes) {
 function show_file() {
   var selected_file = document.getElementById("selected_file").value;
   if (selected_file === "none") {
+    document.getElementById("file").innerHTML = "";
     return;
   }
   else {
     if (files.has(selected_file)) {
-      document.getElementById("file").innerHTML = files.get(selected_file)
+      document.getElementById("file").innerHTML = files.get(selected_file);
     } else {
       console.log("No such file");
     }
@@ -410,7 +400,13 @@ function load_commands() {
     cmd_list.remove(i);
   }
   var protocol = document.getElementById("selected_protocol").value;
-
+  if (protocol === "none") {
+    return;
+  }
+  if (protocol === "rpc") {
+    // TODO(kari): Remove buttons and implement logic here
+    return;
+  }
   for (var cmd of loaded_protocols.get(protocol).commands.keys()) {
     var opt = document.createElement('option');
     opt.value = cmd;
@@ -422,6 +418,10 @@ function load_commands() {
 function show_command() {
   var cmd = document.getElementById("selected_cmd").value;
   if (cmd === "none") {
+    return;
+  }
+  var protocol = document.getElementById("selected_protocol").value;
+  if (protocol === "none") {
     return;
   }
   var node = document.getElementById("selected_node").value;
@@ -443,7 +443,6 @@ function show_command() {
     }
   }`;
   document.getElementById("send_command_text_field").value = msg;
-  var protocol = document.getElementById("selected_protocol").value;
   var cmd_input = loaded_protocols.get(protocol).commands.get(cmd)[0];
   if (cmd_input !== "") {
     document.getElementById("message_encoder").value = "{\n\"" + cmd_input + "\" : " +
@@ -467,7 +466,7 @@ function get_protocols() {
   "method" : "get_protocols",
   "Msg" :  {
     "ProtocolIDsList" : {
-      "protocol_ids" : ["YXV0b21hdG9uL2V4YW1wbGVzL3NtYXJ0cHJvdG8vY2hhdC8="]
+      "protocol_ids" : [""]
     }
   }
   }`;
@@ -478,8 +477,10 @@ function load_protocols() {
   `{
   "method" : "load_protocols",
   "Msg" :  {
-    "ProtocolIDsList" : {
-      protocol_ids : []
+    "ProtocolsList" : {
+      "protocols" : [
+         {"protocol_id": "", "path": ""}
+      ]
     }
   }
   }`;
@@ -487,6 +488,9 @@ function load_protocols() {
 
 function launch_node() {
   var protocol = document.getElementById("selected_protocol").value;
+  if (protocol === "none" || protocol === "rpc") {
+    return;
+  }
   var msg = `{
   "method" : "launch_node",
     "Msg" :  {
@@ -675,11 +679,16 @@ function disconnect() {
 
 function start_testnet() {
   var protocol = document.getElementById("selected_protocol").value;
+  if (protocol === "none" || protocol === "rpc") {
+    return;
+  }
   var msg = `{
   "method" : "start_testnet",
     "Msg" :  {
       "Network" : {
-        "protocol_id" : "",
+        "protocol_id" : "`
+        + window.btoa(protocol) +
+        `",
         "number_nodes" : 50,
         "number_peers_per_node" : 3,
         "is_localhost" : true,

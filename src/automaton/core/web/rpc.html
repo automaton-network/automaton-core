@@ -1,6 +1,6 @@
 <html>
 <meta charset="utf-8"/>
-<body class="body">
+<body class="body" onload="read_and_parse()">
   <script type="text/javascript" src="https://cdn.rawgit.com/dcodeIO/protobuf.js/6.8.8/dist/protobuf.min.js"></script>
   <script type="text/javascript" src="rpc.js"></script>
 
@@ -47,7 +47,8 @@
     <div style="width:100%;color:black;">
       <label>Select protocol:</label>
       <select id="selected_protocol" onchange="load_commands()"">
-         <option value="rpc" selected>rpc</option>
+         <option value="none" selected>None</option>
+         <option value="rpc">rpc</option>
       </select>
 
       <label>Select node:</label>

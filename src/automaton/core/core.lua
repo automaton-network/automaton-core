@@ -15,7 +15,7 @@ history_add("msg = ProtocolsList()")
 history_add("msg = ProtocolIDsList()")
 history_add("msg:deserialize(m)")
 history_add("print(msg:to_string())")
-history_add("load_protocol(\"automaton/examples/smartproto/chat/\")")
+history_add("load_protocol( \"chat\", \"automaton/examples/smartproto/chat/\")")
 
 -- PROTOCOLS RPC --
 
@@ -23,7 +23,6 @@ function list_supported_protocols()
   local m = ProtocolIDsList()
   for k,_ in pairs(get_core_supported_protocols()) do
     m.protocol_ids = k
-    print(k)
   end
   return m:serialize()
 end
@@ -56,7 +55,7 @@ function rpc_get_protocols(m)
   return get_protocols(request.protocol_ids)
 end
 
-function list_running_protocols ()
+function list_running_protocols()
   -- local response = ListProtocolsResponse()
   -- need to store and get info
   print("This function is not yet supported")
@@ -64,21 +63,25 @@ function list_running_protocols ()
   -- return response:serialize()
 end
 
-function rpc_list_running_protocols ()
+function rpc_list_running_protocols()
   return list_running_protocols()
 end
 
-function load_protocols (protocol_ids)
-  for _,pid in ipairs(protocol_ids) do
-    load_protocol(pid)
+function load_protocols(protocol_list)
+  for pid, path in pairs(protocol_list) do
+    load_protocol(pid, path)
   end
   return ""
 end
 
-function rpc_load_protocols (protos)
-  local request = ProtocolIDsList()
-  request:deserialize(protos)
-  return load_protocols(request.protocol_ids)
+function rpc_load_protocols(m)
+  local request = ProtocolsList()
+  request:deserialize(m)
+  local protocol_list = {}
+  for _,p in ipairs(request.protocols) do
+    protocol_list[p.protocol_id] = p.path
+  end
+  return load_protocols(protocol_list)
 end
 
 -- NODE RPC COMMON --

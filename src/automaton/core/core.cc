@@ -219,8 +219,8 @@ int main(int argc, char* argv[]) {
     cli.history_add(cmd.c_str());
   });
 
-  script.set_function("load_protocol", [&](std::string proto_id){
-    smart_protocol::load(proto_id);
+  script.set_function("load_protocol", [&](std::string proto_id, std::string path){
+    smart_protocol::load(proto_id, path);
   });
 
   automaton::core::network::tcp_init();
@@ -245,10 +245,12 @@ int main(int argc, char* argv[]) {
     nlohmann::json j;
     i >> j;
     i.close();
-    std::vector<std::string> paths = j["protocols"];
-    for (auto& p : paths) {
-      script.safe_script(get_file_contents((p + "init.lua").c_str()));
-      smart_protocol::load(p);
+    std::vector<std::vector<std::string>> protocols = j["protocols"];
+    for (auto& p : protocols) {
+      std::string pid = p[0];
+      std::string path = p[1];
+      script.safe_script(get_file_contents((path + "init.lua").c_str()));
+      smart_protocol::load(pid, path);
     }
     script.set_function("get_core_supported_protocols", [&](){
       std::unordered_map<std::string, std::unordered_map<std::string, std::string> > protocols;
