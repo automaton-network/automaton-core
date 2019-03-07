@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <iomanip>
 #include <iostream>
+#include <sstream>
 #include <string>
 
 #include "secp256k1/include/secp256k1_recovery.h"
@@ -21,6 +22,8 @@ int main(int argc, char* argv[]) {
   unsigned char difficulty[32] = {0};
   unsigned char priv_key[32] = {0};
   unsigned char address[32] = {0};
+  secp256k1_context* context = secp256k1_context_create(SECP256K1_CONTEXT_SIGN | SECP256K1_CONTEXT_VERIFY);
+  secp256k1_pubkey* pubkey = new secp256k1_pubkey();
 
   std::string mask_input, difficulty_input, address_input;
   // Input the mask, difficulty and hash of the benefactors address
@@ -52,13 +55,23 @@ int main(int argc, char* argv[]) {
   while (1) {
     bool mined = mine_key(mask, difficulty, priv_key);
     if (mined) {
-      std::cout << "Key mined" << std::endl;
+      std::stringstream ss;
       bin2hex(std::string(reinterpret_cast<char*>(priv_key)));
+      std::string rsv = sign(priv_key, address);
+      ss << "rsv: " << bin2hex(rsv) << std::endl;
+
+      secp256k1_ec_pubkey_create(context, pubkey, priv_key);
+      unsigned char pub_key_serialized[65];
+      size_t outLen = 65;
+      secp256k1_ec_pubkey_serialize(context, pub_key_serialized, &outLen, pubkey, SECP256K1_EC_UNCOMPRESSED);
+      std::string pub_key_uncompressed(reinterpret_cast<char*>(pub_key_serialized), 65);
+      std::string pub_key_x(reinterpret_cast<char*>(pub_key_serialized+1), 32);
+      std::string pub_key_y(reinterpret_cast<char*>(pub_key_serialized+33), 32);
+      std::cout << "koh.claimSlot('0x" << bin2hex(pub_key_x) << "', '0x" << bin2hex(pub_key_y) << "', '0x"
+                << bin2hex(std::string(reinterpret_cast<char*>(address+12), 20)) << "', '0x"
+                << bin2hex(rsv.substr(0, 32)) << "', '0x" << bin2hex(rsv.substr(32, 32)) << "', '0x"
+                << bin2hex(rsv.substr(64, 1)) << "')"<< std::endl;
     }
-
-    std::string rsv = sign(priv_key, address);
-
-    std::cout << "rsv: " << bin2hex(rsv) << std::endl;
   }
 
 
