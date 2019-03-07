@@ -37,14 +37,6 @@ struct peer_info {
 class node: public network::connection::connection_handler,
             public network::acceptor::acceptor_handler {
  public:
-  // node(std::string id,
-  //      uint32_t update_time_slice,
-  //      std::vector<automaton::core::data::schema*> schemas,
-  //      std::vector<std::string> lua_scripts,
-  //      std::vector<std::string> wire_msgs,
-  //      std::vector<std::string> commands,
-  //      data::factory& factory); // NOLINT
-
   node(const std::string& id, std::string proto_id);  //, data::factory& factory);  // NOLINT
 
   ~node();

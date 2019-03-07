@@ -4,8 +4,9 @@ syntax = "proto3";
 
 message Protocol {
   bytes protocol_id = 1;
-  repeated bytes file_names = 2;
-  repeated bytes files = 3;
+  bytes path = 2;
+  repeated bytes file_names = 3;
+  repeated bytes files = 4;
 }
 
 message ProtocolIDsList {

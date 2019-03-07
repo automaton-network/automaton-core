@@ -20,13 +20,13 @@ class smart_protocol {
     std::string input_type;
     std::string output_type;
 
-    cmd(std::string nm, std::string input, std::string output):name(nm), input_type(input), output_type(output) {}
+    cmd(const std::string& nm, const std::string& input, const std::string& output):name(nm), input_type(input), output_type(output) {}
   };
 
-  static std::shared_ptr<smart_protocol> get_protocol(std::string proto_id);
+  static std::shared_ptr<smart_protocol> get_protocol(const std::string& proto_id);
   static std::vector<std::string> list_protocols();
 
-  static bool load(std::string path);
+  static bool load(const std::string& id, const std::string& path);
 
   std::shared_ptr<data::factory> get_factory();
   std::unordered_map<std::string, std::string> get_msgs_definitions();

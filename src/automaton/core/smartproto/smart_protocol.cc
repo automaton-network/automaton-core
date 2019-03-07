@@ -24,7 +24,7 @@ smart_protocol::smart_protocol() {
   factory = std::shared_ptr<data::factory>(new protobuf_factory());
 }
 
-std::shared_ptr<smart_protocol> smart_protocol::get_protocol(std::string proto_id) {
+std::shared_ptr<smart_protocol> smart_protocol::get_protocol(const std::string& proto_id) {
   auto it = protocols.find(proto_id);
   if (it == protocols.end()) {
     return nullptr;
@@ -39,7 +39,11 @@ std::vector<std::string> smart_protocol::list_protocols() {
   return result;
 }
 
-bool smart_protocol::load(std::string path) {
+bool smart_protocol::load(const std::string& id, const std::string& path) {
+  if (protocols.find(id) != protocols.end()) {
+    LOG(ERROR) << "A protocol with this id( " << id << ") is already loaded! ";
+    return false;
+  }
   std::shared_ptr<smart_protocol> proto(new smart_protocol());
   std::ifstream i(path + "config.json");
   if (!i.is_open()) {
@@ -71,7 +75,7 @@ bool smart_protocol::load(std::string path) {
       proto->lua_scripts.push_back(get_file_contents((path + lua_scripts_filenames[i]).c_str()));
     }
   }
-  protocols[path] = proto;
+  protocols[id] = proto;
   return true;
 }
 

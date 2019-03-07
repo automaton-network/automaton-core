@@ -1,8 +1,8 @@
 {
   "protocols" : [
-    "automaton/examples/smartproto/chat/",
-    "automaton/examples/smartproto/blockchain/",
-    "automaton/examples/smartproto/reservationsystem/"
+    ["chat", "automaton/examples/smartproto/chat/"],
+    ["blockchain", "automaton/examples/smartproto/blockchain/"],
+    ["hotel", "automaton/examples/smartproto/reservationsystem/"]
   ],
   "command_definitions" : [
     "automaton/core/rpc.proto"
@@ -14,7 +14,7 @@
     {"cmd":"list_supported_protocols", "input":"", "output":"ProtocolIDsList"},
     {"cmd":"list_running_protocols", "input":"", "output":"ProtocolIDsList"},
     {"cmd":"get_protocols", "input":"ProtocolIDsList", "output":"ProtocolsList"},
-    {"cmd":"load_protocols", "input":"ProtocolIDsList", "output":""},
+    {"cmd":"load_protocols", "input":"ProtocolsList", "output":""},
 
     {"cmd":"launch_node", "input":"Node", "output":""},
     {"cmd":"list_nodes", "input":"", "output":"NodeIdsList"},
