@@ -61,7 +61,7 @@ new_local_repository(
 
 new_local_repository(
   name = "bitcoin",
-  path = "local_third_party/bitcoin-0.16.0",
+  path = "local_third_party/bitcoin",
   build_file = "third_party/bitcoin.BUILD",
 )
 

@@ -63,6 +63,7 @@ Get-GitRepo "https://github.com/google/googletest.git" "googletest" "2fe3bd994b3
 # Get-GitRepo "https://github.com/nelhage/rules_boost.git" "com_github_nelhage_rules_boost" "fe787183c14f2a5c6e5e1e75a7c57d2e799d3d19"
 Get-GitRepo "https://github.com/protocolbuffers/protobuf.git" "protobuf" "b829ff2a4614ff25048944b2cdc8e43b6488fda0"
 # Get-GitRepo "https://github.com/svaarala/duktape.git" "duktape" "d7fdb67f18561a50e06bafd196c6b423af9ad6fe"
+Get-GitRepo "https://github.com/bitcoin/bitcoin" "bitcoin" "ef70f9b52b851c7997a9f1a0834714e3eebc1fd8"
 
 #  ====== Check if missing and download using wget ======
 
