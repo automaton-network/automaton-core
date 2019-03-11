@@ -78,17 +78,20 @@ message TestNetConnection {
 }
 
 message TestNetCreate {
+  // Test network ID. Only one testnet can be created with the same ID.
+  bytes testnet_id = 1;
+
   // The ID of the registered smart protocol we want to launch a testnet with.
-  bytes protocol_id = 1;
+  bytes protocol_id = 2;
 
   // Currently supported: "tcp" or "sim".
-  bytes network_type = 2;
+  bytes network_type = 3;
 
   // Number of peer nodes to instantiate.
-  uint32 number_nodes = 3;
+  uint32 number_nodes = 4;
 
   // Initial network topology using node index, starting at 0.
-  repeated TestNetConnection topology = 3;
+  repeated TestNetConnection topology = 5;
 }
 
 message TestNetGetNodeID {
@@ -96,7 +99,7 @@ message TestNetGetNodeID {
 }
 
 message TestNetDestroy {
-  bytes testned_id = 1;
+  bytes testnet_id = 1;
 }
 
 // -- network messages --
