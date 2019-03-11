@@ -29,6 +29,10 @@
     {"cmd":"disconnect", "input":"PeerIdsList", "output":""},
     {"cmd":"process_cmd", "input":"NodeCmdRequest", "output":"NodeCmdResponse"},
 
+    {"cmd":"testnet_create", "input":"TestNetCreate", "output":""},
+    {"cmd":"testnet_get_node_id", "input":"TestNetGetNodeID", "output":"NodeID"},
+    {"cmd":"testnet_destroy", "input":"TestNetDestroy", "output":""},
+
     {"cmd":"start_testnet", "input":"Network", "output":""}
   ],
   "rpc_config" : {
