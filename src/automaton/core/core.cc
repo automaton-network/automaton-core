@@ -26,7 +26,7 @@ using automaton::core::data::schema;
 using automaton::core::io::get_file_contents;
 using automaton::core::network::http_server;
 using automaton::core::script::engine;
-using automaton::core::smartproto::node;
+using automaton::core::node::node;
 using automaton::core::smartproto::smart_protocol;
 
 using json = nlohmann::json;
@@ -115,7 +115,7 @@ int main(int argc, char* argv[]) {
   engine script(core_factory);
   script.bind_core();
 
-  // Bind smartproto::node class
+  // Bind node::node class
   auto node_type = script.create_simple_usertype<node>();
 
   node_type.set(sol::call_constructor,
@@ -181,35 +181,15 @@ int main(int argc, char* argv[]) {
 
   script.set_usertype("node", node_type);
 
-  std::unordered_map<std::string, std::unique_ptr<node> > nodes;
-
   script.set_function("list_nodes_as_table", [&](){
-    std::vector<std::string> result;
-    for (const auto& n : nodes) {
-      result.push_back(n.first);
-    }
-    return sol::as_table(result);
+    return sol::as_table(node::list_nodes());
   });
 
-  script.set_function("get_node", [&](std::string node_id) -> node* {
-    const auto& n = nodes.find(node_id);
-    if (n != nodes.end()) {
-      return (n->second).get();
-    }
-    return nullptr;
-  });
+  script.set_function("get_node", &node::get_node);
 
   script.set_function("launch_node", [&](std::string node_id, std::string protocol_id, std::string address) {
     LOG(INFO) << "launching node ... " << node_id << " on " << protocol_id << " @ " << address;
-    auto n = nodes.find(node_id);
-    if (n == nodes.end()) {
-      nodes[node_id] = std::make_unique<node>(node_id, protocol_id);
-      bool res = nodes.at(node_id)->set_acceptor(address);
-      if (!res) {
-        LOG(ERROR) << "Setting acceptor at address " << address << " failed!";
-        std::cout << "!!! set acceptor failed" << std::endl;
-      }
-    }
+    node::launch_node(node_id, protocol_id, address);
     return "";
   });
 

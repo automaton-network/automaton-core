@@ -43,7 +43,7 @@ using std::vector;
 
 namespace automaton {
 namespace core {
-namespace smartproto {
+namespace node {
 
 // TODO(kari): Make buffers in connection shared_ptr
 
@@ -51,6 +51,48 @@ static const uint32_t MAX_MESSAGE_SIZE = 1 * 1024;  // Maximum size of message i
 static const uint32_t HEADER_SIZE = 3;
 static const uint32_t WAITING_HEADER = 1;
 static const uint32_t WAITING_MESSAGE = 2;
+
+std::unordered_map<std::string, std::unique_ptr<node> > node::nodes;
+
+std::vector<std::string> node::list_nodes() {
+  std::vector<std::string> result;
+  for (const auto& n : nodes) {
+    result.push_back(n.first);
+  }
+  return result;
+}
+
+node* node::get_node(std::string node_id) {
+  const auto& n = nodes.find(node_id);
+  if (n != nodes.end()) {
+    return (n->second).get();
+  }
+  return nullptr;
+}
+
+bool node::launch_node(std::string node_id, std::string protocol_id, std::string address) {
+  auto n = nodes.find(node_id);
+  if (n == nodes.end()) {
+    auto new_node = std::make_unique<node>(node_id, protocol_id);
+    bool res = new_node->set_acceptor(address);
+    if (!res) {
+      LOG(ERROR) << "Setting acceptor at address " << address << " failed!";
+      std::cout << "!!! set acceptor failed" << std::endl;
+      return false;
+    }
+    nodes[node_id] = std::move(new_node);
+  } else {
+    return false;
+  }
+  return true;
+}
+
+void node::remove_node(std::string id) {
+  auto it = nodes.find(id);
+  if (it != nodes.end()) {
+    nodes.erase(it);
+  }
+}
 
 peer_info::peer_info(): id(0), address("") {}
 
@@ -90,7 +132,8 @@ node::node(const std::string& id,
     , peer_ids(0)
     , acceptor_(nullptr) {
   LOG(DEBUG) << "Node constructor called";
-  std::shared_ptr<smart_protocol> proto = smart_protocol::get_protocol(proto_id);
+  std::shared_ptr<automaton::core::smartproto::smart_protocol> proto =
+      automaton::core::smartproto::smart_protocol::get_protocol(proto_id);
   update_time_slice = proto->get_update_time_slice();
   engine.set_factory(proto->get_factory());
   init_bindings(proto->get_schemas(), proto->get_scripts(), proto->get_wire_msgs(), proto->get_commands());
@@ -831,6 +874,6 @@ void node::on_acceptor_error(acceptor_id a, const common::status& s)  {
   LOG(DEBUG) << acceptor_->get_address() << " -> on_error in acceptor:: " << s;
 }
 
-}  // namespace smartproto
+}  // namespace node
 }  // namespace core
 }  // namespace automaton

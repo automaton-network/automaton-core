@@ -22,7 +22,7 @@
 
 namespace automaton {
 namespace core {
-namespace smartproto {
+namespace node {
 
 typedef network::connection_id peer_id;
 
@@ -37,6 +37,11 @@ struct peer_info {
 class node: public network::connection::connection_handler,
             public network::acceptor::acceptor_handler {
  public:
+  static std::vector<std::string> list_nodes();
+  static node* get_node(std::string node_id);
+  static bool launch_node(std::string node_id, std::string protocol_id, std::string address);
+  static void remove_node(std::string node_id);
+
   node(const std::string& id, std::string proto_id);  //, data::factory& factory);  // NOLINT
 
   ~node();
@@ -98,6 +103,7 @@ class node: public network::connection::connection_handler,
   std::string process_cmd(std::string cmd, std::string);
 
  private:
+  static std::unordered_map<std::string, std::unique_ptr<node> > nodes;
   std::string nodeid;
   std::string protoid;
   peer_id peer_ids;
@@ -175,7 +181,7 @@ class node: public network::connection::connection_handler,
   void s_on_error(peer_id id, const std::string& message) {}
 };
 
-}  // namespace smartproto
+}  // namespace node
 }  // namespace core
 }  // namespace automaton
 
