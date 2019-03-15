@@ -38,11 +38,11 @@ class node: public network::connection::connection_handler,
             public network::acceptor::acceptor_handler {
  public:
   static std::vector<std::string> list_nodes();
-  static node* get_node(std::string node_id);
-  static bool launch_node(std::string node_id, std::string protocol_id, std::string address);
-  static void remove_node(std::string node_id);
+  static node* get_node(const std::string& node_id);
+  static bool launch_node(const std::string& node_id, const std::string& protocol_id, const std::string& address);
+  static void remove_node(const std::string& node_id);
 
-  node(const std::string& id, std::string proto_id);  //, data::factory& factory);  // NOLINT
+  node(const std::string& id, const std::string& proto_id);  //, data::factory& factory);  // NOLINT
 
   ~node();
 
@@ -86,7 +86,7 @@ class node: public network::connection::connection_handler,
   std::set<peer_id> list_connected_peers();
 
   // Execute a script which returns corresponding type
-  void script(std::string command, std::promise<std::string>* result);
+  void script(const std::string& command, std::promise<std::string>* result);
 
   uint32_t find_message_id(const std::string& name) {
     return engine.get_factory()->get_schema_id(name);
@@ -96,11 +96,11 @@ class node: public network::connection::connection_handler,
     return engine.get_factory()->new_message_by_id(id);
   }
 
-  void log(std::string logger, std::string msg);
+  void log(const std::string& logger, const std::string& msg);
 
-  void dump_logs(std::string html_file);
+  void dump_logs(const std::string& html_file);
 
-  std::string process_cmd(std::string cmd, std::string);
+  std::string process_cmd(const std::string& cmd, const std::string& params);
 
  private:
   static std::unordered_map<std::string, std::unique_ptr<node> > nodes;

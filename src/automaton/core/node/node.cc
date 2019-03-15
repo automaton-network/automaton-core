@@ -62,7 +62,7 @@ std::vector<std::string> node::list_nodes() {
   return result;
 }
 
-node* node::get_node(std::string node_id) {
+node* node::get_node(const std::string& node_id) {
   const auto& n = nodes.find(node_id);
   if (n != nodes.end()) {
     return (n->second).get();
@@ -70,7 +70,7 @@ node* node::get_node(std::string node_id) {
   return nullptr;
 }
 
-bool node::launch_node(std::string node_id, std::string protocol_id, std::string address) {
+bool node::launch_node(const std::string& node_id, const std::string& protocol_id, const std::string& address) {
   auto n = nodes.find(node_id);
   if (n == nodes.end()) {
     auto new_node = std::make_unique<node>(node_id, protocol_id);
@@ -87,7 +87,7 @@ bool node::launch_node(std::string node_id, std::string protocol_id, std::string
   return true;
 }
 
-void node::remove_node(std::string id) {
+void node::remove_node(const std::string& id) {
   auto it = nodes.find(id);
   if (it != nodes.end()) {
     nodes.erase(it);
@@ -126,7 +126,7 @@ std::string node::debug_html() {
 }
 
 node::node(const std::string& id,
-           std::string proto_id):
+           const std::string& proto_id):
       nodeid(id)
     , protoid(proto_id)
     , peer_ids(0)
@@ -134,6 +134,9 @@ node::node(const std::string& id,
   LOG(DEBUG) << "Node constructor called";
   std::shared_ptr<automaton::core::smartproto::smart_protocol> proto =
       automaton::core::smartproto::smart_protocol::get_protocol(proto_id);
+  if (!proto) {
+    throw std::invalid_argument("No such protocol: " + proto_id);
+  }
   update_time_slice = proto->get_update_time_slice();
   engine.set_factory(proto->get_factory());
   init_bindings(proto->get_schemas(), proto->get_scripts(), proto->get_wire_msgs(), proto->get_commands());
@@ -295,7 +298,7 @@ peer_info node::get_peer_info(peer_id pid) {
   return it->second;
 }
 
-void node::log(string logger, string msg) {
+void node::log(const std::string& logger, const std::string& msg) {
   lock_guard<mutex> lock(log_mutex);
 
   // LOG(TRACE) << "[" << logger << "] " << msg;
@@ -309,7 +312,7 @@ void node::log(string logger, string msg) {
     "[" + io::get_date_string(now) + "." + io::zero_padded(current_time % 1000, 3) + "] " + msg);
 }
 
-void node::dump_logs(string html_file) {
+void node::dump_logs(const std::string& html_file) {
   add_task([this, html_file](){
     ofstream f;
     f.open(html_file, ios_base::trunc);
@@ -422,7 +425,7 @@ void node::s_on_blob_received(peer_id p_id, const string& blob) {
   });
 }
 
-std::string node::process_cmd(std::string cmd, std::string msg) {
+std::string node::process_cmd(const std::string& cmd, const std::string& msg) {
   if (script_on_cmd.count(cmd) != 1) {
     LOG(ERROR) << "Invalid command! : " << cmd << " (args: " << io::bin2hex(msg) << ")";
     return "";
@@ -522,7 +525,7 @@ bool node::connect(peer_id p_id) {
   }
   auto it = known_peers.find(p_id);
   if (it != known_peers.end()) {
-    if (!it->second.connection) {
+    if (it->second.connection == nullptr) {
       LOG(ERROR) << "Connection does not exist!";
       // VLOG(9) << "UNLOCK " << this << " " << (acceptor_ ? acceptor_->get_address() : "N/A") << " peer " << p_id;
       return false;
@@ -572,14 +575,14 @@ bool node::set_acceptor(const std::string& address) {
     }
     new_acceptor = std::shared_ptr<acceptor>(acceptor::create(protocol, 1, addr, this, this));
     if (new_acceptor && !new_acceptor->init()) {
-      LOG(DEBUG) << "Acceptor initialization failed! Acceptor was not created!" << address;
+      LOG(DEBUG) << "Acceptor initialization failed! Acceptor was not created! " << address;
       return false;
     }
   } catch (std::exception& e) {
     LOG(ERROR) << "Adding acceptor failed! " << address << " Error: " << e.what();
     return false;
   }
-  if (!new_acceptor) {
+  if (new_acceptor == nullptr) {
     LOG(ERROR) << "Acceptor was not created!";
     return false;
   }
@@ -623,7 +626,7 @@ peer_id node::add_peer(const string& address) {
   } catch (std::exception& e) {
     LOG(ERROR) << e.what();
   }
-  if (!new_connection) {
+  if (new_connection == nullptr) {
     LOG(DEBUG) << "No new connection";
   } else {
     info.connection = new_connection;
@@ -678,7 +681,7 @@ peer_id node::get_next_peer_id() {
   return ++peer_ids;
 }
 
-void node::script(std::string command, std::promise<std::string>* result) {
+void node::script(const std::string& command, std::promise<std::string>* result) {
   add_task([this, command, result]() {
     auto pfr = engine.safe_script(command);
     if (result != nullptr) {
