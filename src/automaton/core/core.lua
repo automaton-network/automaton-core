@@ -241,7 +241,7 @@ function connect(node_id, peer_ids)
   for _,id in ipairs(peer_ids) do
     node:connect(id)
   end
-    return ""
+  return ""
 end
 
 function rpc_connect(m)
@@ -284,6 +284,33 @@ function rpc_process_cmd(m)
 end
 
 -- TESTNET --
+
+function rpc_testnet_create(m)
+  local request = TestNetCreate()
+  request:deserialize(m)
+  local peers_list = {}
+  for _,v in pairs(request.topology) do
+    peers_list[v.from_node] = v.to_node
+  end
+  create_testnet(request.testnet_id, request.protocol_id, request.network_type, request.number_nodes, peers_list)
+  return ""
+end
+
+function rpc_testnet_destroy(m)
+  local request = TestNetID()
+  request:deserialize(m)
+  destroy_testnet(request.testnet_id)
+  return ""
+end
+
+function rpc_testnet_get_node_id(m)
+  local request = TestNetGetNodeID()
+  request:deserialize(m)
+  local response = NodeID()
+  response.node_id = get_testnet_node_id(request.testnet_id, request.node_index)
+  return response:serialize()
+end
+-----------------
 
 function rpc_start_testnet(m)
   local request = Network()

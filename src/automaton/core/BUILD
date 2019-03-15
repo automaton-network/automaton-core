@@ -18,6 +18,7 @@ cc_binary(
     "//automaton/core/smartproto",
     "//automaton/core/node",
     "//automaton/core/state",
+    "//automaton/core/testnet",
     "@cryptopp//:cryptopp",
     "@json//:json",
   ],

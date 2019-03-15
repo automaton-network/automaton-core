@@ -31,7 +31,7 @@
 
     {"cmd":"testnet_create", "input":"TestNetCreate", "output":""},
     {"cmd":"testnet_get_node_id", "input":"TestNetGetNodeID", "output":"NodeID"},
-    {"cmd":"testnet_destroy", "input":"TestNetDestroy", "output":""},
+    {"cmd":"testnet_destroy", "input":"TestNetID", "output":""},
 
     {"cmd":"start_testnet", "input":"Network", "output":""}
   ],
