@@ -69,12 +69,12 @@ message Peer {
 
 // *** testnet ***
 
-message TestNetConnection {
-  // The index of the client node within the testnet, starting at 0.
+message TestNetNodeConnections {
+  // The index of the client node within the testnet, starting at 1.
   uint32 from_node = 1;
 
-  // The index of the listener node within the testnet, starting at 0.
-  uint32 to_node = 2;
+  // The index of the listener node within the testnet, starting at 1.
+  repeated uint32 to_node = 2;
 }
 
 message TestNetCreate {
@@ -84,21 +84,22 @@ message TestNetCreate {
   // The ID of the registered smart protocol we want to launch a testnet with.
   bytes protocol_id = 2;
 
-  // Currently supported: "tcp" or "sim".
+  // Currently supported: "localhost" or "simulation".
   bytes network_type = 3;
 
   // Number of peer nodes to instantiate.
   uint32 number_nodes = 4;
 
   // Initial network topology using node index, starting at 0.
-  repeated TestNetConnection topology = 5;
+  repeated TestNetNodeConnections topology = 5;
 }
 
 message TestNetGetNodeID {
-  uint32 node_index = 1;
+  bytes testnet_id = 1;
+  uint32 node_index = 2;  // starting at 1
 }
 
-message TestNetDestroy {
+message TestNetID {
   bytes testnet_id = 1;
 }
 

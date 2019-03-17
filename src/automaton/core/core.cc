@@ -17,6 +17,7 @@
 #include "automaton/core/node/node.h"
 #include "automaton/core/script/engine.h"
 #include "automaton/core/smartproto/smart_protocol.h"
+#include "automaton/core/testnet/testnet.h"
 #include "automaton/core/io/io.h"  //  IO needs to be included after boost
 
 using automaton::core::data::factory;
@@ -26,8 +27,9 @@ using automaton::core::data::schema;
 using automaton::core::io::get_file_contents;
 using automaton::core::network::http_server;
 using automaton::core::script::engine;
-using automaton::core::smartproto::node;
+using automaton::core::node::node;
 using automaton::core::smartproto::smart_protocol;
+using automaton::core::testnet::testnet;
 
 using json = nlohmann::json;
 
@@ -115,7 +117,7 @@ int main(int argc, char* argv[]) {
   engine script(core_factory);
   script.bind_core();
 
-  // Bind smartproto::node class
+  // Bind node::node class
   auto node_type = script.create_simple_usertype<node>();
 
   node_type.set(sol::call_constructor,
@@ -181,39 +183,78 @@ int main(int argc, char* argv[]) {
 
   script.set_usertype("node", node_type);
 
-  std::unordered_map<std::string, std::unique_ptr<node> > nodes;
+  // Bind node static functions
 
   script.set_function("list_nodes_as_table", [&](){
-    std::vector<std::string> result;
-    for (const auto& n : nodes) {
-      result.push_back(n.first);
-    }
-    return sol::as_table(result);
+    return sol::as_table(node::list_nodes());
   });
 
-  script.set_function("get_node", [&](std::string node_id) -> node* {
-    const auto& n = nodes.find(node_id);
-    if (n != nodes.end()) {
-      return (n->second).get();
-    }
-    return nullptr;
-  });
+  script.set_function("get_node", &node::get_node);
 
   script.set_function("launch_node", [&](std::string node_id, std::string protocol_id, std::string address) {
     LOG(INFO) << "launching node ... " << node_id << " on " << protocol_id << " @ " << address;
-    auto n = nodes.find(node_id);
-    if (n == nodes.end()) {
-      nodes[node_id] = std::make_unique<node>(node_id, protocol_id);
-      bool res = nodes.at(node_id)->set_acceptor(address);
-      if (!res) {
-        LOG(ERROR) << "Setting acceptor at address " << address << " failed!";
-        std::cout << "!!! set acceptor failed" << std::endl;
-      }
-    }
+    node::launch_node(node_id, protocol_id, address);
     return "";
   });
 
   script.set_function("remove_node", [&](std::string node_id) {});
+
+  // Bind testnet static functions
+
+  script.set("testnet_create", [&](std::string id, std::string smart_protocol_id, std::string ntype,
+      uint32_t number_nodes, std::unordered_map<uint32_t, std::vector<uint32_t> > peer_list) {
+    bool success = false;
+    if (ntype == "simulation") {
+      success = testnet::create_testnet(id, smart_protocol_id, testnet::network_protocol_type::simulation,
+          number_nodes, peer_list);
+    } else if (ntype == "localhost") {
+      success = testnet::create_testnet(id, smart_protocol_id, testnet::network_protocol_type::localhost,
+          number_nodes, peer_list);
+    }
+    if (!success) {
+      throw std::runtime_error("Testnet creation failed!");
+    }
+  });
+
+  script.set("testnet_destroy", &testnet::destroy_testnet);
+
+  script.set("testnet_list_all", &testnet::list_testnets);
+
+  script.set_function("connect_testnet_nodes",
+      [&](std::string id, std::unordered_map<uint32_t, std::vector<uint32_t> > peers_list) {
+    auto net = testnet::get_testnet(id);
+    if (net == nullptr) {
+      LOG(ERROR) << "No testnet with id " << id;
+    } else {
+      net->connect(peers_list);
+    }
+  });
+
+  script.set_function("list_testnet_nodes", [&](std::string id) {
+    auto net = testnet::get_testnet(id);
+    if (net == nullptr) {
+      LOG(ERROR) << "No testnet with id " << id;
+    } else {
+      return net->list_nodes();
+    }
+    return std::vector<std::string>();
+  });
+
+  script.set_function("get_testnet_node_id", [&](std::string testnet_id, uint32_t index) -> std::string {
+    auto net = testnet::get_testnet(testnet_id);
+    if (net == nullptr) {
+      LOG(ERROR) << "No testnet with id " << testnet_id;
+      return "";
+    }
+    std::vector<std::string> nodes = net->list_nodes();
+    if (index < 1 || index > nodes.size()) {
+      LOG(ERROR) << "No node with index " << index;
+      return "";
+    }
+    return nodes[index - 1];
+  });
+
+  // end of testnet functions
 
   script.set_function("history_add", [&](std::string cmd){
     cli.history_add(cmd.c_str());

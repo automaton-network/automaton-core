@@ -1,14 +1,5 @@
 -- core.lua
 
---[[ --- TESTING ---
-launch_node("a", "automaton/examples/smartproto/chat/", "tcp://127.0.0.1:12345")
-launch_node("b", "automaton/examples/smartproto/chat/", "tcp://127.0.0.1:12355")
-add_peers("a", {"tcp://127.0.0.1:12355"})
-connect("a", {1})
-process_cmd("a", "get_messages", "")
-disconnect("a", {1})
-]]
-
 history_add("m = get_protocols({\"automaton/examples/smartproto/chat/\",\"automaton/examples/smartproto/blockchain/\",\"automaton/examples/smartproto/reservationsystem/\"})")
 history_add("m = list_supported_protocols()")
 history_add("msg = ProtocolsList()")
@@ -250,7 +241,7 @@ function connect(node_id, peer_ids)
   for _,id in ipairs(peer_ids) do
     node:connect(id)
   end
-    return ""
+  return ""
 end
 
 function rpc_connect(m)
@@ -291,6 +282,35 @@ function rpc_process_cmd(m)
   request:deserialize(m)
   return process_cmd(request.node_id, request.cmd, request.params)
 end
+
+-- TESTNET --
+
+function rpc_testnet_create(m)
+  local request = TestNetCreate()
+  request:deserialize(m)
+  local peers_list = {}
+  for _,v in pairs(request.topology) do
+    peers_list[v.from_node] = v.to_node
+  end
+  testnet_create(request.testnet_id, request.protocol_id, request.network_type, request.number_nodes, peers_list)
+  return ""
+end
+
+function rpc_testnet_destroy(m)
+  local request = TestNetID()
+  request:deserialize(m)
+  testnet_destroy(request.testnet_id)
+  return ""
+end
+
+function rpc_testnet_get_node_id(m)
+  local request = TestNetGetNodeID()
+  request:deserialize(m)
+  local response = NodeID()
+  response.node_id = get_testnet_node_id(request.testnet_id, request.node_index)
+  return response:serialize()
+end
+-----------------
 
 function rpc_start_testnet(m)
   local request = Network()

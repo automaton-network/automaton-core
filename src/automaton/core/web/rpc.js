@@ -2,7 +2,7 @@ var PORT = "33777";
 var rpc_proto =
 `syntax = "proto3";
 
-// --- protocol messages ---
+// *** Smart Protocols ***
 
 message Protocol {
   bytes protocol_id = 1;
@@ -19,7 +19,7 @@ message ProtocolsList {
   repeated Protocol protocols = 1;
 }
 
-// -- node messages --
+// *** node ***
 
 message Node {
   bytes id = 1;
@@ -67,6 +67,42 @@ message PeersList {
 message Peer {
   uint32 id = 1;
   bytes address = 2;
+}
+
+// *** testnet ***
+
+message TestNetNodeConnections {
+  // The index of the client node within the testnet, starting at 1.
+  uint32 from_node = 1;
+
+  // The index of the listener node within the testnet, starting at 1.
+  repeated uint32 to_node = 2;
+}
+
+message TestNetCreate {
+  // Test network ID. Only one testnet can be created with the same ID.
+  bytes testnet_id = 1;
+
+  // The ID of the registered smart protocol we want to launch a testnet with.
+  bytes protocol_id = 2;
+
+  // Currently supported: "localhost" or "simulation".
+  bytes network_type = 3;
+
+  // Number of peer nodes to instantiate.
+  uint32 number_nodes = 4;
+
+  // Initial network topology using node index, starting at 0.
+  repeated TestNetNodeConnections topology = 5;
+}
+
+message TestNetGetNodeID {
+  bytes testnet_id = 1;
+  uint32 node_index = 2;
+}
+
+message TestNetID {
+  bytes testnet_id = 1;
 }
 
 // -- network messages --
@@ -144,6 +180,7 @@ function result_handler(protocol_id, cmd) {
   var root = protocol.root;
   var decoded = window.atob(this.response);
   var array = string_to_uint8array(decoded);
+  var response = "";
   if (protocol_id !== "rpc") {
     try {
       var msg_type = root.lookupType("NodeCmdResponse");
@@ -156,21 +193,22 @@ function result_handler(protocol_id, cmd) {
       if(protocol.commands.get(cmd)[1] !== "") {
         msg_type = root.lookupType(protocol.commands.get(cmd)[1]);
         message = msg_type.decode(array);
-        document.getElementById("result").innerHTML = JSON.stringify(message.toJSON());
+        response = JSON.stringify(message.toJSON());
       }
     } catch(err) {
-      document.getElementById("result").innerHTML = err;
+      response = err;
     }
   }
   try {
     if(protocol.commands.get(cmd)[1] !== "") {
       var msg_type = root.lookupType(protocol.commands.get(cmd)[1]);
       var message = msg_type.decode(array);
-      document.getElementById("result").innerHTML = JSON.stringify(message.toJSON());
+      response = JSON.stringify(message.toJSON());
     }
   } catch(err) {
-    document.getElementById("result").innerHTML = err;
+    response = err;
   }
+  document.getElementById("result").innerHTML = response;
 }
 
 function protocols_handler() {
@@ -270,7 +308,10 @@ function read_and_parse() {
       ["connect", ["PeerIdsList", ""]],
       ["disconnect", ["PeerIdsList", ""]],
       ["process_cmd", ["NodeCmdRequest", "NodeCmdResponse"]],
-      ["start_testnet", ["Network", ""]]
+      ["start_testnet", ["Network", ""]],
+      ["testnet_create", ["TestNetCreate", ""]],
+      ["testnet_destroy", ["TestNetID", ""]],
+      ["testnet_get_node_id", ["TestNetGetNodeID", "NodeID"]]
     ]
 
     var protocol_struct = {
@@ -677,22 +718,68 @@ function disconnect() {
   document.getElementById("send_command_text_field").value = msg;
 }
 
-function start_testnet() {
-  var protocol = document.getElementById("selected_protocol").value;
-  if (protocol === "none" || protocol === "rpc") {
-    return;
-  }
+function create_testnet() {
   var msg = `{
-  "method" : "start_testnet",
+  "method" : "testnet_create",
     "Msg" :  {
-      "Network" : {
-        "protocol_id" : "`
-        + window.btoa(protocol) +
+      "TestNetCreate" : {
+        "testnet_id" : "`
+        + window.btoa("testnet") +
         `",
-        "number_nodes" : 50,
-        "number_peers_per_node" : 3,
-        "is_localhost" : true,
-        "logging_path" : ,
+        "protocol_id" : "`
+        + window.btoa("chat") +
+        `",
+        "network_type" : "`
+        + window.btoa("localhost") +
+        `",
+        "number_nodes" : 5,
+        "topology" : [
+          {"from_node" : 1, "to_node" : [2,3]},
+          {"from_node" : 2, "to_node" : [4,5]}
+        ]
+      }
+    }
+  }`;
+  document.getElementById("send_command_text_field").value = msg;
+}
+
+function destroy_testnet() {
+  var msg = `{
+  "method" : "testnet_destroy",
+    "Msg" :  {
+      "TestNetID" : {
+        "testnet_id" : "`
+        + window.btoa("testnet") +
+        `"
+      }
+    }
+  }`;
+  document.getElementById("send_command_text_field").value = msg;
+}
+
+function destroy_testnet() {
+  var msg = `{
+  "method" : "testnet_destroy",
+    "Msg" :  {
+      "TestNetID" : {
+        "testnet_id" : "`
+        + window.btoa("testnet") +
+        `"
+      }
+    }
+  }`;
+  document.getElementById("send_command_text_field").value = msg;
+}
+
+function get_testnet_node_id() {
+  var msg = `{
+  "method" : "testnet_get_node_id",
+    "Msg" :  {
+      "TestNetGetNodeID" : {
+        "testnet_id" : "`
+        + window.btoa("testnet") +
+        `",
+        "node_index" : 1
       }
     }
   }`;
