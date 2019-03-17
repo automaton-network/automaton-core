@@ -201,7 +201,7 @@ int main(int argc, char* argv[]) {
 
   // Bind testnet static functions
 
-  script.set("create_testnet", [&](std::string id, std::string smart_protocol_id, std::string ntype,
+  script.set("testnet_create", [&](std::string id, std::string smart_protocol_id, std::string ntype,
       uint32_t number_nodes, std::unordered_map<uint32_t, std::vector<uint32_t> > peer_list) {
     bool success = false;
     if (ntype == "simulation") {
@@ -216,9 +216,9 @@ int main(int argc, char* argv[]) {
     }
   });
 
-  script.set("destroy_testnet", &testnet::destroy_testnet);
+  script.set("testnet_destroy", &testnet::destroy_testnet);
 
-  script.set("list_testnets", &testnet::list_testnets);
+  script.set("testnet_list_all", &testnet::list_testnets);
 
   script.set_function("connect_testnet_nodes",
       [&](std::string id, std::unordered_map<uint32_t, std::vector<uint32_t> > peers_list) {

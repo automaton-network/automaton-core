@@ -69,7 +69,7 @@ message Peer {
 
 // *** testnet ***
 
-message TestNetPeerList {
+message TestNetNodeConnections {
   // The index of the client node within the testnet, starting at 1.
   uint32 from_node = 1;
 
@@ -91,7 +91,7 @@ message TestNetCreate {
   uint32 number_nodes = 4;
 
   // Initial network topology using node index, starting at 0.
-  repeated TestNetPeerList topology = 5;
+  repeated TestNetNodeConnections topology = 5;
 }
 
 message TestNetGetNodeID {
