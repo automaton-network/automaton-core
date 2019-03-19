@@ -1,5 +1,8 @@
 #!/bin/bash
 
+PROTOBUF_VER="3.6.1.2"
+JUCE_VER="5.4.3"
+
 darwin=false;
 case "`uname`" in
   Darwin*) darwin=true ;;
@@ -121,9 +124,9 @@ git_repo "https://github.com/orlp/ed25519.git" "ed25519" "7fa6712ef5d581a6981ec2
 [ -d cryptopp-CRYPTOPP_7_0_0 ] && mv cryptopp-CRYPTOPP_7_0_0 cryptopp
 
 [ ! -d protobuf ] && \
-  get_archive "https://github.com/protocolbuffers/protobuf/archive/v3.6.1.2.tar.gz" \
-  "v3.6.1.2.tar.gz" "2244b0308846bb22b4ff0bcc675e99290ff9f1115553ae9671eba1030af31bc0"
-[ -d protobuf-3.6.1.2 ] && mv protobuf-3.6.1.2 protobuf
+  get_archive "https://github.com/protocolbuffers/protobuf/archive/v$PROTOBUF_VER.tar.gz" \
+  "v$PROTOBUF_VER.tar.gz" "2244b0308846bb22b4ff0bcc675e99290ff9f1115553ae9671eba1030af31bc0"
+[ -d protobuf-$PROTOBUF_VER ] && mv protobuf-$PROTOBUF_VER protobuf
 
 [ ! -d json-3.1.2 ] && \
   mkdir json-3.1.2 && \
@@ -149,6 +152,11 @@ git_repo "https://github.com/orlp/ed25519.git" "ed25519" "7fa6712ef5d581a6981ec2
 [ ! -d xz-5.2.3 ] && \
   get_archive "http://phoenixnap.dl.sourceforge.net/project/lzmautils/xz-5.2.3.tar.gz" \
   "xz-5.2.3.tar.gz" "71928b357d0a09a12a4b4c5fafca8c31c19b0e7d3b8ebb19622e96f26dbf28cb"
+
+[ ! -d JUCE ] && \
+  get_archive "https://github.com/WeAreROLI/JUCE/archive/$JUCE_VER.zip" \
+  "JUCE-$JUCE_VER.zip" "a55c9c49c039c79ef733c53d463e51c7089dc602b27d99b7a4ed37f753918976"
+[ -d JUCE-$JUCE_VER ] && mv JUCE-$JUCE_VER JUCE
 
 [ ! -d bitcoin ] && \
   get_archive "https://github.com/bitcoin/bitcoin/archive/v0.17.1.tar.gz" \
@@ -212,12 +220,15 @@ mkdir -p build && cd build
 make replxx
 cd ../..
 
-cd bitcoin/src/secp256k1
-./autogen.sh
-./configure
-make
-./tests
-cd ../../..
+if [ ! -f bitcoin/src/secp256k1/.libs/libsecp256k1.a ]
+then
+  cd bitcoin/src/secp256k1
+  ./autogen.sh
+  ./configure
+  make
+  ./tests
+  cd ../../..
+fi
 
 # Build boost
 print_separator "=" 80
