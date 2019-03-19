@@ -1,7 +1,7 @@
 #include "automaton/core/data/factory.h"
 #include "automaton/core/data/protobuf/protobuf_factory.h"
 #include "automaton/core/data/protobuf/protobuf_schema.h"
-#include "automaton/core/network/tcp_implementation.h"
+#include "automaton/core/network/simulated_connection.h"
 #include "automaton/core/node/node.h"
 #include "automaton/core/smartproto/smart_protocol.h"
 #include "automaton/core/testnet/testnet.h"
@@ -13,11 +13,12 @@ using automaton::core::smartproto::smart_protocol;
 using automaton::core::testnet::testnet;
 
 TEST(testnet, test_all) {
-// int main() {
-  smart_protocol::load("chat", "automaton/tests/testnet/testproto/");
-  automaton::core::network::tcp_init();
+  EXPECT_EQ(smart_protocol::load("chat", "automaton/tests/testnet/testproto/"), true);
 
-  testnet::create_testnet("testnet", "chat", testnet::network_protocol_type::localhost, 5,
+  std::shared_ptr<automaton::core::network::simulation> sim = automaton::core::network::simulation::get_simulator();
+  sim->simulation_start(50);
+
+  testnet::create_testnet("testnet", "chat", testnet::network_protocol_type::simulation, 5,
       {
         {1, {2, 3}}, {2, {4, 5}}
       });
@@ -58,5 +59,5 @@ TEST(testnet, test_all) {
   testnet::destroy_testnet("testnet");
   EXPECT_EQ(testnet::list_testnets().size(), 0);
 
-  automaton::core::network::tcp_release();
+  sim->simulation_stop();
 }
