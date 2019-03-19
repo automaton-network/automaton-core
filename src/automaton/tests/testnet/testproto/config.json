@@ -1,0 +1,21 @@
+{
+  "update_time_slice": 50,
+
+  "schemas": [
+    "chat.proto"
+  ],
+
+  "lua_scripts": [
+    "connections.lua",
+    "chat.lua"
+  ],
+
+  "wire_msgs": [
+    "Hello", "Msg"
+  ],
+
+  "commands": [
+    ["get_heard_of", "", "Peers"],
+    ["get_peers", "", "Peers"]
+  ]
+}

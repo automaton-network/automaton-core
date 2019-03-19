@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+message Hello {
+  string name = 1;
+}
+
+message Msg {
+  string author = 1;
+}
+
+message Peers {
+  repeated string id = 1;
+}
