@@ -16,33 +16,13 @@ namespace automaton {
 namespace core {
 namespace cli {
 
-// words to be completed
-std::vector<std::string> examples {
-  "dump_logs()",
-  "localhost",
-  "simulation",
-  "chat_node",
-  "blockchain_node",
-  "testnet()",
-  "set_mining_power",
-  "get_mining_power",
-  "Alice",
-  "Bob",
-  "Charlie",
-  "Dave",
-  "Emily",
-  "random_topology()",
-  "start_random_reservations()",
-  "stop_random_reservations()",
-};
-
 Replxx::completions_t hook_completion(std::string const& context, int index, void* data) {
   Replxx::completions_t completions;
-
+  auto hints = reinterpret_cast<cli*>(data)->get_hints();
   std::string prefix {context.substr(index)};
-  for (auto const& e : examples) {
-    if (e.compare(0, prefix.size(), prefix) == 0) {
-      completions.emplace_back(e.c_str());
+  for (auto const& h : hints) {
+    if (h.compare(0, prefix.size(), prefix) == 0) {
+      completions.emplace_back(h.c_str());
     }
   }
 
@@ -51,27 +31,27 @@ Replxx::completions_t hook_completion(std::string const& context, int index, voi
 
 // NOLINTNEXTLINE
 Replxx::hints_t hook_hint(std::string const& context, int index, Replxx::Color& c, void* data) {
-  Replxx::hints_t hints;
-
+  Replxx::hints_t rplxx_hints;
   // only show hint if prefix is at least 'n' chars long
   // or if prefix begins with a specific character
+  auto hints = reinterpret_cast<cli*>(data)->get_hints();
   std::string prefix {context.substr(index)};
   if (prefix.size() >= 1) {
-    for (auto const& e : examples) {
-      if (e.compare(0, prefix.size(), prefix) == 0) {
-        hints.emplace_back(e.substr(prefix.size()).c_str());
+    for (auto const& h : hints) {
+      if (h.compare(0, prefix.size(), prefix) == 0) {
+        rplxx_hints.emplace_back(h.substr(prefix.size()).c_str());
       }
     }
   }
 
   // set hint color to green if single match found
-  if (hints.size() == 1) {
+  if (rplxx_hints.size() == 1) {
     c = Replxx::Color::GREEN;
   } else {
     c = Replxx::Color::YELLOW;
   }
 
-  return hints;
+  return rplxx_hints;
 }
 
 // NOLINTNEXTLINE
@@ -110,8 +90,20 @@ void cli::history_add(const char* cmd) {
   rx.history_add(cmd);
 }
 
+void cli::hints_add(const char* cmd) {
+  hints.push_back(cmd);
+}
+
+void cli::hints_clear() {
+  hints.clear();
+}
+
 void cli::print(const char * msg) {
   rx.print("%s", msg);
+}
+
+std::vector<std::string> cli::get_hints() {
+  return hints;
 }
 
 }  // namespace cli

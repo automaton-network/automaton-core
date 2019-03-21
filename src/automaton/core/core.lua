@@ -1,12 +1,55 @@
 -- core.lua
 
-history_add("m = get_protocols({\"automaton/examples/smartproto/chat/\",\"automaton/examples/smartproto/blockchain/\",\"automaton/examples/smartproto/reservationsystem/\"})")
-history_add("m = list_supported_protocols()")
-history_add("msg = ProtocolsList()")
-history_add("msg = ProtocolIDsList()")
-history_add("msg:deserialize(m)")
-history_add("print(msg:to_string())")
-history_add("load_protocol( \"chat\", \"automaton/examples/smartproto/chat/\")")
+-- add rpc/core commands to cli history/hints
+history_add("list_supported_protocols()")
+hints_add("list_supported_protocols()")
+history_add("list_running_protocols()")
+hints_add("list_running_protocols()")
+history_add("get_protocols()")
+hints_add("get_protocols()")
+history_add("load_protocol()")
+hints_add("load_protocol()")
+
+history_add("launch_node()")
+hints_add("launch_node()")
+history_add("list_nodes()")
+hints_add("list_nodes()")
+history_add("get_node()")
+hints_add("get_node()")
+
+history_add("add_peers()")
+hints_add("add_peers()")
+history_add("remove_peers()")
+hints_add("remove_peers()")
+history_add("list_known_peers()")
+hints_add("list_known_peers()")
+history_add("list_connected_peers()")
+hints_add("list_connected_peers()")
+history_add("get_peers()")
+hints_add("get_peers()")
+history_add("connect()")
+hints_add("connect()")
+history_add("disconnect()")
+hints_add("disconnect()")
+history_add("process_cmd()")
+hints_add("process_cmd()")
+
+history_add("testnet_create()")
+hints_add("testnet_create()")
+history_add("testnet_get_node_id()")
+hints_add("testnet_get_node_id()")
+history_add("testnet_destroy()")
+hints_add("testnet_destroy()")
+
+history_add("start_testnet()")
+hints_add("start_testnet()")
+
+history_add("history_add()")
+hints_add("history_add()")
+history_add("hints_add()")
+hints_add("hints_add()")
+history_add("hints_clear()")
+hints_add("hints_clear()")
 
 -- PROTOCOLS RPC --
 
