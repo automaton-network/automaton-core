@@ -260,6 +260,14 @@ int main(int argc, char* argv[]) {
     cli.history_add(cmd.c_str());
   });
 
+  script.set_function("hints_add", [&](std::string cmd){
+    cli.hints_add(cmd.c_str());
+  });
+
+  script.set_function("hints_clear", [&](){
+    cli.hints_clear();
+  });
+
   script.set_function("load_protocol", [&](std::string proto_id, std::string path){
     smart_protocol::load(proto_id, path);
   });

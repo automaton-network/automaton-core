@@ -2,6 +2,7 @@
 #define AUTOMATON_CORE_CLI_CLI_H_
 
 #include <string>
+#include <vector>
 
 #include "replxx.hxx"
 
@@ -16,9 +17,13 @@ class cli {
 
   char const* input(const char* prompt);
   void history_add(const char* cmd);
+  void hints_add(const char* cmd);
+  void hints_clear();
   void print(const char* msg);
+  std::vector<std::string> get_hints();
 
  private:
+  std::vector<std::string> hints;
   replxx::Replxx rx;
 };
 
