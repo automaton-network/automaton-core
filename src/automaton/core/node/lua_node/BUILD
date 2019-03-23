@@ -1,26 +1,20 @@
-# Automaton Core Node
-
 package(default_visibility = ["//visibility:public"])
 
 cc_library(
-  name = "node",
+  name = "lua_node",
   srcs = [
-    "node.cc",
+    "lua_node.cc",
   ],
   hdrs = [
-    "node.h",
+    "lua_node.h",
   ],
   deps = [
-    "@localboost//:algorithm",
     "//automaton/core/data",
     "//automaton/core/data/protobuf",
     "//automaton/core/io",
-    "//automaton/core/network",
+    "//automaton/core/node:node",
+    "//automaton/core/script",
     "//automaton/core/smartproto",
   ],
   linkstatic=True,
-  defines = select({
-      "//conditions:windows": ["BOOST_ALL_NO_LIB"],
-      "//conditions:default": [],
-  }),
 )
