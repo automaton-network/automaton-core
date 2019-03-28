@@ -87,7 +87,9 @@ class node: public network::connection::connection_handler,
 
   void dump_logs(const std::string& html_file);
 
-  virtual std::string process_cmd(const std::string& cmd, const std::string& params) {}
+  virtual std::string process_cmd(const std::string& cmd, const std::string& params) {
+    return "";
+  }
 
  protected:
   node(const std::string& id, const std::string& proto_id);

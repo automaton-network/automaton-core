@@ -1,5 +1,5 @@
-#ifndef AUTOMATON_CORE_NODE_LUA_NODE_H_
-#define AUTOMATON_CORE_NODE_LUA_NODE_H_
+#ifndef AUTOMATON_CORE_NODE_LUA_NODE_LUA_NODE_H_
+#define AUTOMATON_CORE_NODE_LUA_NODE_LUA_NODE_H_
 
 #include <future>
 #include <memory>
@@ -72,4 +72,4 @@ class lua_node : public node {
 }  // namespace core
 }  // namespace automaton
 
-#endif  // AUTOMATON_CORE_NODE_LUA_NODE_H_
+#endif  // AUTOMATON_CORE_NODE_LUA_NODE_LUA_NODE_H_
