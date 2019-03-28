@@ -4,6 +4,7 @@
 #include <deque>
 #include <functional>
 #include <future>
+#include <map>
 #include <memory>
 #include <mutex>
 #include <set>
@@ -33,16 +34,19 @@ struct peer_info {
 class node: public network::connection::connection_handler,
             public network::acceptor::acceptor_handler {
  public:
+  typedef std::unique_ptr<node> (*factory_function)(const std::string& id, const std::string& proto_id);
+  static std::unique_ptr<node> create(const std::string& type, const std::string& id, const std::string& proto_id);
+  static void register_node_type(const std::string& type, factory_function func);
+
   static std::vector<std::string> list_nodes();
   static node* get_node(const std::string& node_id);
-  static bool launch_node(const std::string& node_id, const std::string& protocol_id, const std::string& address);
+  static bool launch_node(const std::string& node_type, const std::string& node_id, const std::string& protocol_id,
+      const std::string& address);
   static void remove_node(const std::string& node_id);
-
-  node(const std::string& id, const std::string& proto_id);
 
   ~node();
 
-  virtual void init();
+  virtual void init() = 0;
 
   void init_worker();
 
@@ -77,19 +81,18 @@ class node: public network::connection::connection_handler,
   std::set<peer_id> list_connected_peers();
 
   // Execute a script which returns corresponding type
-  virtual void script(const std::string& command, std::promise<std::string>* result);
+  virtual void script(const std::string& command, std::promise<std::string>* result) {}
 
   void log(const std::string& logger, const std::string& msg);
 
   void dump_logs(const std::string& html_file);
 
-  virtual std::string process_cmd(const std::string& cmd, const std::string& params);
+  virtual std::string process_cmd(const std::string& cmd, const std::string& params) {}
 
  protected:
-  void add_task(std::function<std::string()> task) {
-    std::lock_guard<std::mutex> lock(tasks_mutex);
-    tasks.push_back(task);
-  }
+  node(const std::string& id, const std::string& proto_id);
+
+  void add_task(std::function<std::string()> task);
 
   std::string nodeid;
   std::string protoid;
@@ -101,6 +104,7 @@ class node: public network::connection::connection_handler,
   std::unordered_map<uint32_t, uint32_t> factory_to_wire;
 
  private:
+  static std::map<std::string, factory_function> node_factory;
   static std::unordered_map<std::string, std::unique_ptr<node> > nodes;
   peer_id peer_ids;
 
@@ -149,13 +153,13 @@ class node: public network::connection::connection_handler,
   void on_acceptor_error(network::acceptor_id a, const common::status& s);
 
   // Script handler functions
-  virtual void s_on_blob_received(peer_id id, const std::string& blob);
-  virtual void s_on_msg_sent(peer_id c, uint32_t id, const common::status& s);
-  virtual void s_on_connected(peer_id id);
-  virtual void s_on_disconnected(peer_id id);
-  virtual void s_on_error(peer_id id, const std::string& message);
-  virtual void s_update(uint64_t time);
-  virtual std::string s_debug_html();
+  virtual void s_on_blob_received(peer_id id, const std::string& blob) {}
+  virtual void s_on_msg_sent(peer_id c, uint32_t id, const common::status& s) {}
+  virtual void s_on_connected(peer_id id) {}
+  virtual void s_on_disconnected(peer_id id) {}
+  virtual void s_on_error(peer_id id, const std::string& message) {}
+  virtual void s_update(uint64_t time) {}
+  virtual std::string s_debug_html() = 0;
 };
 
 }  // namespace node

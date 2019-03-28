@@ -20,8 +20,9 @@ class testnet {
 
   ~testnet();
 
-  static bool create_testnet(const std::string& id, const std::string& smart_protocol_id, network_protocol_type ntype,
-      uint32_t number_nodes, std::unordered_map<uint32_t, std::vector<uint32_t> > peer_list);
+  static bool create_testnet(const std::string& node_type, const std::string& id, const std::string& smart_protocol_id,
+      network_protocol_type ntype, uint32_t number_nodes, std::unordered_map<uint32_t,
+      std::vector<uint32_t> > peer_list);
 
   static void destroy_testnet(const std::string& id);
 
@@ -36,14 +37,15 @@ class testnet {
  private:
   static std::unordered_map<std::string, std::shared_ptr<testnet>> testnets;
 
+  std::string node_type;
   std::string network_id;
   std::string protocol_id;
   network_protocol_type network_type;
   uint32_t number_nodes;
   std::vector<std::string> node_ids_list;  // <network_id>_1, <network_id>_2, ...
 
-  testnet(const std::string& id, const std::string& smart_protocol_id, network_protocol_type ntype,
-      uint32_t number_nodes);
+  testnet(const std::string& node_type, const std::string& id, const std::string& smart_protocol_id,
+      network_protocol_type ntype, uint32_t number_nodes);
 
   bool init();
 };

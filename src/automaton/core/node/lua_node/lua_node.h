@@ -5,6 +5,7 @@
 #include <memory>
 #include <mutex>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "automaton/core/data/msg.h"
@@ -21,7 +22,6 @@ namespace luanode {
 
 class lua_node : public node {
  public:
-
   lua_node(const std::string& id, const std::string& proto_id);
 
   ~lua_node();

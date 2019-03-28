@@ -5,6 +5,7 @@
 #include <iomanip>
 #include <ios>
 #include <iostream>
+#include <map>
 #include <regex>
 #include <sstream>
 #include <thread>
@@ -59,10 +60,15 @@ node* node::get_node(const string& node_id) {
   return nullptr;
 }
 
-bool node::launch_node(const string& node_id, const string& protocol_id, const string& address) {
+bool node::launch_node(const string& node_type, const string& node_id, const string& protocol_id,
+    const string& address) {
   auto n = nodes.find(node_id);
   if (n == nodes.end()) {
-    auto new_node = std::make_unique<node>(node_id, protocol_id);
+    std::unique_ptr<node> new_node = create(node_type, node_id, protocol_id);
+    if (new_node == nullptr) {
+      LOG(ERROR) << "Creating node failed!";
+      return false;
+    }
     bool res = new_node->set_acceptor(address);
     if (!res) {
       LOG(ERROR) << "Setting acceptor at address " << address << " failed!";
@@ -82,6 +88,24 @@ void node::remove_node(const string& id) {
     nodes.erase(it);
   }
 }
+
+std::unique_ptr<node> node::create(const std::string& type, const std::string& id, const std::string& proto_id) {
+  auto it = node_factory.find(type);
+  if (it == node_factory.end()) {
+    return nullptr;
+  } else {
+    auto new_node = it->second(id, proto_id);
+    new_node->init();
+    new_node->init_worker();
+    return new_node;
+  }
+}
+
+void node::register_node_type(const std::string& type, factory_function func) {
+  node_factory[type] = func;
+}
+
+std::map<std::string, node::factory_function> node::node_factory;
 
 peer_info::peer_info(): id(0), address("") {}
 
@@ -116,18 +140,27 @@ node::node(const string& id,
     factory_to_wire[factory_id] = wire_id;
     wire_to_factory[wire_id] = factory_id;
   }
-
-  init();
-  init_worker();
 }
 
 node::~node() {
+  // Actions to prevent other threads (worker threads) from calling non-existent functions
+  acceptor_ = nullptr;
+  for (auto it = known_peers.begin(); it != known_peers.end(); ++it) {
+    it->second.connection->disconnect();
+    it->second.connection = nullptr;
+  }
+  // Stop worker/update loop
   worker_mutex.lock();
   worker_stop_signal = true;
   worker_mutex.unlock();
 
   worker->join();
   delete worker;
+}
+
+void node::add_task(std::function<std::string()> task) {
+  std::lock_guard<std::mutex> lock(tasks_mutex);
+  tasks.push_back(task);
 }
 
 void node::init_worker() {

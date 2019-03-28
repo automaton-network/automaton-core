@@ -109,6 +109,10 @@ std::string lua_node::process_cmd(const std::string& cmd, const std::string& msg
   }
   sol::protected_function_result pfr;
   script_mutex.lock();
+  if (!script_on_cmd[cmd].valid()) {
+    LOG(ERROR) << "Invalid command " << cmd;
+    return "";
+  }
   try {
     if (msg != "") {
       LOG(INFO) << "calling script func " << cmd << " with msg " << msg;
@@ -135,9 +139,14 @@ std::string lua_node::process_cmd(const std::string& cmd, const std::string& msg
 
 void lua_node::script(const std::string& command, std::promise<std::string>* result) {
   add_task([this, command, result]() {
-    auto pfr = engine.safe_script(command);
-    if (result != nullptr) {
-      result->set_value(pfr);
+    try {
+      auto pfr = engine.safe_script(command);
+      if (result != nullptr) {
+        result->set_value(pfr);
+      }
+      return "";
+    } catch (const std::exception& e) {
+      LOG(ERROR) << e.what();
     }
     return "";
   });
@@ -154,45 +163,73 @@ void lua_node::s_on_blob_received(peer_id p_id, const string& blob) {
   msg* m = engine.get_factory()->new_message_by_id(msg_id).release();
   m->deserialize_message(blob.substr(1));
   add_task([this, wire_id, p_id, m, blob]() -> string {
-    auto r = fresult("on_" + m->get_message_type(), script_on_msg[wire_id](p_id, m));
-    // delete m;
-    return r;
+    try {
+      auto r = fresult("on_" + m->get_message_type(), script_on_msg[wire_id](p_id, m));
+      return r;
+    } catch (const std::exception& e) {
+      LOG(ERROR) << e.what();
+    }
+    return "";
   });
 }
 
 void lua_node::s_on_msg_sent(peer_id c, uint32_t id, const common::status& s) {
   add_task([this, c, id, s]() -> string {
-    return fresult("sent", script_on_msg_sent(c, id, s.code == status::OK));
+    try {
+      return fresult("sent", script_on_msg_sent(c, id, s.code == status::OK));
+    } catch (const std::exception& e) {
+      LOG(ERROR) << e.what();
+    }
+    return "";
   });
 }
 
 void lua_node::s_on_connected(peer_id p_id) {
   add_task([this, p_id]() -> string {
-    return fresult("connected", script_on_connected(static_cast<uint32_t>(p_id)));
+    try {
+      return fresult("connected", script_on_connected(static_cast<uint32_t>(p_id)));
+    } catch (const std::exception& e) {
+      LOG(ERROR) << e.what();
+    }
+    return "";
   });
 }
 
 void lua_node::s_on_disconnected(peer_id p_id) {
   add_task([this, p_id]() -> string {
-    return fresult("disconnected", script_on_disconnected(static_cast<uint32_t>(p_id)));
+    try {
+      return fresult("disconnected", script_on_disconnected(static_cast<uint32_t>(p_id)));
+    } catch (const std::exception& e) {
+      LOG(ERROR) << e.what();
+    }
+    return "";
   });
 }
 
 void lua_node::s_on_error(peer_id id, const std::string& message) {}
 
 void lua_node::s_update(uint64_t time) {
-  if (script_on_update.valid()) {
-    fresult("update", script_on_update(time));
+  try {
+    if (script_on_update.valid()) {
+      fresult("update", script_on_update(time));
+    }
+  } catch (const std::exception& e) {
+    LOG(ERROR) << e.what();
   }
 }
 
 std::string lua_node::s_debug_html() {
-  auto result = script_on_debug_html();
-  if (result.valid()) {
-    return result;
-  } else {
-    return "Invalid or missing debug_html() in script.";
+  try {
+    auto result = script_on_debug_html();
+    if (result.valid()) {
+      return result;
+    } else {
+      return "Invalid or missing debug_html() in script.";
+    }
+  } catch (const std::exception& e) {
+    LOG(ERROR) << e.what();
   }
+  return "";
 }
 
 }  // namespace luanode

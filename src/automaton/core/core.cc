@@ -14,10 +14,12 @@
 #include "automaton/core/network/http_server.h"
 #include "automaton/core/network/simulated_connection.h"
 #include "automaton/core/network/tcp_implementation.h"
+#include "automaton/core/node/lua_node/lua_node.h"
 #include "automaton/core/node/node.h"
 #include "automaton/core/script/engine.h"
 #include "automaton/core/smartproto/smart_protocol.h"
 #include "automaton/core/testnet/testnet.h"
+
 #include "automaton/core/io/io.h"  //  IO needs to be included after boost
 
 using automaton::core::data::factory;
@@ -26,8 +28,9 @@ using automaton::core::data::protobuf::protobuf_schema;
 using automaton::core::data::schema;
 using automaton::core::io::get_file_contents;
 using automaton::core::network::http_server;
-using automaton::core::script::engine;
+using automaton::core::node::luanode::lua_node;
 using automaton::core::node::node;
+using automaton::core::script::engine;
 using automaton::core::smartproto::smart_protocol;
 using automaton::core::testnet::testnet;
 
@@ -111,6 +114,9 @@ int main(int argc, char* argv[]) {
   string automaton_ascii_logo(automaton_ascii_logo_cstr);
   string_replace(&automaton_ascii_logo, "@", "\x1b[38;5;");
   auto core_factory = std::make_shared<protobuf_factory>();
+  node::register_node_type("lua", [](const std::string& id, const std::string& proto_id)->std::unique_ptr<node> {
+      return std::unique_ptr<node>(new lua_node(id, proto_id));
+    });
 
 {
   automaton::core::cli::cli cli;
@@ -118,30 +124,30 @@ int main(int argc, char* argv[]) {
   script.bind_core();
 
   // Bind node::node class
-  auto node_type = script.create_simple_usertype<node>();
+  auto node_type = script.create_simple_usertype<lua_node>();
 
   node_type.set(sol::call_constructor,
     sol::factories(
-    [&](const std::string& id, std::string proto) -> unique_ptr<node> {
-      return make_unique<node>(id, proto);
+    [&](const std::string& id, std::string proto) -> unique_ptr<lua_node> {
+      auto n = node::create("lua", id, proto);
+      return unique_ptr<lua_node>(reinterpret_cast<lua_node*>(n.release()));
     }));
 
   // Bind this node to its own Lua state.
-  node_type.set("add_peer", &node::add_peer);
-  node_type.set("remove_peer", &node::remove_peer);
-  node_type.set("connect", &node::connect);
-  node_type.set("disconnect", &node::disconnect);
-  node_type.set("send", &node::send_message);
-  node_type.set("listen", &node::set_acceptor);
+  node_type.set("add_peer", &lua_node::add_peer);
+  node_type.set("remove_peer", &lua_node::remove_peer);
+  node_type.set("connect", &lua_node::connect);
+  node_type.set("disconnect", &lua_node::disconnect);
+  node_type.set("send", &lua_node::send_message);
+  node_type.set("listen", &lua_node::set_acceptor);
 
-  node_type.set("msg_id", &node::find_message_id);
-  node_type.set("new_msg", &node::create_msg_by_id);
-  node_type.set("send", &node::send_message);
+  node_type.set("msg_id", &lua_node::find_message_id);
+  node_type.set("new_msg", &lua_node::create_msg_by_id);
+  node_type.set("send", &lua_node::send_message);
 
-  node_type.set("dump_logs", &node::dump_logs);
-  node_type.set("debug_html", &node::debug_html);
+  node_type.set("dump_logs", &lua_node::dump_logs);
 
-  node_type.set("script", [](node& n, std::string command) -> std::string {
+  node_type.set("script", [](lua_node& n, std::string command) -> std::string {
     std::promise<std::string> prom;
     std::future<std::string> fut = prom.get_future();
     n.script(command, &prom);
@@ -149,9 +155,9 @@ int main(int argc, char* argv[]) {
     return result;
   });
 
-  node_type.set("get_id", &node::get_id);
-  node_type.set("get_protocol_id", &node::get_protocol_id);
-  node_type.set("get_address", [](node& n) -> std::string {
+  node_type.set("get_id", &lua_node::get_id);
+  node_type.set("get_protocol_id", &lua_node::get_protocol_id);
+  node_type.set("get_address", [](lua_node& n) -> std::string {
     std::shared_ptr<automaton::core::network::acceptor> a = n.get_acceptor();
     if (a) {
       return a->get_address();
@@ -159,25 +165,25 @@ int main(int argc, char* argv[]) {
     return "";
   });
 
-  node_type.set("process_cmd", &node::process_cmd);
+  node_type.set("process_cmd", &lua_node::process_cmd);
 
-  node_type.set("call", [](node& n, std::string command) {
+  node_type.set("call", [](lua_node& n, std::string command) {
     n.script(command, nullptr);
   });
 
-  node_type.set("known_peers", [](node& n) {
+  node_type.set("known_peers", [](lua_node& n) {
     LOG(DEBUG) << "getting known peers... " << &n;
     LOG(DEBUG) << n.list_known_peers();
     return sol::as_table(n.list_known_peers());
   });
 
-  node_type.set("peers", [](node& n) {
+  node_type.set("peers", [](lua_node& n) {
     LOG(DEBUG) << "getting peers... " << &n;
     LOG(DEBUG) << n.list_connected_peers();
     return sol::as_table(n.list_connected_peers());
   });
 
-  node_type.set("get_peer_address", [](node& n, uint32_t pid) {
+  node_type.set("get_peer_address", [](lua_node& n, uint32_t pid) {
     return n.get_peer_info(pid).address;
   });
 
@@ -189,15 +195,18 @@ int main(int argc, char* argv[]) {
     return sol::as_table(node::list_nodes());
   });
 
-  script.set_function("get_node", &node::get_node);
+  script.set_function("get_node", [&](const std::string& node_id) {
+    node* n = node::get_node(node_id);
+    return reinterpret_cast<lua_node*>(n);
+  });
 
   script.set_function("launch_node", [&](std::string node_id, std::string protocol_id, std::string address) {
     LOG(INFO) << "launching node ... " << node_id << " on " << protocol_id << " @ " << address;
-    node::launch_node(node_id, protocol_id, address);
+    node::launch_node("lua", node_id, protocol_id, address);
     return "";
   });
 
-  script.set_function("remove_node", [&](std::string node_id) {});
+  script.set_function("remove_node", &node::remove_node);
 
   // Bind testnet static functions
 
@@ -205,10 +214,10 @@ int main(int argc, char* argv[]) {
       uint32_t number_nodes, std::unordered_map<uint32_t, std::vector<uint32_t> > peer_list) {
     bool success = false;
     if (ntype == "simulation") {
-      success = testnet::create_testnet(id, smart_protocol_id, testnet::network_protocol_type::simulation,
+      success = testnet::create_testnet("lua", id, smart_protocol_id, testnet::network_protocol_type::simulation,
           number_nodes, peer_list);
     } else if (ntype == "localhost") {
-      success = testnet::create_testnet(id, smart_protocol_id, testnet::network_protocol_type::localhost,
+      success = testnet::create_testnet("lua", id, smart_protocol_id, testnet::network_protocol_type::localhost,
           number_nodes, peer_list);
     }
     if (!success) {
