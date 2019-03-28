@@ -4,6 +4,7 @@
 #include <deque>
 #include <functional>
 #include <future>
+#include <map>
 #include <memory>
 #include <mutex>
 #include <set>
@@ -11,13 +12,9 @@
 #include <unordered_map>
 #include <vector>
 
-#include "automaton/core/data/factory.h"
 #include "automaton/core/data/msg.h"
-#include "automaton/core/data/schema.h"
-#include "automaton/core/io/io.h"
 #include "automaton/core/network/acceptor.h"
 #include "automaton/core/network/connection.h"
-#include "automaton/core/script/engine.h"
 #include "automaton/core/smartproto/smart_protocol.h"
 
 namespace automaton {
@@ -37,19 +34,19 @@ struct peer_info {
 class node: public network::connection::connection_handler,
             public network::acceptor::acceptor_handler {
  public:
+  typedef std::unique_ptr<node> (*factory_function)(const std::string& id, const std::string& proto_id);
+  static std::unique_ptr<node> create(const std::string& type, const std::string& id, const std::string& proto_id);
+  static void register_node_type(const std::string& type, factory_function func);
+
   static std::vector<std::string> list_nodes();
   static node* get_node(const std::string& node_id);
-  static bool launch_node(const std::string& node_id, const std::string& protocol_id, const std::string& address);
+  static bool launch_node(const std::string& node_type, const std::string& node_id, const std::string& protocol_id,
+      const std::string& address);
   static void remove_node(const std::string& node_id);
-
-  node(const std::string& id, const std::string& proto_id);  //, data::factory& factory);  // NOLINT
 
   ~node();
 
-  void init_bindings(std::vector<automaton::core::data::schema*> schemas,
-                     std::vector<std::string> lua_scripts,
-                     std::vector<std::string> wire_msgs,
-                     std::vector<std::string> commands);
+  virtual void init() = 0;
 
   void init_worker();
 
@@ -66,8 +63,6 @@ class node: public network::connection::connection_handler,
   void send_message(peer_id id, const data::msg& msg, uint32_t msg_id);
 
   void send_blob(peer_id id, const std::string& blob, uint32_t msg_id);
-
-  std::string debug_html();
 
   bool connect(peer_id id);
 
@@ -86,38 +81,34 @@ class node: public network::connection::connection_handler,
   std::set<peer_id> list_connected_peers();
 
   // Execute a script which returns corresponding type
-  void script(const std::string& command, std::promise<std::string>* result);
-
-  uint32_t find_message_id(const std::string& name) {
-    return engine.get_factory()->get_schema_id(name);
-  }
-
-  std::unique_ptr<data::msg> create_msg_by_id(uint32_t id) {
-    return engine.get_factory()->new_message_by_id(id);
-  }
+  virtual void script(const std::string& command, std::promise<std::string>* result) {}
 
   void log(const std::string& logger, const std::string& msg);
 
   void dump_logs(const std::string& html_file);
 
-  std::string process_cmd(const std::string& cmd, const std::string& params);
+  virtual std::string process_cmd(const std::string& cmd, const std::string& params) {
+    return "";
+  }
 
- private:
-  static std::unordered_map<std::string, std::unique_ptr<node> > nodes;
+ protected:
+  node(const std::string& id, const std::string& proto_id);
+
+  void add_task(std::function<std::string()> task);
+
   std::string nodeid;
   std::string protoid;
+
+  std::mutex script_mutex;
+
+  // Protocol schema
+  std::unordered_map<uint32_t, uint32_t> wire_to_factory;
+  std::unordered_map<uint32_t, uint32_t> factory_to_wire;
+
+ private:
+  static std::map<std::string, factory_function> node_factory;
+  static std::unordered_map<std::string, std::unique_ptr<node> > nodes;
   peer_id peer_ids;
-
-  // Script processing related
-  script::engine engine;
-
-  sol::protected_function script_on_connected;
-  sol::protected_function script_on_disconnected;
-  sol::protected_function script_on_update;
-  sol::protected_function script_on_msg_sent;
-  std::unordered_map<uint32_t, sol::protected_function> script_on_msg;
-  std::unordered_map<std::string, sol::protected_function> script_on_cmd;
-  sol::protected_function script_on_debug_html;
 
   uint32_t update_time_slice;
 
@@ -136,24 +127,13 @@ class node: public network::connection::connection_handler,
 
   bool address_parser(const std::string& s, std::string* protocol, std::string* address);
 
-  // Protocol schema
-  std::unordered_map<uint32_t, uint32_t> wire_to_factory;
-  std::unordered_map<uint32_t, uint32_t> factory_to_wire;
-
   // Worker thread
   std::mutex worker_mutex;
   bool worker_stop_signal;
   std::thread* worker;
 
-  std::mutex script_mutex;
-
   std::mutex tasks_mutex;
   std::deque<std::function<std::string()>> tasks;
-
-  void add_task(std::function<std::string()> task) {
-    std::lock_guard<std::mutex> lock(tasks_mutex);
-    tasks.push_back(task);
-  }
 
   // Inherited handlers' functions
 
@@ -175,10 +155,13 @@ class node: public network::connection::connection_handler,
   void on_acceptor_error(network::acceptor_id a, const common::status& s);
 
   // Script handler functions
-  void s_on_blob_received(peer_id id, const std::string& blob);
-  void s_on_connected(peer_id id);
-  void s_on_disconnected(peer_id id);
-  void s_on_error(peer_id id, const std::string& message) {}
+  virtual void s_on_blob_received(peer_id id, const std::string& blob) {}
+  virtual void s_on_msg_sent(peer_id c, uint32_t id, const common::status& s) {}
+  virtual void s_on_connected(peer_id id) {}
+  virtual void s_on_disconnected(peer_id id) {}
+  virtual void s_on_error(peer_id id, const std::string& message) {}
+  virtual void s_update(uint64_t time) {}
+  virtual std::string s_debug_html() = 0;
 };
 
 }  // namespace node

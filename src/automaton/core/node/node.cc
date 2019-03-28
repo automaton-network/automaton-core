@@ -5,64 +5,54 @@
 #include <iomanip>
 #include <ios>
 #include <iostream>
+#include <map>
 #include <regex>
 #include <sstream>
 #include <thread>
 #include <utility>
 
 #include <boost/algorithm/string/replace.hpp>
-#include <json.hpp>
 
-#include "automaton/core/data/protobuf/protobuf_factory.h"
-#include "automaton/core/data/protobuf/protobuf_schema.h"
 #include "automaton/core/io/io.h"
 
 
 using automaton::core::common::status;
 
 using automaton::core::data::msg;
-using automaton::core::data::schema;
-using automaton::core::data::protobuf::protobuf_factory;
-using automaton::core::data::protobuf::protobuf_schema;
 
 using automaton::core::network::acceptor;
 using automaton::core::network::acceptor_id;
 using automaton::core::network::connection;
 
 using std::chrono::system_clock;
-using std::future;
 using std::ios_base;
 using std::lock_guard;
 using std::make_unique;
 using std::mutex;
 using std::ofstream;
-using std::promise;
 using std::string;
-using std::unique_ptr;
 using std::vector;
 
 namespace automaton {
 namespace core {
 namespace node {
 
-// TODO(kari): Make buffers in connection shared_ptr
-
 static const uint32_t MAX_MESSAGE_SIZE = 1 * 1024;  // Maximum size of message in bytes
 static const uint32_t HEADER_SIZE = 3;
 static const uint32_t WAITING_HEADER = 1;
 static const uint32_t WAITING_MESSAGE = 2;
 
-std::unordered_map<std::string, std::unique_ptr<node> > node::nodes;
+std::unordered_map<string, std::unique_ptr<node> > node::nodes;
 
-std::vector<std::string> node::list_nodes() {
-  std::vector<std::string> result;
+vector<string> node::list_nodes() {
+  vector<string> result;
   for (const auto& n : nodes) {
     result.push_back(n.first);
   }
   return result;
 }
 
-node* node::get_node(const std::string& node_id) {
+node* node::get_node(const string& node_id) {
   const auto& n = nodes.find(node_id);
   if (n != nodes.end()) {
     return (n->second).get();
@@ -70,10 +60,15 @@ node* node::get_node(const std::string& node_id) {
   return nullptr;
 }
 
-bool node::launch_node(const std::string& node_id, const std::string& protocol_id, const std::string& address) {
+bool node::launch_node(const string& node_type, const string& node_id, const string& protocol_id,
+    const string& address) {
   auto n = nodes.find(node_id);
   if (n == nodes.end()) {
-    auto new_node = std::make_unique<node>(node_id, protocol_id);
+    std::unique_ptr<node> new_node = create(node_type, node_id, protocol_id);
+    if (new_node == nullptr) {
+      LOG(ERROR) << "Creating node failed!";
+      return false;
+    }
     bool res = new_node->set_acceptor(address);
     if (!res) {
       LOG(ERROR) << "Setting acceptor at address " << address << " failed!";
@@ -87,27 +82,34 @@ bool node::launch_node(const std::string& node_id, const std::string& protocol_i
   return true;
 }
 
-void node::remove_node(const std::string& id) {
+void node::remove_node(const string& id) {
   auto it = nodes.find(id);
   if (it != nodes.end()) {
     nodes.erase(it);
   }
 }
 
-peer_info::peer_info(): id(0), address("") {}
-
-static std::string fresult(string fname, sol::protected_function_result pfr) {
-  if (!pfr.valid()) {
-    sol::error err = pfr;
-    string what = err.what();
-    LOG(ERROR) << "*** SCRIPT ERROR IN " << fname << "***\n" << what;
-    return what;
+std::unique_ptr<node> node::create(const std::string& type, const std::string& id, const std::string& proto_id) {
+  auto it = node_factory.find(type);
+  if (it == node_factory.end()) {
+    return nullptr;
+  } else {
+    auto new_node = it->second(id, proto_id);
+    new_node->init();
+    new_node->init_worker();
+    return new_node;
   }
-
-  return "";
 }
 
-void html_escape(std::string *data) {
+void node::register_node_type(const std::string& type, factory_function func) {
+  node_factory[type] = func;
+}
+
+std::map<std::string, node::factory_function> node::node_factory;
+
+peer_info::peer_info(): id(0), address("") {}
+
+void html_escape(string *data) {
   using boost::algorithm::replace_all;
   replace_all(*data, "&",  "&amp;");
   replace_all(*data, "\"", "&quot;");
@@ -116,17 +118,8 @@ void html_escape(std::string *data) {
   replace_all(*data, ">",  "&gt;");
 }
 
-std::string node::debug_html() {
-  auto result = script_on_debug_html();
-  if (result.valid()) {
-    return result;
-  } else {
-    return "Invalid or missing debug_html() in script.";
-  }
-}
-
-node::node(const std::string& id,
-           const std::string& proto_id):
+node::node(const string& id,
+           const string& proto_id):
       nodeid(id)
     , protoid(proto_id)
     , peer_ids(0)
@@ -138,12 +131,25 @@ node::node(const std::string& id,
     throw std::invalid_argument("No such protocol: " + proto_id);
   }
   update_time_slice = proto->get_update_time_slice();
-  engine.set_factory(proto->get_factory());
-  init_bindings(proto->get_schemas(), proto->get_scripts(), proto->get_wire_msgs(), proto->get_commands());
-  init_worker();
+
+  auto factory = proto->get_factory();
+  std::vector<std::string> wire_msgs = proto->get_wire_msgs();
+  for (uint32_t wire_id = 0; wire_id < wire_msgs.size(); ++wire_id) {
+    string wire_msg = wire_msgs[wire_id];
+    auto factory_id = factory->get_schema_id(wire_msg);
+    factory_to_wire[factory_id] = wire_id;
+    wire_to_factory[wire_id] = factory_id;
+  }
 }
 
 node::~node() {
+  // Actions to prevent other threads (worker threads) from calling non-existent functions
+  acceptor_ = nullptr;
+  for (auto it = known_peers.begin(); it != known_peers.end(); ++it) {
+    it->second.connection->disconnect();
+    it->second.connection = nullptr;
+  }
+  // Stop worker/update loop
   worker_mutex.lock();
   worker_stop_signal = true;
   worker_mutex.unlock();
@@ -152,74 +158,9 @@ node::~node() {
   delete worker;
 }
 
-void node::init_bindings(vector<schema*> schemas,
-                         vector<string> lua_scripts,
-                         vector<string> wire_msgs,
-                         vector<string> commands) {
-  engine.bind_core();
-
-  // for (auto schema : schemas) {
-  //   engine.import_schema(schema);
-  // }
-
-  // Bind node methods.
-  engine.set_function("send",
-    [this](uint32_t peer_id, msg& m, uint32_t msg_id) {
-      send_message(peer_id, m, msg_id);
-    });
-
-  engine.set_function("log",
-    [this](string logger, string msg) {
-      // LOG(TRACE) << "[" << logger << "] " << msg;
-      log(logger, msg);
-    });
-
-  engine.set_function("connect",
-    [this](uint32_t peer_id) {
-      log("connect_", "CONNECTED " + std::to_string(peer_id));
-      connect(peer_id);
-    });
-
-  engine.set_function("disconnect",
-    [this](uint32_t peer_id) {
-      log("disconnect_", "DISCONNECTED " + std::to_string(peer_id));
-      disconnect(peer_id);
-    });
-
-  engine["nodeid"] = nodeid;
-
-  uint32_t script_id = 0;
-  for (string lua_script : lua_scripts) {
-    script_id++;
-    fresult("script " + std::to_string(script_id), engine.safe_script(lua_script));
-  }
-
-  script_on_update = engine["update"];
-  script_on_connected = engine["connected"];
-  script_on_disconnected = engine["disconnected"];
-  script_on_msg_sent = engine["sent"];
-  script_on_debug_html = engine["debug_html"];
-
-  // Map wire msg IDs to factory msg IDs and vice versa.
-  uint32_t wire_id = 0;
-  for (auto wire_msg : wire_msgs) {
-    auto factory_id = engine.get_factory()->get_schema_id(wire_msg);
-    factory_to_wire[factory_id] = wire_id;
-    wire_to_factory[wire_id] = factory_id;
-    string function_name = "on_" + wire_msg;
-    LOG(DEBUG) << wire_id << ": " << function_name;
-    script_on_msg[wire_id] = engine[function_name];
-    wire_id++;
-  }
-
-  for (auto cmd : commands) {
-    if (engine[cmd] != sol::lua_nil) {
-      LOG(DEBUG) << "command: " << cmd;
-      script_on_cmd[cmd] = engine[cmd];
-    } else {
-      LOG(DEBUG) << "command: " << cmd << " does not exist!";
-    }
-  }
+void node::add_task(std::function<std::string()> task) {
+  std::lock_guard<std::mutex> lock(tasks_mutex);
+  tasks.push_back(task);
 }
 
 void node::init_worker() {
@@ -232,13 +173,10 @@ void node::init_worker() {
       auto current_time = std::chrono::duration_cast<std::chrono::milliseconds>(
          std::chrono::system_clock::now().time_since_epoch()).count();
 
-      // Call update function only if a valid definition for it exists.
-      if (script_on_update.valid()) {
-        // LOG(DEBUG) << "Calling update in " << nodeid;
-        script_mutex.lock();
-        fresult("update", script_on_update(current_time));
-        script_mutex.unlock();
-      }
+      // LOG(DEBUG) << "Calling update in " << nodeid;
+      script_mutex.lock();
+      s_update(current_time);
+      script_mutex.unlock();
 
       // TODO(asen): custom break condition, e.g. max number of tasks per update.
       // Process tasks pending in the queue.
@@ -261,12 +199,11 @@ void node::init_worker() {
         try {
           string result = task();
           if (result.size() > 0) {
-            engine.script("for k,v in pairs(_G) do print(k .. ' = ' .. tostring(v)) end");
             LOG(FATAL) << "TASK FAILED: " << result;
           }
         } catch (const std::exception& ex) {
           LOG(FATAL) << "TASK FAILED: EXCEPTION1: " << ex.what();
-        } catch (std::string s) {
+        } catch (string s) {
           LOG(FATAL) << "TASK FAILED: EXCEPTION2: " << s;
         } catch (...) {
           LOG(FATAL) << "TASK FAILED: EXCEPTION DURING TASK EXECUTION!";
@@ -282,11 +219,11 @@ bool node::get_worker_stop_signal() {
   return worker_stop_signal;
 }
 
-std::string node::get_id() {
+string node::get_id() {
   return nodeid;
 }
 
-std::string node::get_protocol_id() {
+string node::get_protocol_id() {
   return protoid;
 }
 
@@ -298,7 +235,7 @@ peer_info node::get_peer_info(peer_id pid) {
   return it->second;
 }
 
-void node::log(const std::string& logger, const std::string& msg) {
+void node::log(const string& logger, const string& msg) {
   lock_guard<mutex> lock(log_mutex);
 
   // LOG(TRACE) << "[" << logger << "] " << msg;
@@ -312,7 +249,7 @@ void node::log(const std::string& logger, const std::string& msg) {
     "[" + io::get_date_string(now) + "." + io::zero_padded(current_time % 1000, 3) + "] " + msg);
 }
 
-void node::dump_logs(const std::string& html_file) {
+void node::dump_logs(const string& html_file) {
   add_task([this, html_file](){
     ofstream f;
     f.open(html_file, ios_base::trunc);
@@ -371,7 +308,7 @@ void node::dump_logs(const std::string& html_file) {
     log_mutex.unlock();
 
     f << "<hr />\n";
-    f << debug_html();
+    f << s_debug_html();
     f << "<hr />\n";
 
     log_mutex.lock();
@@ -408,63 +345,13 @@ void node::send_message(peer_id p_id, const core::data::msg& msg, uint32_t msg_i
   }
 }
 
-void node::s_on_blob_received(peer_id p_id, const string& blob) {
-  auto wire_id = blob[0];
-  if (script_on_msg.count(wire_id) != 1) {
-    LOG(FATAL) << "Invalid wire msg_id sent to us!";
-    return;
-  }
-  CHECK_GT(wire_to_factory.count(wire_id), 0);
-  auto msg_id = wire_to_factory[wire_id];
-  msg* m = engine.get_factory()->new_message_by_id(msg_id).release();
-  m->deserialize_message(blob.substr(1));
-  add_task([this, wire_id, p_id, m, blob]() -> string {
-    auto r = fresult("on_" + m->get_message_type(), script_on_msg[wire_id](p_id, m));
-    // delete m;
-    return r;
-  });
-}
-
-std::string node::process_cmd(const std::string& cmd, const std::string& msg) {
-  if (script_on_cmd.count(cmd) != 1) {
-    LOG(ERROR) << "Invalid command! : " << cmd << " (args: " << io::bin2hex(msg) << ")";
-    return "";
-  }
-  sol::protected_function_result pfr;
-  script_mutex.lock();
-  try {
-    if (msg != "") {
-      LOG(INFO) << "calling script func " << cmd << " with msg " << msg;
-      pfr = script_on_cmd[cmd](msg);
-    } else {
-      LOG(INFO) << "calling script func " << cmd << " without msg";
-      pfr = script_on_cmd[cmd]();
-    }
-  } catch (const std::exception& e) {
-    LOG(ERROR) << "Error while executing command!!! : " << e.what();
-  } catch (...) {
-    LOG(ERROR) << "Error while executing command!!!";
-  }
-  script_mutex.unlock();
-  if (!pfr.valid()) {
-    sol::error err = pfr;
-    string what = err.what();
-    LOG(ERROR) << "*** SCRIPT ERROR IN " << cmd << "***\n" << what;
-    return "";
-  }
-  std::string result = pfr;
-  return result;
-}
-
 void node::send_blob(peer_id p_id, const string& blob, uint32_t msg_id) {
   LOG(DEBUG) << (acceptor_ ? acceptor_->get_address() : "N/A") << " sending message " << core::io::bin2hex(blob) <<
       " to peer " << p_id;
   uint32_t blob_size = blob.size();
   if (blob_size > MAX_MESSAGE_SIZE) {
     LOG(ERROR) << "Message size is " << blob_size << " and is too big! Max message size is " << MAX_MESSAGE_SIZE;
-    add_task([this, p_id, msg_id]() -> string {
-      return fresult("sent", script_on_msg_sent(p_id, msg_id, false));
-    });
+    on_message_sent(p_id, msg_id, common::status::failed_precondition("Message size is too big!"));
     return;
   }
   char buffer[3];
@@ -477,17 +364,13 @@ void node::send_blob(peer_id p_id, const string& blob, uint32_t msg_id) {
   lock_guard<mutex> lock(peers_mutex);
   if (connected_peers.find(p_id) == connected_peers.end()) {
     LOG(ERROR) << "Peer " << p_id << " is not connected! Call connect first!";
-    add_task([this, p_id, msg_id]() -> string {
-      return fresult("sent", script_on_msg_sent(p_id, msg_id, false));
-    });
+    on_message_sent(p_id, msg_id, common::status::canceled("Peer is not connected!"));
     return;
   }
   auto it = known_peers.find(p_id);
   if (it == known_peers.end()) {
     LOG(ERROR) << "Trying to send message to unknown peer " << p_id;
-    add_task([this, p_id, msg_id]() -> string {
-      return fresult("sent", script_on_msg_sent(p_id, msg_id, false));
-    });
+    on_message_sent(p_id, msg_id, common::status::failed_precondition("Unknown peer!"));
     return;
   }
   if (it->second.connection) {
@@ -496,23 +379,9 @@ void node::send_blob(peer_id p_id, const string& blob, uint32_t msg_id) {
     }
   } else {
     LOG(ERROR) << "No connection in peer " << p_id;
-    add_task([this, p_id, msg_id]() -> string {
-      return fresult("sent", script_on_msg_sent(p_id, msg_id, false));
-    });
+    on_message_sent(p_id, msg_id, common::status::not_found("Not connected!"));
   }
   // VLOG(9) << "UNLOCK " << this << " " << (acceptor_ ? acceptor_->get_address() : "N/A") << " peer " << p_id;
-}
-
-void node::s_on_connected(peer_id p_id) {
-  add_task([this, p_id]() -> string {
-    return fresult("connected", script_on_connected(static_cast<uint32_t>(p_id)));
-  });
-}
-
-void node::s_on_disconnected(peer_id p_id) {
-  add_task([this, p_id]() -> string {
-    return fresult("disconnected", script_on_disconnected(static_cast<uint32_t>(p_id)));
-  });
 }
 
 bool node::connect(peer_id p_id) {
@@ -565,7 +434,7 @@ bool node::disconnect(peer_id p_id) {
   return false;
 }
 
-bool node::set_acceptor(const std::string& address) {
+bool node::set_acceptor(const string& address) {
   std::shared_ptr<acceptor> new_acceptor;
   try {
     string protocol, addr;
@@ -681,16 +550,6 @@ peer_id node::get_next_peer_id() {
   return ++peer_ids;
 }
 
-void node::script(const std::string& command, std::promise<std::string>* result) {
-  add_task([this, command, result]() {
-    auto pfr = engine.safe_script(command);
-    if (result != nullptr) {
-      result->set_value(pfr);
-    }
-    return "";
-  });
-}
-
 bool node::address_parser(const string& s, string* protocol, string* address) {
   std::regex rgx_ip("(.+)://(.+)");
   std::smatch match;
@@ -781,9 +640,7 @@ void node::on_message_received(peer_id c, char* buffer, uint32_t bytes_read, uin
 void node::on_message_sent(peer_id c, uint32_t id, const common::status& s) {
   LOG(DEBUG) << "Message to peer " << c << " with msg_id " << id << " was sent " <<
       (s.code == status::OK ? "successfully" : "unsuccessfully");
-  add_task([this, c, id, s]() -> string {
-    return fresult("sent", script_on_msg_sent(c, id, s.code == status::OK));
-  });
+  s_on_msg_sent(c, id, s);
 }
 
 void node::on_connected(peer_id c) {

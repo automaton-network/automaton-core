@@ -13,14 +13,15 @@ static const uint32_t STARTING_PORT = 12300;
 
 std::unordered_map<std::string, std::shared_ptr<testnet>> testnet::testnets;
 
-bool testnet::create_testnet(const std::string& id, const std::string& smart_protocol_id, network_protocol_type ntype,
-    uint32_t number_nodes, std::unordered_map<uint32_t, std::vector<uint32_t> > peer_list) {
+bool testnet::create_testnet(const std::string& node_type, const std::string& id, const std::string& smart_protocol_id,
+    network_protocol_type ntype, uint32_t number_nodes, std::unordered_map<uint32_t,
+    std::vector<uint32_t> > peer_list) {
   auto it = testnets.find(id);
   if (it != testnets.end()) {
     LOG(ERROR) << "Testnet with id " << id << " already exists!";
     return false;
   }
-  auto net = std::unique_ptr<testnet>(new testnet(id, smart_protocol_id, ntype, number_nodes));
+  auto net = std::unique_ptr<testnet>(new testnet(node_type, id, smart_protocol_id, ntype, number_nodes));
   bool initialised = net->init();
   if (!initialised) {
     LOG(ERROR) << "Testnet " << id << " initialization failed!";
@@ -94,9 +95,9 @@ std::vector<std::string> testnet::list_nodes() {
 
 // private
 
-testnet::testnet(const std::string& id, const std::string& smart_protocol_id, network_protocol_type ntype,
-    uint32_t number_nodes): network_id(id), protocol_id(smart_protocol_id), network_type(ntype),
-    number_nodes(number_nodes) {}
+testnet::testnet(const std::string& node_type, const std::string& id, const std::string& smart_protocol_id,
+    network_protocol_type ntype, uint32_t number_nodes): node_type(node_type), network_id(id),
+    protocol_id(smart_protocol_id), network_type(ntype), number_nodes(number_nodes) {}
 
 bool testnet::init() {
   std::string address = "";
@@ -109,7 +110,8 @@ bool testnet::init() {
   }
   for (uint32_t i = 1; i <= number_nodes; ++i) {
     std::string node_id = network_id + "_" + std::to_string(i);
-    bool res = automaton::core::node::node::launch_node(node_id, protocol_id, address + std::to_string(port + i));
+    bool res = automaton::core::node::node::launch_node(node_type,
+        node_id, protocol_id, address + std::to_string(port + i));
     if (!res) {
       return false;
     }

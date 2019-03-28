@@ -158,8 +158,7 @@ void simulation::handle_request(uint32_t src, uint32_t dest) {
       new_connection->remote_connection_id = source->local_connection_id;
       new_connection->set_time_stamp(time_of_handling);
       add_task(get_time() + 1, [acceptor_, new_connection, source_address](){
-        acceptor_->get_handler()->on_connected(acceptor_->get_id(), std::shared_ptr<connection>(new_connection),
-          source_address);
+        acceptor_->get_handler()->on_connected(acceptor_->get_id(), new_connection, source_address);
       });
       add_task(get_time() + 1, [new_connection, cid](){
         new_connection->get_handler()->on_connected(cid);
@@ -429,7 +428,7 @@ void simulated_connection::async_send(const std::string& message, uint32_t msg_i
   sending_q_mutex.unlock();
   if (get_state() == connection::state::connected) {
     std::shared_ptr<simulation> sim = simulation::get_simulator();
-    sim->add_task(sim->get_time() + 1, std::bind(&simulated_connection::handle_send, this));
+    sim->add_task(sim->get_time() + 1, std::bind(&simulated_connection::handle_send, shared_from_this()));
   }
   // LOG(DEBUG) << id << " </async_send>";
 }
@@ -533,7 +532,7 @@ void simulated_connection::async_read(char* buffer, uint32_t buffer_size, uint32
   reading_q_mutex.unlock();
   recv_buf_mutex.lock();
   if (receive_buffer.size()) {
-    sim->add_task(sim->get_time() + 1, std::bind(&simulated_connection::handle_read, this));
+    sim->add_task(sim->get_time() + 1, std::bind(&simulated_connection::handle_read, shared_from_this()));
   }
   reading_q_mutex.lock();
   reading_q_mutex.unlock();

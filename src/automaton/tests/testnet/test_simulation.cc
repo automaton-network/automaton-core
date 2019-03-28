@@ -3,27 +3,33 @@
 #include "automaton/core/data/protobuf/protobuf_schema.h"
 #include "automaton/core/network/simulated_connection.h"
 #include "automaton/core/node/node.h"
+#include "automaton/core/node/lua_node/lua_node.h"
 #include "automaton/core/smartproto/smart_protocol.h"
 #include "automaton/core/testnet/testnet.h"
 
 #include "gtest/gtest.h"
 
 using automaton::core::node::node;
+using automaton::core::node::luanode::lua_node;
 using automaton::core::smartproto::smart_protocol;
 using automaton::core::testnet::testnet;
 
 TEST(testnet, test_all) {
+  node::register_node_type("lua", [](const std::string& id, const std::string& proto_id)->std::unique_ptr<node> {
+      return std::unique_ptr<node>(new lua_node(id, proto_id));
+    });
+
   EXPECT_EQ(smart_protocol::load("chat", "automaton/tests/testnet/testproto/"), true);
 
   std::shared_ptr<automaton::core::network::simulation> sim = automaton::core::network::simulation::get_simulator();
   sim->simulation_start(50);
 
-  testnet::create_testnet("testnet", "chat", testnet::network_protocol_type::simulation, 5,
+  EXPECT_EQ(testnet::create_testnet("lua", "testnet", "chat", testnet::network_protocol_type::simulation, 5,
       {
         {1, {2, 3}}, {2, {4, 5}}
-      });
+      }),
+      true);
 
-  auto net = testnet::get_testnet("testnet");
   auto msg_factory = smart_protocol::get_protocol("chat")->get_factory();
   auto msg1 = msg_factory->new_message_by_name("Peers");
   auto msg2 = msg_factory->new_message_by_name("Peers");
@@ -58,6 +64,7 @@ TEST(testnet, test_all) {
 
   testnet::destroy_testnet("testnet");
   EXPECT_EQ(testnet::list_testnets().size(), 0);
+  EXPECT_EQ(node::list_nodes().size(), 0);
 
   sim->simulation_stop();
 }

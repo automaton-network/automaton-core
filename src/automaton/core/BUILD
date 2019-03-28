@@ -17,6 +17,7 @@ cc_binary(
     "//automaton/core/network:simulated_connection",
     "//automaton/core/smartproto",
     "//automaton/core/node",
+    "//automaton/core/node/lua_node",
     "//automaton/core/state",
     "//automaton/core/testnet",
     "@cryptopp//:cryptopp",
