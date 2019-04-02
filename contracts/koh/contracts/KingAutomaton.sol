@@ -44,7 +44,7 @@ contract KingAutomaton {
     return claimed;
   }
 
-  function getTotalHeld(address rewardAddress) public view returns(uint) {
+  function getTotalTimeHeld(address rewardAddress) public view returns(uint) {
       return total_time_held[rewardAddress];
   }
 
