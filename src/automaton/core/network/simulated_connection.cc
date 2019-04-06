@@ -294,7 +294,13 @@ uint32_t simulation::process(uint64_t time_) {
       for (auto& t : tasks.at(current_time)) {
         events_processed++;
         tasks_mutex.unlock();
-        t();
+        try {
+          t();
+        } catch (const std::exception& e) {
+          LOG(ERROR) << e.what();
+        } catch (...) {
+          LOG(ERROR) << "Error occured";
+        }
         tasks_mutex.lock();
       }
       tasks.erase(current_time);

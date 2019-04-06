@@ -63,7 +63,7 @@ TEST(testnet, test_all) {
 
   testnet::destroy_testnet("testnet");
   EXPECT_EQ(testnet::list_testnets().size(), 0);
-
   EXPECT_EQ(node::list_nodes().size(), 0);
+
   automaton::core::network::tcp_release();
 }

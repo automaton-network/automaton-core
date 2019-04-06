@@ -16,6 +16,8 @@ history_add("list_nodes()")
 hints_add("list_nodes()")
 history_add("get_node()")
 hints_add("get_node()")
+history_add("remove_node()")
+hints_add("remove_node()")
 
 history_add("add_peers()")
 hints_add("add_peers()")
