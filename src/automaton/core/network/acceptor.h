@@ -81,6 +81,11 @@ class acceptor {
   virtual void start_accepting() = 0;
 
   /**
+    The acceptor starts to listen for incoming connections.
+  */
+  virtual void stop_accepting() = 0;
+
+  /**
     @returns the acceptor's address
   */
   virtual std::string get_address() const = 0;
@@ -115,10 +120,10 @@ class acceptor {
     @returns object from the specified class. If no such class type was registered, empty ptr will be returned.
   */
   static std::shared_ptr<acceptor> create(const std::string& type, acceptor_id id, const std::string& address,
-      acceptor_handler* handler_, connection::connection_handler* connections_handler);
+      std::shared_ptr<acceptor_handler> handler_, std::shared_ptr<connection::connection_handler> connections_handler);
 
   typedef std::shared_ptr<acceptor> (*factory_function)(acceptor_id id, const std::string& address,
-      acceptor_handler* handler_, connection::connection_handler* connections_handler);
+      std::shared_ptr<acceptor_handler> handler_, std::shared_ptr<connection::connection_handler> connections_handler);
 
   /**
     Registers acceptor implementation.
@@ -139,9 +144,9 @@ class acceptor {
       @see acceptor_handler
     @param[in] handler_ pointer to an acceptor_handler
   */
-  acceptor(acceptor_id id, acceptor_handler* handler_);
+  acceptor(acceptor_id id, std::shared_ptr<acceptor_handler> handler_);
 
-  acceptor_handler* handler;
+  std::shared_ptr<acceptor_handler> handler;
   acceptor_id id;
 
  private:

@@ -10,8 +10,8 @@ std::shared_ptr<connection> connection_c;
 
 class client_handler:public connection::connection_handler {
  public:
-  void on_message_received(connection_id c, char* buffer, uint32_t bytes_read, uint32_t mid) {
-    std::string message = std::string(buffer, bytes_read);
+  void on_message_received(connection_id c, std::shared_ptr<char> buffer, uint32_t bytes_read, uint32_t mid) {
+    std::string message = std::string(buffer.get(), bytes_read);
     std::cout << "Message \n\"" << message << "\"\nreceived from server" << std::endl;
     connection_c->async_read(buffer, 256, 0, 0);
   }
@@ -36,12 +36,12 @@ class client_handler:public connection::connection_handler {
   }
 };
 
-char* buffer_c = new char[256];
+std::shared_ptr<char> buffer_c = std::shared_ptr<char>(new char[256], std::default_delete<char[]>());
 
-client_handler handler_c;
+std::shared_ptr<client_handler> handler_c;
 
 void client() {
-  connection_c = connection::create("tcp", 1, SERVER_ADDRESS, &handler_c);
+  connection_c = connection::create("tcp", 1, SERVER_ADDRESS, std::move(handler_c));
   if (connection_c->init()) {
     std::cout << "Connection init was successful!" << std::endl;
     connection_c -> connect();
@@ -70,6 +70,5 @@ int main(int argc, char* argv[]) {
   automaton::core::network::tcp_init();
   client();
   automaton::core::network::tcp_release();
-  delete [] buffer_c;
   return 0;
 }

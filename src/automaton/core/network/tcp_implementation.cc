@@ -43,7 +43,8 @@ static bool tcp_initialized = false;
 
 // Connection functions
 
-tcp_connection::tcp_connection(connection_id id, const std::string& address_, connection_handler* handler_):
+tcp_connection::tcp_connection(connection_id id, const std::string& address_,
+    std::shared_ptr<connection_handler> handler_):
     connection(id, handler_), asio_socket{asio_io_service},
     connection_state(connection::state::invalid_state), address(address_) {
   if (!tcp_initialized) {
@@ -57,7 +58,7 @@ tcp_connection::tcp_connection(connection_id id, const std::string& address_, co
 // This is called only from acceptor
 tcp_connection::tcp_connection(connection_id id, const std::string& addr,
     const boost::asio::ip::tcp::socket& sock,
-    connection_handler* handler_):connection(id, handler_),
+    std::shared_ptr<connection_handler> handler_):connection(id, handler_),
     asio_socket(std::move(const_cast<boost::asio::ip::tcp::socket&>(sock))),
     connection_state(connection::state::connected), address(addr) {
 }
@@ -121,7 +122,7 @@ void tcp_connection::connect() {
     if (get_state() == connection::state::disconnected) {
       set_state(connection::state::connecting);
       std::shared_ptr<tcp_connection> self = shared_from_this();
-      connection_handler* c_handler = handler;
+      std::shared_ptr<connection_handler> c_handler = handler;
       connection_id cid = id;
       std::string addr = address;
       asio_socket.async_connect(asio_endpoint,
@@ -151,7 +152,7 @@ void tcp_connection::async_send(const std::string& msg, uint32_t message_id) {
     // LOG(DEBUG) << "ASYNC SEND MSG ID" << message_id << " data: " << io::bin2hex(msg);
     std::string* message = new std::string(msg);
     std::shared_ptr<tcp_connection> self = shared_from_this();
-    connection_handler* c_handler = handler;
+    std::shared_ptr<connection_handler> c_handler = handler;
     connection_id cid = id;
     std::string addr = address;
     asio_socket.async_write_some(boost::asio::buffer(*message),
@@ -192,15 +193,15 @@ void tcp_connection::async_send(const std::string& msg, uint32_t message_id) {
   }
 }
 
-void tcp_connection::async_read(char* buffer, uint32_t buffer_size,
+void tcp_connection::async_read(std::shared_ptr<char> buffer, uint32_t buffer_size,
     uint32_t num_bytes, uint32_t read_id) {
   if (tcp_initialized && asio_socket.is_open()) {
     if (num_bytes == 0) {
       std::shared_ptr<tcp_connection> self = shared_from_this();
-      connection_handler* c_handler = handler;
+      std::shared_ptr<connection_handler> c_handler = handler;
       connection_id cid = id;
       std::string addr = address;
-      asio_socket.async_read_some(boost::asio::buffer(buffer, buffer_size),
+      asio_socket.async_read_some(boost::asio::buffer(buffer.get(), buffer_size),
           [self, c_handler, cid, addr, buffer, read_id](const boost::system::error_code& boost_error_code,
           size_t bytes_transferred) {
         if (boost_error_code) {
@@ -223,10 +224,10 @@ void tcp_connection::async_read(char* buffer, uint32_t buffer_size,
       });
     } else {
         std::shared_ptr<tcp_connection> self = shared_from_this();
-        connection_handler* c_handler = handler;
+        std::shared_ptr<connection_handler> c_handler = handler;
         connection_id cid = id;
         std::string addr = address;
-        boost::asio::async_read(asio_socket, boost::asio::buffer(buffer, buffer_size),
+        boost::asio::async_read(asio_socket, boost::asio::buffer(buffer.get(), buffer_size),
           boost::asio::transfer_exactly(num_bytes),
           [self, c_handler, addr, cid, buffer, read_id](const boost::system::error_code& boost_error_code,
               size_t bytes_transferred) {
@@ -277,7 +278,7 @@ void tcp_connection::disconnect() {
   }
 }
 
-void tcp_connection::add_handler(connection_handler* handler_) {
+void tcp_connection::add_handler(std::shared_ptr<connection_handler> handler_) {
   std::lock_guard<std::mutex> lock(connection_mutex);
   this->handler = handler_;
 }
@@ -298,8 +299,8 @@ void tcp_connection::set_state(connection::state new_state) {
 
 // Acceptor functions
 
-tcp_acceptor::tcp_acceptor(acceptor_id id, const std::string& address, acceptor_handler* handler,
-    connection::connection_handler* connections_handler_):
+tcp_acceptor::tcp_acceptor(acceptor_id id, const std::string& address, std::shared_ptr<acceptor_handler> handler,
+    std::shared_ptr<connection::connection_handler> connections_handler_):
     acceptor(id, handler), asio_acceptor{asio_io_service}, accepted_connections_handler(connections_handler_),
     acceptor_state(acceptor::state::invalid_state), address(address) {
   if (!tcp_initialized) {
@@ -362,8 +363,8 @@ void tcp_acceptor::start_accepting() {
   if (tcp_initialized && asio_acceptor.is_open()) {
     set_state(acceptor::state::accepting);
     std::shared_ptr<tcp_acceptor> self = shared_from_this();
-    acceptor_handler* a_handler = handler;
-    connection::connection_handler* ac_handler = accepted_connections_handler;
+    std::shared_ptr<acceptor_handler> a_handler = handler;
+    std::shared_ptr<connection::connection_handler> ac_handler = accepted_connections_handler;
     asio_acceptor.async_accept(asio_io_service, [self, a_handler, ac_handler]
         (const boost::system::error_code& boost_error_code, boost::asio::ip::tcp::socket socket_) {
        // LOG(DEBUG) << "async_accept";
@@ -413,6 +414,16 @@ void tcp_acceptor::start_accepting() {
   }
 }
 
+void tcp_acceptor::stop_accepting() {
+  if (asio_acceptor.is_open()) {
+    boost::system::error_code boost_error_code_close;
+    asio_acceptor.close(boost_error_code_close);
+    if (boost_error_code_close) {
+      // LOG(DEBUG) << address << " -> " <<  boost_error_code_close.message();
+    }
+  }
+}
+
 std::string tcp_acceptor::get_address() const {
   return address;
 }
@@ -434,13 +445,13 @@ void tcp_init() {
     return;
   }
   connection::register_connection_type("tcp",
-    [](connection_id id, const std::string& address, connection::connection_handler* handler) ->
+    [](connection_id id, const std::string& address, std::shared_ptr<connection::connection_handler> handler) ->
         std::shared_ptr<connection> {
       return std::shared_ptr<connection>(new tcp_connection(id, address, handler));
     });
   acceptor::register_acceptor_type("tcp",
-    [](acceptor_id id, const std::string& address, acceptor::acceptor_handler* handler,
-    connection::connection_handler* connections_handler) -> std::shared_ptr<acceptor> {
+    [](acceptor_id id, const std::string& address, std::shared_ptr<acceptor::acceptor_handler> handler,
+    std::shared_ptr<connection::connection_handler> connections_handler) -> std::shared_ptr<acceptor> {
       return std::shared_ptr<acceptor>(new tcp_acceptor(id, address, handler, connections_handler));
     });
   worker_thread = new std::thread([]() {

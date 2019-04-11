@@ -27,7 +27,7 @@ using automaton::core::network::connection;
 using std::chrono::system_clock;
 using std::ios_base;
 using std::lock_guard;
-using std::make_unique;
+using std::make_shared;
 using std::mutex;
 using std::ofstream;
 using std::string;
@@ -42,7 +42,7 @@ static const uint32_t HEADER_SIZE = 3;
 static const uint32_t WAITING_HEADER = 1;
 static const uint32_t WAITING_MESSAGE = 2;
 
-std::unordered_map<string, std::unique_ptr<node> > node::nodes;
+std::unordered_map<string, std::shared_ptr<node> > node::nodes;
 
 vector<string> node::list_nodes() {
   vector<string> result;
@@ -52,10 +52,10 @@ vector<string> node::list_nodes() {
   return result;
 }
 
-node* node::get_node(const string& node_id) {
+std::shared_ptr<node> node::get_node(const string& node_id) {
   const auto& n = nodes.find(node_id);
   if (n != nodes.end()) {
-    return (n->second).get();
+    return n->second;
   }
   return nullptr;
 }
@@ -64,7 +64,7 @@ bool node::launch_node(const string& node_type, const string& node_id, const str
     const string& address) {
   auto n = nodes.find(node_id);
   if (n == nodes.end()) {
-    std::unique_ptr<node> new_node = create(node_type, node_id, protocol_id);
+    std::shared_ptr<node> new_node = create(node_type, node_id, protocol_id);
     if (new_node == nullptr) {
       LOG(ERROR) << "Creating node failed!";
       return false;
@@ -85,11 +85,19 @@ bool node::launch_node(const string& node_type, const string& node_id, const str
 void node::remove_node(const string& id) {
   auto it = nodes.find(id);
   if (it != nodes.end()) {
+    auto node = it->second;
+    // Actions to prevent other threads (worker threads) from calling non-existent functions
+    node->acceptor_->stop_accepting();
+    node->acceptor_ = nullptr;
+    for (auto peer = node->known_peers.begin(); peer != node->known_peers.end(); ++peer) {
+      peer->second.connection->disconnect();
+    }
+    node->known_peers.clear();
     nodes.erase(it);
   }
 }
 
-std::unique_ptr<node> node::create(const std::string& type, const std::string& id, const std::string& proto_id) {
+std::shared_ptr<node> node::create(const std::string& type, const std::string& id, const std::string& proto_id) {
   auto it = node_factory.find(type);
   if (it == node_factory.end()) {
     return nullptr;
@@ -143,12 +151,6 @@ node::node(const string& id,
 }
 
 node::~node() {
-  // Actions to prevent other threads (worker threads) from calling non-existent functions
-  acceptor_ = nullptr;
-  for (auto it = known_peers.begin(); it != known_peers.end(); ++it) {
-    it->second.connection->disconnect();
-    it->second.connection = nullptr;
-  }
   // Stop worker/update loop
   worker_mutex.lock();
   worker_stop_signal = true;
@@ -166,36 +168,37 @@ void node::add_task(std::function<std::string()> task) {
 void node::init_worker() {
   lock_guard<mutex> lock(worker_mutex);
   worker_stop_signal = false;
-  worker = new std::thread([this]() {
+  auto self = shared_from_this();
+  worker = new std::thread([self]() {
     // LOG(DEBUG) << "Worker thread starting in " << nodeid;
-    while (!get_worker_stop_signal()) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(this->update_time_slice));
+    while (!self->get_worker_stop_signal()) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(self->update_time_slice));
       auto current_time = std::chrono::duration_cast<std::chrono::milliseconds>(
          std::chrono::system_clock::now().time_since_epoch()).count();
 
       // LOG(DEBUG) << "Calling update in " << nodeid;
-      script_mutex.lock();
-      s_update(current_time);
-      script_mutex.unlock();
+      self->script_mutex.lock();
+      self->s_update(current_time);
+      self->script_mutex.unlock();
 
       // TODO(asen): custom break condition, e.g. max number of tasks per update.
       // Process tasks pending in the queue.
       // LOG(DEBUG) << "Executing tasks in " << nodeid;
-      while (!tasks.empty()) {
+      while (!self->tasks.empty()) {
         // Check to see if we should stop the thread execution.
-        if (get_worker_stop_signal()) {
+        if (self->get_worker_stop_signal()) {
           break;
         }
 
         // Pop a task from the front of the queue.
-        tasks_mutex.lock();
-        auto task = tasks.front();
-        tasks.pop_front();
-        tasks_mutex.unlock();
+        self->tasks_mutex.lock();
+        auto task = self->tasks.front();
+        self->tasks.pop_front();
+        self->tasks_mutex.unlock();
 
         // Execute task.
         // LOG(DEBUG) << "  - Executing a task in " << nodeid;
-        script_mutex.lock();
+        self->script_mutex.lock();
         try {
           string result = task();
           if (result.size() > 0) {
@@ -208,7 +211,7 @@ void node::init_worker() {
         } catch (...) {
           LOG(FATAL) << "TASK FAILED: EXCEPTION DURING TASK EXECUTION!";
         }
-        script_mutex.unlock();
+        self->script_mutex.unlock();
       }
     }
   });
@@ -219,11 +222,11 @@ bool node::get_worker_stop_signal() {
   return worker_stop_signal;
 }
 
-string node::get_id() {
+string node::get_id() const {
   return nodeid;
 }
 
-string node::get_protocol_id() {
+string node::get_protocol_id() const {
   return protoid;
 }
 
@@ -250,7 +253,8 @@ void node::log(const string& logger, const string& msg) {
 }
 
 void node::dump_logs(const string& html_file) {
-  add_task([this, html_file](){
+  auto self = shared_from_this();
+  add_task([self, html_file](){
     ofstream f;
     f.open(html_file, ios_base::trunc);
     if (!f.is_open()) {
@@ -299,20 +303,20 @@ void node::dump_logs(const string& html_file) {
 <br/>
 )";
 
-    log_mutex.lock();
-    for (auto log : logs) {
+    self->log_mutex.lock();
+    for (auto log : self->logs) {
       f << "<a class='button' href='#" << log.first << "'>";
       f << log.first << std::endl;
       f << "</a>\n";
     }
-    log_mutex.unlock();
+    self->log_mutex.unlock();
 
     f << "<hr />\n";
-    f << s_debug_html();
+    f << self->s_debug_html();
     f << "<hr />\n";
 
-    log_mutex.lock();
-    for (auto log : logs) {
+    self->log_mutex.lock();
+    for (auto log : self->logs) {
       f << "<br/><span class='button' id='" << log.first << "'>" << log.first << "</span>";
       f << "<pre>";
       for (auto msg : log.second) {
@@ -321,7 +325,7 @@ void node::dump_logs(const string& html_file) {
       }
       f << "</pre>\n";
     }
-    log_mutex.unlock();
+    self->log_mutex.unlock();
 
     f << "</body></html>\n";
     f.close();
@@ -333,8 +337,7 @@ void node::dump_logs(const string& html_file) {
 void node::send_message(peer_id p_id, const core::data::msg& msg, uint32_t msg_id) {
   auto msg_schema_id = msg.get_schema_id();
   CHECK_GT(factory_to_wire.count(msg_schema_id), 0)
-      << "Message " << msg.get_message_type()
-      << " not part of the protocol";
+      << "Message " << msg.get_message_type() << " not part of the protocol";
   auto wire_id = factory_to_wire[msg_schema_id];
   string msg_blob;
   if (msg.serialize_message(&msg_blob)) {
@@ -346,8 +349,8 @@ void node::send_message(peer_id p_id, const core::data::msg& msg, uint32_t msg_i
 }
 
 void node::send_blob(peer_id p_id, const string& blob, uint32_t msg_id) {
-  LOG(DEBUG) << (acceptor_ ? acceptor_->get_address() : "N/A") << " sending message " << core::io::bin2hex(blob) <<
-      " to peer " << p_id;
+  LOG(DEBUG) << (acceptor_ ? acceptor_->get_address() : "N/A") <<
+      " sending message " << core::io::bin2hex(blob) << " to peer " << p_id;
   uint32_t blob_size = blob.size();
   if (blob_size > MAX_MESSAGE_SIZE) {
     LOG(ERROR) << "Message size is " << blob_size << " and is too big! Max message size is " << MAX_MESSAGE_SIZE;
@@ -442,7 +445,8 @@ bool node::set_acceptor(const string& address) {
       LOG(DEBUG) << "Address was not parsed!";
       return false;
     }
-    new_acceptor = std::shared_ptr<acceptor>(acceptor::create(protocol, 1, addr, this, this));
+    auto self = shared_from_this();
+    new_acceptor = std::shared_ptr<acceptor>(acceptor::create(protocol, 1, addr, self, self));
     if (new_acceptor && !new_acceptor->init()) {
       LOG(DEBUG) << "Acceptor initialization failed! Acceptor was not created! " << address;
       return false;
@@ -486,8 +490,8 @@ peer_id node::add_peer(const string& address) {
     if (!address_parser(address, &protocol, &addr)) {
       LOG(DEBUG) << "Address was not parsed! " << address;
     } else {
-      new_connection = std::shared_ptr<connection>
-          (connection::create(protocol, info.id, addr, this));
+      std::shared_ptr<node> self = shared_from_this();
+      new_connection = std::shared_ptr<connection>(connection::create(protocol, info.id, addr, self));
       if (new_connection && !new_connection->init()) {
         LOG(DEBUG) << "Connection initialization failed! Connection was not created!";
       }
@@ -569,8 +573,8 @@ bool node::address_parser(const string& s, string* protocol, string* address) {
   }
 }
 
-void node::on_message_received(peer_id c, char* buffer, uint32_t bytes_read, uint32_t mid) {
-  LOG(DEBUG) << "RECEIVED: " << core::io::bin2hex(string(buffer, bytes_read)) << " from peer " << c;
+void node::on_message_received(peer_id c, std::shared_ptr<char> buffer, uint32_t bytes_read, uint32_t mid) {
+  LOG(DEBUG) << "RECEIVED: " << core::io::bin2hex(string(buffer.get(), bytes_read)) << " from peer " << c;
   switch (mid) {
     case WAITING_HEADER: {
       if (bytes_read != HEADER_SIZE) {
@@ -582,9 +586,9 @@ void node::on_message_received(peer_id c, char* buffer, uint32_t bytes_read, uin
       // TODO(kari): check if this peer still exists, the buffer could be invalid
       // TODO(kari): make this loop
       uint32_t message_size = 0;
-      message_size += (buffer[2] & 0x000000ff);
-      message_size += ((buffer[1] & 0x000000ff) << 8);
-      message_size += ((buffer[0] & 0x000000ff) << 16);
+      message_size += (buffer.get()[2] & 0x000000ff);
+      message_size += ((buffer.get()[1] & 0x000000ff) << 8);
+      message_size += ((buffer.get()[0] & 0x000000ff) << 16);
       LOG(DEBUG) << "MESSAGE SIZE: " << message_size;
       if (!message_size || message_size > MAX_MESSAGE_SIZE) {
         LOG(ERROR) << "Invalid message size!";
@@ -613,7 +617,7 @@ void node::on_message_received(peer_id c, char* buffer, uint32_t bytes_read, uin
     }
     break;
     case WAITING_MESSAGE: {
-      string blob = string(buffer, bytes_read);
+      string blob = string(buffer.get(), bytes_read);
       // VLOG(9) << "LOCK " << this << " " << (acceptor_ ? acceptor_->get_address() : "N/A");
       peers_mutex.lock();
       auto it = known_peers.find(c);
@@ -656,7 +660,7 @@ void node::on_connected(peer_id c) {
   }
   LOG(DEBUG) << "Connected to " << c;
   connected_peers.insert(c);
-  it->second.connection->async_read(it->second.buffer.get(), MAX_MESSAGE_SIZE, HEADER_SIZE, WAITING_HEADER);
+  it->second.connection->async_read(it->second.buffer, MAX_MESSAGE_SIZE, HEADER_SIZE, WAITING_HEADER);
   // VLOG(9) << "UNLOCK " << this << " " << (acceptor_ ? acceptor_->get_address() : "N/A") << " peer " << c
       // << (it->second.address);
   peers_mutex.unlock();

@@ -29,11 +29,12 @@ std::shared_ptr<simulation> simulation::simulator;
 
 simulation::simulation():simulation_time(0), simulation_running(false) {
   connection::register_connection_type("sim", [](connection_id id, const std::string& address,
-      connection::connection_handler* handler) {
+      std::shared_ptr<connection::connection_handler> handler) {
     return std::shared_ptr<connection>(new simulated_connection(id, address, handler));
   });
   acceptor::register_acceptor_type("sim", [](acceptor_id id, const std::string& address,
-      acceptor::acceptor_handler* handler, connection::connection_handler* connections_handler) {
+      std::shared_ptr<acceptor::acceptor_handler> handler,
+      std::shared_ptr<connection::connection_handler> connections_handler) {
     return std::shared_ptr<acceptor>(new simulated_acceptor(id, address, handler, connections_handler));
   });
   std::srand(816405263);
@@ -103,8 +104,13 @@ void simulation::handle_disconnect(uint32_t dest) {
   }
   LOG(INFO) << "Other peer closed connection in: " << destination->get_address();
   destination->set_state(connection::state::disconnected);
-  add_task(get_time() + 1, [destination](){
-    destination->get_handler()->on_disconnected(destination->get_id());
+  std::weak_ptr<connection::connection_handler> c_handler = destination->get_handler();
+  auto c_id = destination->get_id();
+  add_task(get_time() + 1, [c_handler, c_id]() {
+    std::shared_ptr<connection::connection_handler> handler = c_handler.lock();
+    if (handler != nullptr) {
+      handler->on_disconnected(c_id);
+    }
   });
   destination->remote_connection_id = 0;
   add_task(get_time() + 1, [destination](){
@@ -134,8 +140,14 @@ void simulation::handle_request(uint32_t src, uint32_t dest) {
   uint64_t time_of_handling = get_time() + source->get_lag() + 1;
   if (!acceptor_ || acceptor_->get_state() != acceptor::state::accepting) {
     LOG(ERROR) << "No such peer: " << dest;
-    add_task(time_of_handling, std::bind(&connection::connection_handler::on_connection_error,
-        source->get_handler(), source->get_id(), status::internal("No route to host")));
+    std::weak_ptr<connection::connection_handler> c_handler = source->get_handler();
+    auto c_id = source->get_id();
+    add_task(time_of_handling, [c_handler, c_id]() {
+      std::shared_ptr<connection::connection_handler> handler = c_handler.lock();
+      if (handler != nullptr) {
+        handler->on_connection_error(c_id, status::internal("No route to host"));
+      }
+    });
   }
   std::string source_address = source->get_address();
   connection_id cid = 0;
@@ -157,8 +169,13 @@ void simulation::handle_request(uint32_t src, uint32_t dest) {
       new_connection->set_state(connection::state::connected);
       new_connection->remote_connection_id = source->local_connection_id;
       new_connection->set_time_stamp(time_of_handling);
-      add_task(get_time() + 1, [acceptor_, new_connection, source_address](){
-        acceptor_->get_handler()->on_connected(acceptor_->get_id(), new_connection, source_address);
+      std::weak_ptr<acceptor::acceptor_handler> a_handler = acceptor_->get_handler();
+      auto a_id = acceptor_->get_id();
+      add_task(get_time() + 1, [a_handler, a_id, new_connection, source_address]() {
+        std::shared_ptr<acceptor::acceptor_handler> handler = a_handler.lock();
+        if (handler != nullptr) {
+          handler->on_connected(a_id, new_connection, source_address);
+        }
       });
       add_task(get_time() + 1, [new_connection, cid](){
         new_connection->get_handler()->on_connected(cid);
@@ -274,7 +291,9 @@ void simulation::handle_ack(uint32_t dest, const status& s) {
       add_task(get_time() + 1, [destination, rid, s](){
         destination->get_handler()->on_message_sent(destination->get_id(), rid, s);
       });
-      add_task(simulation::get_time() + 1, std::bind(&simulated_connection::handle_send, destination));
+      add_task(simulation::get_time() + 1, [destination]() {
+        destination->handle_send();
+      });
     }
     destination->sending_q_mutex.unlock();
   }
@@ -392,7 +411,8 @@ simulated_connection::incoming_packet::incoming_packet(): buffer(nullptr), buffe
 
 simulated_connection::outgoing_packet::outgoing_packet(): bytes_send(0), id(0) {}
 
-simulated_connection::simulated_connection(connection_id id, const std::string& address_, connection_handler* handler_):
+simulated_connection::simulated_connection(connection_id id, const std::string& address_,
+    std::shared_ptr<connection_handler> handler_):
     connection(id, handler_), remote_address(0), local_connection_id(0), remote_connection_id(0), time_stamp(0),
     original_address(address_), connection_state(connection::state::invalid_state) {
 }
@@ -490,11 +510,11 @@ void simulated_connection::handle_read() {
       uint32_t left_to_read = max_to_read - packet.bytes_read;
       std::string message = receive_buffer.front();
       if (left_to_read >= message.size()) {
-        std::memcpy(packet.buffer + packet.bytes_read, message.data(), message.size());
+        std::memcpy(packet.buffer.get() + packet.bytes_read, message.data(), message.size());
         packet.bytes_read += message.size();
         receive_buffer.pop();
       } else {
-        std::memcpy(packet.buffer + packet.bytes_read, message.data(), left_to_read);
+        std::memcpy(packet.buffer.get() + packet.bytes_read, message.data(), left_to_read);
         packet.bytes_read += left_to_read;
         receive_buffer.front() = message.substr(left_to_read);
       }
@@ -514,7 +534,8 @@ void simulated_connection::handle_read() {
   // LOG(DEBUG) << id << " </handle_read 1>";
 }
 
-void simulated_connection::async_read(char* buffer, uint32_t buffer_size, uint32_t num_bytes = 0, uint32_t rid = 0) {
+void simulated_connection::async_read(std::shared_ptr<char> buffer, uint32_t buffer_size, uint32_t num_bytes = 0,
+    uint32_t rid = 0) {
   /**
     This function does not create event. Actual reading will happen when the
     other endpoint sends a message and it arrives (send event is handled and
@@ -620,13 +641,20 @@ void simulated_connection::disconnect() {
       self->cancel_operations();
       self->clear_queues();
     });
-    sim->add_task(sim->get_time() + 1, std::bind(&connection::connection_handler::on_disconnected, handler, id));
+    std::weak_ptr<connection::connection_handler> c_handler = handler;
+    auto c_id = id;
+    sim->add_task(sim->get_time() + 1, [c_handler, c_id]() {
+      std::shared_ptr<connection::connection_handler> handler = c_handler.lock();
+      if (handler != nullptr) {
+        handler->on_disconnected(c_id);
+      }
+    });
     // LOG(DEBUG) << id << " </disconnect>";
     sim->add_task(time_of_handling, std::bind(&simulation::handle_disconnect, sim, remote_connection_id));
     remote_connection_id = 0;
 }
 
-connection::connection_handler* simulated_connection::get_handler() {
+std::shared_ptr<connection::connection_handler> simulated_connection::get_handler() {
   return handler;
 }
 
@@ -660,22 +688,28 @@ void simulated_connection::cancel_operations() {
   std::shared_ptr<simulation> sim = simulation::get_simulator();
   std::lock_guard<std::mutex> sending_lock(sending_q_mutex);
   std::lock_guard<std::mutex> reading_lock(reading_q_mutex);
+  std::shared_ptr<connection::connection_handler> c_handler = handler;
+  connection_id c_id = id;
   while (!sending.empty()) {
-    sim->add_task(sim->get_time() + 1, std::bind(&connection::connection_handler::on_message_sent, handler,
-        this->id, sending.front().id, status::aborted("Operation cancelled!")));
+    auto m_id = sending.front().id;
+    sim->add_task(sim->get_time() + 1, [c_handler, c_id, m_id]() {
+      c_handler->on_message_sent(c_id, m_id, status::aborted("Operation cancelled!"));
+    });
     sending.pop();
   }
   uint32_t n = reading.size();
   while (n--) {
-    sim->add_task(sim->get_time() + 1, std::bind(&connection::connection_handler::on_connection_error, handler,
-        this->id, status::aborted("Operation read cancelled!")));
+    sim->add_task(sim->get_time() + 1, [c_handler, c_id]() {
+      c_handler->on_connection_error(c_id, status::aborted("Operation read cancelled!"));
+    });
   }
 }
 
 // ACCEPTOR
 
 simulated_acceptor::simulated_acceptor(acceptor_id id, const std::string& address_,
-    acceptor::acceptor_handler* handler, connection::connection_handler* connections_handler):
+    std::shared_ptr<acceptor::acceptor_handler> handler,
+    std::shared_ptr<connection::connection_handler> connections_handler):
     acceptor(id, handler), address(0), original_address(address_),
     accepted_connections_handler(connections_handler), acceptor_state(acceptor::state::invalid_state) {
 }
@@ -718,6 +752,10 @@ void simulated_acceptor::start_accepting() {
   set_state(acceptor::state::accepting);
 }
 
+void simulated_acceptor::stop_accepting() {
+  set_state(acceptor::state::not_accepting);
+}
+
 acceptor::state simulated_acceptor::get_state() const {
   std::lock_guard<std::mutex> lock(state_mutex);
   return acceptor_state;
@@ -732,7 +770,7 @@ std::string simulated_acceptor::get_address() const {
   return original_address;
 }
 
-acceptor::acceptor_handler* simulated_acceptor::get_handler() {
+std::shared_ptr<acceptor::acceptor_handler> simulated_acceptor::get_handler() {
   return handler;
 }
 

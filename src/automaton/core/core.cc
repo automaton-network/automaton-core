@@ -114,8 +114,8 @@ int main(int argc, char* argv[]) {
   string automaton_ascii_logo(automaton_ascii_logo_cstr);
   string_replace(&automaton_ascii_logo, "@", "\x1b[38;5;");
   auto core_factory = std::make_shared<protobuf_factory>();
-  node::register_node_type("lua", [](const std::string& id, const std::string& proto_id)->std::unique_ptr<node> {
-      return std::unique_ptr<node>(new lua_node(id, proto_id));
+  node::register_node_type("lua", [](const std::string& id, const std::string& proto_id)->std::shared_ptr<node> {
+      return std::shared_ptr<node>(new lua_node(id, proto_id));
     });
 
 {
@@ -128,9 +128,8 @@ int main(int argc, char* argv[]) {
 
   node_type.set(sol::call_constructor,
     sol::factories(
-    [&](const std::string& id, std::string proto) -> unique_ptr<lua_node> {
-      auto n = node::create("lua", id, proto);
-      return unique_ptr<lua_node>(reinterpret_cast<lua_node*>(n.release()));
+    [&](const std::string& id, std::string proto) -> std::shared_ptr<lua_node> {
+      return std::dynamic_pointer_cast<lua_node>(node::create("lua", id, proto));
     }));
 
   // Bind this node to its own Lua state.
@@ -195,9 +194,8 @@ int main(int argc, char* argv[]) {
     return sol::as_table(node::list_nodes());
   });
 
-  script.set_function("get_node", [&](const std::string& node_id) {
-    node* n = node::get_node(node_id);
-    return reinterpret_cast<lua_node*>(n);
+  script.set_function("get_node", [&](const std::string& node_id) -> std::shared_ptr<lua_node> {
+    return std::dynamic_pointer_cast<lua_node>(node::get_node(node_id));
   });
 
   script.set_function("launch_node", [&](std::string node_id, std::string protocol_id, std::string address) {

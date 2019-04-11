@@ -15,8 +15,8 @@ using automaton::core::smartproto::smart_protocol;
 using automaton::core::testnet::testnet;
 
 TEST(testnet, test_all) {
-  node::register_node_type("lua", [](const std::string& id, const std::string& proto_id)->std::unique_ptr<node> {
-      return std::unique_ptr<node>(new lua_node(id, proto_id));
+  node::register_node_type("lua", [](const std::string& id, const std::string& proto_id)->std::shared_ptr<node> {
+      return std::shared_ptr<node>(new lua_node(id, proto_id));
     });
 
   EXPECT_EQ(smart_protocol::load("chat", "automaton/tests/testnet/testproto/"), true);

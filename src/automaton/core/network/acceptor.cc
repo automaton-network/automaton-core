@@ -4,14 +4,15 @@ namespace automaton {
 namespace core {
 namespace network {
 
-acceptor::acceptor(acceptor_id id_, acceptor::acceptor_handler* handler_):handler(handler_), id(id_) {}
+acceptor::acceptor(acceptor_id id_, std::shared_ptr<acceptor::acceptor_handler> handler_):handler(handler_), id(id_) {}
 
 acceptor_id acceptor::get_id() {
   return id;
 }
 
 std::shared_ptr<acceptor> acceptor::create(const std::string& type, acceptor_id id, const std::string& address,
-    acceptor::acceptor_handler* handler, connection::connection_handler* connections_handler) {
+    std::shared_ptr<acceptor::acceptor_handler> handler,
+    std::shared_ptr<connection::connection_handler> connections_handler) {
   auto it = acceptor_factory.find(type);
   if (it == acceptor_factory.end()) {
     return NULL;

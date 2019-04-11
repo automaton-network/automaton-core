@@ -20,8 +20,8 @@ class test_server_handler: public http_server::server_handler {
 
 class client_handler:public connection::connection_handler {
  public:
-  void on_message_received(connection_id c, char* buffer, uint32_t bytes_read, uint32_t mid) {
-    std::string message = std::string(buffer, bytes_read);
+  void on_message_received(connection_id c, std::shared_ptr<char> buffer, uint32_t bytes_read, uint32_t mid) {
+    std::string message = std::string(buffer.get(), bytes_read);
     LOG(INFO) << "Message \"" << message << "\" received from server";
     // connection_c->async_read(buffer, 256, 0, 0);
   }
@@ -46,12 +46,12 @@ class client_handler:public connection::connection_handler {
   }
 };
 
-char* buffer_c = new char[256];
+std::shared_ptr<char> buffer_c = std::shared_ptr<char>(new char[256], std::default_delete<char[]>());
 
-client_handler handler_c;
+std::shared_ptr<client_handler> handler_c;
 
 void client() {
-  connection_c = connection::create("tcp", 1, SERVER_ADDRESS, &handler_c);
+  connection_c = connection::create("tcp", 1, SERVER_ADDRESS, std::move(handler_c));
   if (connection_c->init()) {
     LOG(DEBUG) << "Connection init was successful!";
     connection_c -> connect();
@@ -85,6 +85,5 @@ int main() {
   client();
   rpc.stop();
   automaton::core::network::tcp_release();
-  delete [] buffer_c;
   return 0;
 }

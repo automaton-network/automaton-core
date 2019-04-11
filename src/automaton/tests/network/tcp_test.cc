@@ -26,12 +26,12 @@ uint32_t get_new_id() {
   return ++cids;
 }
 
-char* bufferC = new char[256];
+std::shared_ptr<char> bufferC = std::shared_ptr<char>(new char[256], std::default_delete<char[]>());
 
 class handler: public connection::connection_handler {
  public:
-  void on_message_received(connection_id c, char* buffer, uint32_t bytes_read, uint32_t mid) {
-    std::string message = std::string(buffer, bytes_read);
+  void on_message_received(connection_id c, std::shared_ptr<char> buffer, uint32_t bytes_read, uint32_t mid) {
+    std::string message = std::string(buffer.get(), bytes_read);
     LOG(INFO) << "Message \"" << message << "\" received from " << c;
     if (message.compare("Thank you!")) {
       connections[c]->async_send("Thank you!", counter++);
@@ -72,7 +72,7 @@ class lis_handler: public acceptor::acceptor_handler {
   void on_connected(acceptor_id a, std::shared_ptr<connection> c, const std::string& address) {
     LOG(INFO) << "Accepted connection from: " << address;
     connections[c->get_id()] = c;
-    char* buffer = new char[256];
+    std::shared_ptr<char> buffer = std::shared_ptr<char>(new char[256], std::default_delete<char[]>());
     c->async_read(buffer, 256, 0);
   }
   void on_acceptor_error(acceptor_id a, const status& s) {
@@ -80,10 +80,11 @@ class lis_handler: public acceptor::acceptor_handler {
   }
 };
 
-handler handlerC, handlerA;
+std::shared_ptr<handler> handlerC = std::make_shared<handler>();
+std::shared_ptr<handler> handlerA = std::make_shared<handler>();
 
 void func() {
-  std::shared_ptr<connection> connection_c = connection::create("tcp", get_new_id(), address_a, &handlerC);
+  std::shared_ptr<connection> connection_c = connection::create("tcp", get_new_id(), address_a, std::move(handlerC));
   if (connection_c->init()) {
     connections[connection_c->get_id()] = connection_c;
     LOG(DEBUG) << "Connection init was successful!";
@@ -114,8 +115,9 @@ void func() {
 
 int main() {
   automaton::core::network::tcp_init();
-  lis_handler lis_handler;
-  std::shared_ptr<acceptor> acceptorB = acceptor::create("tcp", 1, address_a, &lis_handler, &handlerA);
+  std::shared_ptr<lis_handler> l_handler = std::make_shared<lis_handler>();
+  std::shared_ptr<acceptor> acceptorB =
+      acceptor::create("tcp", 1, address_a, std::move(l_handler), std::move(handlerA));
   if (acceptorB->init()) {
     LOG(DEBUG) << "Acceptor init was successful!";
     acceptorB->start_accepting();
@@ -128,7 +130,6 @@ int main() {
   std::this_thread::sleep_for(std::chrono::milliseconds(2500));
   t.join();
   automaton::core::network::tcp_release();
-  delete [] bufferC;
   connections.clear();
   return 0;
 }
