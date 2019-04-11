@@ -13,11 +13,18 @@ contract KingAutomaton {
   // Holds the Ethereum reward address for each validator slot.
   mapping(uint32 => address) rewards;
 
+  // The last time the slot was claimed
+  mapping(uint32 => uint) prev_claimed_time;
+
+  // Total time held by a validator
+  mapping(address => uint) total_time_held;
+
   // Prevents keys premine prior to contract deployment.
   uint mask;
 
   // Total slots claimed.
   uint claimed;
+
 
   // *** GETTERS ***
 
@@ -37,8 +44,12 @@ contract KingAutomaton {
     return claimed;
   }
 
+  function getTotalTimeHeld(address rewardAddress) public view returns(uint) {
+      return total_time_held[rewardAddress];
+  }
+
   constructor() public {
-    mask = uint(keccak256(abi.encode(blockhash(block.number-1))));
+    mask = uint(keccak256(abi.encodePacked(now, msg.sender)));
   }
 
   // Verifies that signature of a message matches the given public key.
@@ -95,6 +106,13 @@ contract KingAutomaton {
 
     claimed++;
     slots[slot] = key;
+
+    if(prev_claimed_time[slot] != 0) {
+        total_time_held[rewardAddress] += now - prev_claimed_time[slot];
+    }
+    // Record the time when the slot was acquired
+    prev_claimed_time[slot] = now;
+
     rewards[slot] = rewardAddress;
   }
 }
