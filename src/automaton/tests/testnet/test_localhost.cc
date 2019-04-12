@@ -48,7 +48,7 @@ TEST(testnet, test_all) {
 
   std::string result2 = node::get_node("testnet_3")->process_cmd("get_heard_of", "");
   msg2->deserialize_message(result2);
-  // Nodes should have heard of all 5 peers
+  
   EXPECT_EQ(msg2->get_repeated_field_size(1), 5);
 
   // Sort nodes names
