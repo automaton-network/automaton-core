@@ -54,7 +54,7 @@ class tcp_connection: public connection, public std::enable_shared_from_this<tcp
 
     @param[in] address_ string representing the address of the connection - ip:port
   */
-  tcp_connection(connection_id id, const std::string& address_, connection_handler* handler_);
+  tcp_connection(connection_id id, const std::string& address_, std::shared_ptr<connection_handler> handler_);
 
   /**
     Constructor that should be used **ONLY** from the acceptor. It is used when there is a connection request and
@@ -70,7 +70,7 @@ class tcp_connection: public connection, public std::enable_shared_from_this<tcp
     @param[in] socket_ the boost::asio::ip::tcp::socket on which the new connection was accepted.
   */
   tcp_connection(connection_id id, const std::string& address_, const boost::asio::ip::tcp::socket& socket_,
-      connection_handler* handler_);
+      std::shared_ptr<connection_handler> handler_);
 
   /**
     Destructor.
@@ -128,7 +128,7 @@ class tcp_connection: public connection, public std::enable_shared_from_this<tcp
     If an error occures during sending, on_connection_error() will be called with status, containing the error.
     If the error is boost::asio::error::eof (meaning the other peer has disconnected), disconnect() will be called too.
   */
-  void async_read(char* buffer, uint32_t buffer_size, uint32_t num_bytes, uint32_t id);
+  void async_read(std::shared_ptr<char> buffer, uint32_t buffer_size, uint32_t num_bytes, uint32_t id);
 
   /**
     This function can be called to disconnect peer. To reconnect, connect() should be called. Handler's
@@ -140,7 +140,7 @@ class tcp_connection: public connection, public std::enable_shared_from_this<tcp
     This function is used to change the handler. It may be necessary when a connection is created from the acceptor
     and the default handler (the one passed to the acceptor) needs to be changed.
   */
-  void add_handler(connection_handler* handler_);
+  void add_handler(std::shared_ptr<connection_handler> handler_);
 
   std::string get_address() const;
 
@@ -163,8 +163,8 @@ class tcp_acceptor:public acceptor, public std::enable_shared_from_this<tcp_acce
     @see acceptor::create
     @see acceptor::factory_function
   */
-  tcp_acceptor(acceptor_id id, const std::string& address, acceptor_handler* handler_,
-      connection::connection_handler* connections_handler);
+  tcp_acceptor(acceptor_id id, const std::string& address, std::shared_ptr<acceptor_handler> handler_,
+      std::shared_ptr<connection::connection_handler> connections_handler);
 
   /**
     Destructor.
@@ -206,13 +206,15 @@ class tcp_acceptor:public acceptor, public std::enable_shared_from_this<tcp_acce
   */
   void start_accepting();
 
+  void stop_accepting();
+
   std::string get_address() const;
 
   acceptor::state get_state() const;
 
  private:
   boost::asio::ip::tcp::acceptor asio_acceptor;
-  connection::connection_handler* accepted_connections_handler;
+  std::shared_ptr<connection::connection_handler> accepted_connections_handler;
   acceptor::state acceptor_state;
   mutable std::mutex state_mutex;
   std::string address;

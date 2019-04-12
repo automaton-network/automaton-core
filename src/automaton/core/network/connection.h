@@ -60,7 +60,8 @@ class connection {
       @param[in] id the identifier of the read operation
         @see connection::async_read
     */
-    virtual void on_message_received(connection_id c, char* buffer, uint32_t bytes_read, uint32_t id) = 0;
+    virtual void on_message_received(connection_id c, std::shared_ptr<char> buffer, uint32_t bytes_read,
+        uint32_t id) = 0;
 
     /**
       Will be invoked to notify the user that a message was successfully sent or an error occured.
@@ -132,7 +133,8 @@ class connection {
     @param[in] id given by the user to identify this specific read call. It will be used from the handler when
       on_message_received is called. @see connection_handler::on_message_received
   */
-  virtual void async_read(char* buffer, uint32_t buffer_size, uint32_t num_bytes = 0, uint32_t id = 0) = 0;
+  virtual void async_read(std::shared_ptr<char> buffer, uint32_t buffer_size, uint32_t num_bytes = 0,
+      uint32_t id = 0) = 0;
 
   /**
     @return the connection id
@@ -178,10 +180,10 @@ class connection {
 
   */
   static std::shared_ptr<connection> create(const std::string& type, connection_id id, const std::string& address,
-      connection_handler* handler);
+      std::shared_ptr<connection_handler> handler);
 
   typedef std::shared_ptr<connection>
-      (*factory_function)(connection_id id, const std::string& address, connection_handler* handler);
+      (*factory_function)(connection_id id, const std::string& address, std::shared_ptr<connection_handler> handler);
 
   /**
     Registers connection implementation.
@@ -201,7 +203,7 @@ class connection {
     invoked the function. @see connection_handler
   @param[in] handler_ pointer to an connection_handler
   */
-  connection(connection_id id, connection_handler* handler_);
+  connection(connection_id id, std::shared_ptr<connection_handler> handler_);
 
   /**
     Handler object that must be set so the client could be informed for events.
@@ -209,7 +211,7 @@ class connection {
     client will not have access to events information like connect/ disconnect,
     received messages or an error that happend.
   */
-  connection_handler* handler;
+  std::shared_ptr<connection_handler> handler;
   connection_id id;
 
  private:

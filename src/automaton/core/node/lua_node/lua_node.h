@@ -28,11 +28,6 @@ class lua_node : public node {
 
   void init();
 
-  void init_bindings(std::vector<automaton::core::data::schema*> schemas,
-                     std::vector<std::string> lua_scripts,
-                     std::vector<std::string> wire_msgs,
-                     std::vector<std::string> commands);
-
   void script(const std::string& command, std::promise<std::string>* result);
 
   uint32_t find_message_id(const std::string& name) {
@@ -56,6 +51,11 @@ class lua_node : public node {
   std::unordered_map<uint32_t, sol::protected_function> script_on_msg;
   std::unordered_map<std::string, sol::protected_function> script_on_cmd;
   sol::protected_function script_on_debug_html;
+
+  void init_bindings(std::vector<automaton::core::data::schema*> schemas,
+                     std::vector<std::string> lua_scripts,
+                     std::vector<std::string> wire_msgs,
+                     std::vector<std::string> commands);
 
   // Script handler functions
   void s_on_blob_received(peer_id id, const std::string& blob);

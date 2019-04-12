@@ -76,7 +76,7 @@ void testnet::connect(std::unordered_map<uint32_t, std::vector<uint32_t> > peers
 
   for (auto it = peers_list.begin(); it != peers_list.end(); it++) {
     std::string nid = id + std::to_string(it->first);
-    automaton::core::node::node* n = automaton::core::node::node::get_node(nid);
+    std::shared_ptr<automaton::core::node::node> n = automaton::core::node::node::get_node(nid);
     if (n == nullptr) {
       LOG(ERROR) << "No such node: " << nid;
       continue;

@@ -150,7 +150,7 @@ class simulated_connection: public connection, public std::enable_shared_from_th
   uint32_t remote_connection_id;
 
   struct incoming_packet {
-    char* buffer;
+    std::shared_ptr<char> buffer;
     uint32_t buffer_size;
     uint32_t expect_to_read;
     uint32_t id;
@@ -174,7 +174,7 @@ class simulated_connection: public connection, public std::enable_shared_from_th
   std::queue<std::string> receive_buffer;
   std::mutex recv_buf_mutex;
 
-  simulated_connection(connection_id id, const std::string& address_, connection_handler* handler_);
+  simulated_connection(connection_id id, const std::string& address_, std::shared_ptr<connection_handler> handler_);
 
   ~simulated_connection();
 
@@ -188,7 +188,7 @@ class simulated_connection: public connection, public std::enable_shared_from_th
 
   void async_send(const std::string& message, uint32_t message_id);
 
-  void async_read(char* buffer, uint32_t buffer_size, uint32_t num_bytes, uint32_t id);
+  void async_read(std::shared_ptr<char> buffer, uint32_t buffer_size, uint32_t num_bytes, uint32_t id);
 
   void handle_read();
   void handle_send();
@@ -201,7 +201,7 @@ class simulated_connection: public connection, public std::enable_shared_from_th
 
   uint32_t get_lag() const;
 
-  connection_handler* get_handler();
+  std::shared_ptr<connection_handler> get_handler();
 
   void set_time_stamp(uint32_t t);
 
@@ -235,16 +235,18 @@ class simulated_acceptor: public acceptor, public std::enable_shared_from_this<s
   uint32_t address;
   std::string original_address;
   acceptor_params parameters;
-  connection::connection_handler* accepted_connections_handler;
+  std::shared_ptr<connection::connection_handler> accepted_connections_handler;
 
-  simulated_acceptor(acceptor_id id, const std::string& address_, acceptor::acceptor_handler*
-      handler_, connection::connection_handler* accepted_connections_handler);
+  simulated_acceptor(acceptor_id id, const std::string& address_, std::shared_ptr<acceptor::acceptor_handler>
+      handler_, std::shared_ptr<connection::connection_handler> accepted_connections_handler);
 
   ~simulated_acceptor();
 
   bool init();
 
   void start_accepting();
+
+  void stop_accepting();
 
   state get_state() const;
 
@@ -254,7 +256,7 @@ class simulated_acceptor: public acceptor, public std::enable_shared_from_this<s
 
   bool parse_address(const std::string& address_, acceptor_params* params, uint32_t* parsed_address);
 
-  acceptor_handler* get_handler();
+  std::shared_ptr<acceptor_handler> get_handler();
 
  private:
   acceptor::state acceptor_state;

@@ -32,14 +32,15 @@ struct peer_info {
 };
 
 class node: public network::connection::connection_handler,
-            public network::acceptor::acceptor_handler {
+            public network::acceptor::acceptor_handler,
+            public std::enable_shared_from_this<node> {
  public:
-  typedef std::unique_ptr<node> (*factory_function)(const std::string& id, const std::string& proto_id);
-  static std::unique_ptr<node> create(const std::string& type, const std::string& id, const std::string& proto_id);
+  typedef std::shared_ptr<node> (*factory_function)(const std::string& id, const std::string& proto_id);
+  static std::shared_ptr<node> create(const std::string& type, const std::string& id, const std::string& proto_id);
   static void register_node_type(const std::string& type, factory_function func);
 
   static std::vector<std::string> list_nodes();
-  static node* get_node(const std::string& node_id);
+  static std::shared_ptr<node> get_node(const std::string& node_id);
   static bool launch_node(const std::string& node_type, const std::string& node_id, const std::string& protocol_id,
       const std::string& address);
   static void remove_node(const std::string& node_id);
@@ -52,9 +53,9 @@ class node: public network::connection::connection_handler,
 
   bool get_worker_stop_signal();
 
-  std::string get_id();
+  std::string get_id() const;
 
-  std::string get_protocol_id();
+  std::string get_protocol_id() const;
 
   peer_info get_peer_info(peer_id id);
 
@@ -107,7 +108,7 @@ class node: public network::connection::connection_handler,
 
  private:
   static std::map<std::string, factory_function> node_factory;
-  static std::unordered_map<std::string, std::unique_ptr<node> > nodes;
+  static std::unordered_map<std::string, std::shared_ptr<node> > nodes;
   peer_id peer_ids;
 
   uint32_t update_time_slice;
@@ -137,7 +138,7 @@ class node: public network::connection::connection_handler,
 
   // Inherited handlers' functions
 
-  void on_message_received(peer_id c, char* buffer, uint32_t bytes_read, uint32_t id);
+  void on_message_received(peer_id c, std::shared_ptr<char> buffer, uint32_t bytes_read, uint32_t id);
 
   void on_message_sent(peer_id c, uint32_t id, const common::status& s);
 

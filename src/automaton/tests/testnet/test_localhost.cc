@@ -15,8 +15,8 @@ using automaton::core::smartproto::smart_protocol;
 using automaton::core::testnet::testnet;
 
 TEST(testnet, test_all) {
-  node::register_node_type("lua", [](const std::string& id, const std::string& proto_id)->std::unique_ptr<node> {
-      return std::unique_ptr<node>(new lua_node(id, proto_id));
+  node::register_node_type("lua", [](const std::string& id, const std::string& proto_id)->std::shared_ptr<node> {
+      return std::shared_ptr<node>(new lua_node(id, proto_id));
     });
 
   EXPECT_EQ(smart_protocol::load("chat", "automaton/tests/testnet/testproto/"), true);
@@ -48,7 +48,7 @@ TEST(testnet, test_all) {
 
   std::string result2 = node::get_node("testnet_3")->process_cmd("get_heard_of", "");
   msg2->deserialize_message(result2);
-  // Nodes should have heard of all 5 peers
+
   EXPECT_EQ(msg2->get_repeated_field_size(1), 5);
 
   // Sort nodes names
@@ -63,7 +63,7 @@ TEST(testnet, test_all) {
 
   testnet::destroy_testnet("testnet");
   EXPECT_EQ(testnet::list_testnets().size(), 0);
-
   EXPECT_EQ(node::list_nodes().size(), 0);
+
   automaton::core::network::tcp_release();
 }
