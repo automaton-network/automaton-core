@@ -81,7 +81,7 @@ class acceptor {
   virtual void start_accepting() = 0;
 
   /**
-    The acceptor starts to listen for incoming connections.
+    The acceptor stops to listen for incoming connections.
   */
   virtual void stop_accepting() = 0;
 
