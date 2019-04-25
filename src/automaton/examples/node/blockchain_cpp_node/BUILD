@@ -18,3 +18,16 @@ cc_library(
   ],
   linkstatic = True,
 )
+
+cc_binary(
+  name = "blockchain_cpp_node_test",
+  srcs = [
+    "blockchain_cpp_node_test.cc",
+  ],
+  deps = [
+    ":blockchain_cpp_node",
+    "//automaton/core/network:network_tcp",
+    "//automaton/core/network:simulated_connection",
+    "//automaton/core/testnet",
+  ]
+)
