@@ -31,11 +31,11 @@ class lua_node : public node {
   void script(const std::string& command, std::promise<std::string>* result);
 
   uint32_t find_message_id(const std::string& name) {
-    return engine.get_factory()->get_schema_id(name);
+    return node::find_message_id(name, engine.get_factory());
   }
 
   std::unique_ptr<data::msg> create_msg_by_id(uint32_t id) {
-    return engine.get_factory()->new_message_by_id(id);
+    return node::create_msg_by_id(id, engine.get_factory());
   }
 
   std::string process_cmd(const std::string& cmd, const std::string& params);

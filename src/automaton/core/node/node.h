@@ -95,6 +95,10 @@ class node: public network::connection::connection_handler,
  protected:
   node(const std::string& id, const std::string& proto_id);
 
+  std::unique_ptr<data::msg> get_wire_msg(const std::string& blob);
+  uint32_t find_message_id(const std::string& name, std::shared_ptr<data::factory> factory);
+  std::unique_ptr<data::msg> create_msg_by_id(uint32_t id, std::shared_ptr<data::factory> factory);
+
   void add_task(std::function<std::string()> task);
 
   std::string nodeid;
