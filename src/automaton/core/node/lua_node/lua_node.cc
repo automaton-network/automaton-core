@@ -37,7 +37,12 @@ void lua_node::init() {
     throw std::invalid_argument("No such protocol: " + protoid);
   }
   engine.set_factory(proto->get_factory());
-  init_bindings(proto->get_schemas(), proto->get_scripts(), proto->get_wire_msgs(), proto->get_commands());
+  std::vector<std::string> lua_scripts;
+  auto files = proto->get_files("lua_scripts");
+  for (auto it : files) {
+    lua_scripts.push_back(it.second);
+  }
+  init_bindings(proto->get_schemas(), lua_scripts, proto->get_wire_msgs(), proto->get_commands());
 }
 
 void lua_node::init_bindings(vector<schema*> schemas,
@@ -158,13 +163,11 @@ void lua_node::s_on_blob_received(peer_id p_id, const string& blob) {
     LOG(FATAL) << "Invalid wire msg_id sent to us!";
     return;
   }
-  CHECK_GT(wire_to_factory.count(wire_id), 0);
-  auto msg_id = wire_to_factory[wire_id];
-  msg* m = engine.get_factory()->new_message_by_id(msg_id).release();
-  m->deserialize_message(blob.substr(1));
-  add_task([this, wire_id, p_id, m, blob]() -> string {
+  msg* m = get_wire_msg(blob).release();
+  add_task([this, wire_id, p_id, m]() -> string {
     try {
       auto r = fresult("on_" + m->get_message_type(), script_on_msg[wire_id](p_id, m));
+      // ?? delete m;
       return r;
     } catch (const std::exception& e) {
       LOG(ERROR) << e.what();

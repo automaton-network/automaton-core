@@ -160,6 +160,25 @@ node::~node() {
   delete worker;
 }
 
+std::unique_ptr<msg> node::get_wire_msg(const std::string& blob) {
+  auto wire_id = blob[0];
+  CHECK_GT(wire_to_factory.count(wire_id), 0);
+  auto msg_id = wire_to_factory[wire_id];
+  static std::shared_ptr<data::factory> factory =
+      automaton::core::smartproto::smart_protocol::get_protocol(protoid)->get_factory();
+  std::unique_ptr<msg> m = factory->new_message_by_id(msg_id);
+  m->deserialize_message(blob.substr(1));
+  return m;
+}
+
+uint32_t node::find_message_id(const std::string& name, std::shared_ptr<data::factory> factory) {
+  return factory->get_schema_id(name);
+}
+
+std::unique_ptr<data::msg> node::create_msg_by_id(uint32_t id, std::shared_ptr<data::factory> factory) {
+  return factory->new_message_by_id(id);
+}
+
 void node::add_task(std::function<std::string()> task) {
   std::lock_guard<std::mutex> lock(tasks_mutex);
   tasks.push_back(task);

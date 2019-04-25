@@ -3,13 +3,15 @@
 
   "schemas": ["blockchain.proto"],
 
-  "lua_scripts": [
-    "connections.lua",
-    "graph.lua",
-    "states.lua",
-    "miner.lua",
-    "blockchain.lua"
-  ],
+  "files" : {
+    "lua_scripts": [
+      "connections.lua",
+      "graph.lua",
+      "states.lua",
+      "miner.lua",
+      "blockchain.lua"
+    ]
+  },
 
   "wire_msgs": ["Hello", "Block", "GetBlocks", "Blocks"]
 }

@@ -5,10 +5,12 @@
     "chat.proto"
   ],
 
-  "lua_scripts": [
-    "connections.lua",
-    "chat.lua"
-  ],
+  "files" : {
+    "lua_scripts": [
+      "connections.lua",
+      "chat.lua"
+    ]
+  },
 
   "wire_msgs": [
     "Hello", "Msg"

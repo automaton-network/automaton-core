@@ -2,6 +2,7 @@
 
 #include <fstream>
 #include <string>
+#include <utility>
 
 #include <json.hpp>
 
@@ -57,7 +58,7 @@ bool smart_protocol::load(const std::string& id, const std::string& path) {
     i.close();
     proto->update_time_slice = j["update_time_slice"];
     std::vector<std::string> schemas_filenames = j["schemas"];
-    std::vector<std::string> lua_scripts_filenames = j["lua_scripts"];
+    nlohmann::json filenames = j["files"];
     std::vector<std::string> wm = j["wire_msgs"];
     proto->wire_msgs = wm;
     for (auto cmd : j["commands"]) {
@@ -71,8 +72,14 @@ bool smart_protocol::load(const std::string& id, const std::string& path) {
       proto->factory->import_schema(proto->schemas.back(), "", "");
     }
 
-    for (uint32_t i = 0; i < lua_scripts_filenames.size(); ++i) {
-      proto->lua_scripts.push_back(get_file_contents((path + lua_scripts_filenames[i]).c_str()));
+    for (nlohmann::json::iterator it = filenames.begin(); it != filenames.end(); ++it) {
+      std::unordered_map<std::string, std::string> extracted_files;
+      std::vector<std::string> fnames = it.value();
+      for (uint32_t i = 0; i < fnames.size(); ++i) {
+        std::string file_name = fnames[i];
+        extracted_files[file_name] = get_file_contents((path + file_name).c_str());
+      }
+      proto->files.insert(std::make_pair(it.key(), std::move(extracted_files)));
     }
   }
   protocols[id] = proto;
@@ -90,12 +97,27 @@ std::unordered_map<std::string, std::string> smart_protocol::get_msgs_definition
 std::vector<data::schema*> smart_protocol::get_schemas() {
   return schemas;
 }
-std::vector<std::string> smart_protocol::get_scripts() {
-  return lua_scripts;
+
+std::unordered_map<std::string, std::string> smart_protocol::get_files(std::string files_type) {
+  // return all files
+  if (files_type == "") {
+    std::unordered_map<std::string, std::string> result;
+    for (auto it : files) {
+      result.insert(it.second.begin(), it.second.end());
+    }
+    return result;
+  }
+  auto it = files.find(files_type);
+  if (it != files.end()) {
+    return it->second;
+  }
+  return {};
 }
+
 std::vector<std::string> smart_protocol::get_wire_msgs() {
   return wire_msgs;
 }
+
 std::vector<std::string> smart_protocol::get_commands() {
   std::vector<std::string> cmds;
   for (auto c : commands) {

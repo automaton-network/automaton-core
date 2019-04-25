@@ -32,7 +32,7 @@ class smart_protocol {
   std::shared_ptr<data::factory> get_factory();
   std::unordered_map<std::string, std::string> get_msgs_definitions();
   std::vector<data::schema*> get_schemas();
-  std::vector<std::string> get_scripts();
+  std::unordered_map<std::string, std::string> get_files(std::string files_type);
   std::vector<std::string> get_wire_msgs();
   std::vector<std::string> get_commands();
   std::string get_configuration_file();
@@ -45,7 +45,8 @@ class smart_protocol {
   std::shared_ptr<data::factory> factory;
   uint32_t update_time_slice;
 
-  std::vector<std::string> lua_scripts;
+  // files_type -> [file_name -> file]
+  std::unordered_map<std::string, std::unordered_map<std::string, std::string> > files;
   std::unordered_map<std::string, std::string> msgs_defs;
   std::vector<data::schema*> schemas;
   std::vector<std::string> wire_msgs;

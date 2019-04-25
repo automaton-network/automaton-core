@@ -3,15 +3,17 @@
 
   "schemas": ["reservationsystem.proto"],
 
-  "lua_scripts": [
-    "connections.lua",
-    "states.lua",
-    "consensus.lua",
-    "reservationsystem.lua",
-    "logging.lua",
-    "validators.lua",
-    "visualize.lua"
-  ],
+  "files" : {
+    "lua_scripts": [
+      "connections.lua",
+      "states.lua",
+      "consensus.lua",
+      "reservationsystem.lua",
+      "logging.lua",
+      "validators.lua",
+      "visualize.lua"
+    ]
+  },
 
   "wire_msgs": ["Hello", "CancelReservation", "CreateReservation", "StateTransition"]
 }
