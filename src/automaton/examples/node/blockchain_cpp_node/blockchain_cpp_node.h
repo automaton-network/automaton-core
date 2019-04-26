@@ -18,9 +18,11 @@ struct block {
   std::string prev_hash;
   uint64_t height;
   std::string nonce;
-  block(const std::string& miner, const std::string& prev_hash, uint64_t height, const std::string& nonce);
+  block(const std::string& miner = "", const std::string& prev_hash = "", uint64_t height = 0,
+      const std::string& nonce = "");
   std::string to_string() const;
   std::string data() const;
+  std::string block_hash() const;
 };
 
 enum block_validity {
@@ -53,6 +55,8 @@ class blockchain_cpp_node : public automaton::core::node::node {
   std::string process_cmd(const std::string& cmd, const std::string& params);
 
   std::string node_stats(uint32_t last_blocks);
+
+  block get_blockchain_top();
 
  private:
   void s_on_blob_received(uint32_t id, const std::string& blob);

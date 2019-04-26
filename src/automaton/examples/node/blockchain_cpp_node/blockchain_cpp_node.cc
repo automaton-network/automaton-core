@@ -35,8 +35,8 @@ static const char* DIFFICULTY_PREFIX = "00FFFF";
 
 static const uint32_t MINE_ATTEMPTS = 7;
 
-block::block(const std::string& miner = "", const std::string& prev_hash = "", uint64_t height = 0,
-    const std::string& nonce = ""):miner(miner), prev_hash(prev_hash), height(height), nonce(nonce) {}
+block::block(const std::string& miner, const std::string& prev_hash, uint64_t height, const std::string& nonce):
+    miner(miner), prev_hash(prev_hash), height(height), nonce(nonce) {}
 
 std::string block::to_string() const {
   std::stringstream ss;
@@ -49,6 +49,10 @@ std::string block::data() const {
   std::stringstream ss;
   ss << miner << prev_hash << height << nonce;
   return ss.str();
+}
+
+std::string block::block_hash() const {
+  return hash(data());
 }
 
 blockchain_cpp_node::blockchain_cpp_node(const std::string& id, const std::string& proto_id) :
@@ -113,6 +117,9 @@ void blockchain_cpp_node::s_on_error(uint32_t id, const std::string& message) {
 }
 
 void blockchain_cpp_node::s_update(uint64_t time) {
+  // if (std::rand() % 100 > 10) {
+  //   return;
+  // }
   block b = mine();
   if (b.height) {
     if (LOG_ENABLED) {
@@ -424,6 +431,10 @@ std::string blockchain_cpp_node::node_stats(uint32_t last_blocks = 0) {
     ss << bin2hex(blockchain[i]) << "\n";
   }
   return ss.str();
+}
+
+block blockchain_cpp_node::get_blockchain_top() {
+  return get_block(get_current_hash());
 }
 
 std::unordered_map<std::string, uint32_t> blockchain_cpp_node::collect_balances() {

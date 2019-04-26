@@ -26,6 +26,7 @@ cc_binary(
   ],
   deps = [
     ":blockchain_cpp_node",
+    "//automaton/core/io",
     "//automaton/core/network:network_tcp",
     "//automaton/core/network:simulated_connection",
     "//automaton/core/testnet",

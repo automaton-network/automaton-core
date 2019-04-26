@@ -1,11 +1,13 @@
 #include <memory>
 #include <unordered_map>
 
+#include "automaton/core/io/io.h"
 #include "automaton/core/network/simulated_connection.h"
 #include "automaton/core/network/tcp_implementation.h"
 #include "automaton/core/testnet/testnet.h"
 #include "automaton/examples/node/blockchain_cpp_node/blockchain_cpp_node.h"
 
+using automaton::core::io::bin2hex;
 using automaton::core::node::node;
 using automaton::core::smartproto::smart_protocol;
 using automaton::core::testnet::testnet;
@@ -44,8 +46,8 @@ int main() {
   std::shared_ptr<automaton::core::network::simulation> sim = automaton::core::network::simulation::get_simulator();
   sim->simulation_start(50);
   automaton::core::network::tcp_init();
-  testnet::create_testnet("blockchain", "testnet", "doesntmatter", testnet::network_protocol_type::simulation, 10,
-      create_connections_vector(10, 2));
+  testnet::create_testnet("blockchain", "testnet", "doesntmatter", testnet::network_protocol_type::simulation, 1000,
+      create_connections_vector(1000, 4));
 
   bool stop_logger = false;
   std::thread logger([&]() {
@@ -58,7 +60,7 @@ int main() {
     }
   });
 
-  std::this_thread::sleep_for(std::chrono::milliseconds(30000));
+  std::this_thread::sleep_for(std::chrono::milliseconds(180000));
 
   stop_logger = true;
   logger.join();
@@ -66,11 +68,20 @@ int main() {
   automaton::core::network::tcp_release();
   sim->simulation_stop();
 
-  // std::cout << "ALL BLOCKCHAIN TOPS:" << std::endl;
-  // for (auto n : node::list_nodes()) {
-  //   std::shared_ptr<blockchain_cpp_node> node = std::dynamic_pointer_cast<blockchain_cpp_node>(node::get_node(n));
-  //   std::cout << n << "\n" << node->node_stats(4) << std::endl;
-  // }
+  std::unordered_map<std::string, uint32_t> counter;
+  std::unordered_map<std::string, block> blocks;
+
+  std::cout << "ALL BLOCKCHAIN TOPS:" << std::endl;
+  for (auto n : node::list_nodes()) {
+    std::shared_ptr<blockchain_cpp_node> node = std::dynamic_pointer_cast<blockchain_cpp_node>(node::get_node(n));
+    block b = node->get_blockchain_top();
+    counter[b.block_hash()]++;
+    blocks[b.block_hash()] = b;
+  }
+  std::cout << "=============================================" << std::endl;
+  for (auto it = counter.begin(); it != counter.end(); ++it) {
+    std::cout << bin2hex(it->first) << "@ height " << blocks[it->first].height << " -> " << it->second << std::endl;
+  }
 
   testnet::destroy_testnet("testnet");
   return 0;
