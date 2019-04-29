@@ -56,13 +56,24 @@ int main() {
   testnet::create_testnet("blockchain", "testnet", "doesntmatter", testnet::network_protocol_type::simulation, 1000,
       create_connections_vector(1000, 4));
 
+  std::unordered_map<std::string, std::mutex> node_locks;
+  std::mutex map_lock;
   std::thread worker_thread = std::thread([&]() {
       while (worker_running) {
         std::vector<std::string> node_ids = node::list_nodes();
-        auto node = node::get_node(node_ids[std::rand()%1000]);
-        if (node != nullptr) {
-          // protocol update time and node's time to update are not used here
-          node->process_update(0);
+        std::string id = node_ids[std::rand()%1000];
+        map_lock.lock();
+        bool locked = node_locks[id].try_lock();
+        map_lock.unlock();
+        if (locked) {
+          auto node = node::get_node(id);
+          if (node != nullptr) {
+            // protocol update time and node's time to update are not used here
+            node->process_update(0);
+          }
+          node_locks[id].unlock();
+        } else {
+          continue;
         }
         std::this_thread::sleep_for(WORKER_SLEEP_TIME_MS);
       }

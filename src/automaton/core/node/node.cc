@@ -294,8 +294,6 @@ void node::process_update(uint64_t current_time) {
   script_mutex.lock();
   s_update(current_time);
   script_mutex.unlock();
-  // TODO(asen): custom break condition, e.g. max number of tasks per update.
-  // Process tasks pending in the queue.
   while (true) {
     tasks_mutex.lock();
     if (tasks.empty()) {

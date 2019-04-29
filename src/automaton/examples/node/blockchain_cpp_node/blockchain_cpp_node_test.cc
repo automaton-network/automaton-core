@@ -58,6 +58,8 @@ int main() {
       create_connections_vector(1000, 4));
 
   std::vector<std::thread> worker_threads;
+  std::unordered_map<std::string, std::mutex> node_locks;
+  std::mutex map_lock;
   for (uint32_t i = 0; i < WORKER_NUMBER; ++i) {
     worker_threads.push_back(std::thread([&]() {
       while (worker_running) {
@@ -66,16 +68,24 @@ int main() {
           if (!worker_running) {
             break;
           }
-          auto node = node::get_node(node_ids[i]);
-          if (node != nullptr) {
-            uint64_t current_time = std::chrono::duration_cast<std::chrono::milliseconds>(
-                std::chrono::system_clock::now().time_since_epoch()).count();
-            if (current_time >= (node->get_time_to_update())) {
-              node->process_update(current_time);
+          std::string id = node_ids[i];
+          map_lock.lock();
+          bool locked = node_locks[id].try_lock();
+          map_lock.unlock();
+          if (locked) {
+            auto node = node::get_node(id);
+            if (node != nullptr) {
+              uint64_t current_time = std::chrono::duration_cast<std::chrono::milliseconds>(
+                  std::chrono::system_clock::now().time_since_epoch()).count();
+              if (current_time >= (node->get_time_to_update())) {
+                node->process_update(current_time);
+              }
             }
+            node_locks[id].unlock();
+          } else {
+            continue;
           }
         }
-
         std::this_thread::sleep_for(WORKER_SLEEP_TIME_MS);
       }
     }));
