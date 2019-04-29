@@ -29,6 +29,30 @@ TEST(testnet, test_all) {
       }),
       true);
 
+  bool worker_running = true;
+  auto net = testnet::get_testnet("testnet");
+
+  std::thread worker_thread = std::thread([&]() {
+      while (worker_running) {
+        std::vector<std::string> node_ids = net->list_nodes();
+        for (uint32_t i = 0; i < node_ids.size(); ++i) {
+          if (!worker_running) {
+            break;
+          }
+          auto node = node::get_node(node_ids[i]);
+          if (node != nullptr) {
+            uint64_t current_time = std::chrono::duration_cast<std::chrono::milliseconds>(
+                std::chrono::system_clock::now().time_since_epoch()).count();
+            if (current_time >= (node->get_time_to_update())) {
+              node->process_update(current_time);
+            }
+          }
+        }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      }
+    });
+
   auto msg_factory = smart_protocol::get_protocol("chat")->get_factory();
   auto msg1 = msg_factory->new_message_by_name("Peers");
   auto msg2 = msg_factory->new_message_by_name("Peers");
@@ -60,6 +84,10 @@ TEST(testnet, test_all) {
   for (uint32_t i = 1; it != result.end(), i <= 5; ++it, ++i) {
     EXPECT_EQ(*it, "testnet_" + std::to_string(i));
   }
+
+  worker_running = false;
+  worker_thread.join();
+  net = nullptr;
 
   testnet::destroy_testnet("testnet");
   EXPECT_EQ(testnet::list_testnets().size(), 0);

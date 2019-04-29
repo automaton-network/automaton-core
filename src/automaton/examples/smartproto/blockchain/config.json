@@ -1,5 +1,5 @@
 {
-  "update_time_slice": 100,
+  "update_time_slice": 300,
 
   "schemas": ["blockchain.proto"],
 
