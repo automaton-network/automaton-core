@@ -167,7 +167,7 @@ void lua_node::s_on_blob_received(peer_id p_id, const string& blob) {
   add_task([this, wire_id, p_id, m]() -> string {
     try {
       auto r = fresult("on_" + m->get_message_type(), script_on_msg[wire_id](p_id, m));
-      // ?? delete m;
+      delete m;
       return r;
     } catch (const std::exception& e) {
       LOG(ERROR) << e.what();
