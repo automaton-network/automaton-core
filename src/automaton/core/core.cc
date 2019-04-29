@@ -166,6 +166,10 @@ int main(int argc, char* argv[]) {
 
   node_type.set("process_cmd", &lua_node::process_cmd);
 
+  node_type.set("process_update", &lua_node::process_update);
+
+  node_type.set("get_time_to_update", &lua_node::get_time_to_update);
+
   node_type.set("call", [](lua_node& n, std::string command) {
     n.script(command, nullptr);
   });

@@ -16,7 +16,6 @@ using automaton::core::smartproto::smart_protocol;
 using automaton::core::testnet::testnet;
 
 auto WORKER_SLEEP_TIME_MS = std::chrono::milliseconds(20);
-uint32_t WORKER_NUMBER = 10;
 
 bool worker_running = true;
 
@@ -57,39 +56,28 @@ int main() {
   testnet::create_testnet("blockchain", "testnet", "doesntmatter", testnet::network_protocol_type::simulation, 1000,
       create_connections_vector(1000, 4));
 
-  std::vector<std::thread> worker_threads;
   std::unordered_map<std::string, std::mutex> node_locks;
   std::mutex map_lock;
-  for (uint32_t i = 0; i < WORKER_NUMBER; ++i) {
-    worker_threads.push_back(std::thread([&]() {
+  std::thread worker_thread = std::thread([&]() {
       while (worker_running) {
         std::vector<std::string> node_ids = node::list_nodes();
-        for (uint32_t i = 0; i < node_ids.size(); ++i) {
-          if (!worker_running) {
-            break;
+        std::string id = node_ids[std::rand()%1000];
+        map_lock.lock();
+        bool locked = node_locks[id].try_lock();
+        map_lock.unlock();
+        if (locked) {
+          auto node = node::get_node(id);
+          if (node != nullptr) {
+            // protocol update time and node's time to update are not used here
+            node->process_update(0);
           }
-          std::string id = node_ids[i];
-          map_lock.lock();
-          bool locked = node_locks[id].try_lock();
-          map_lock.unlock();
-          if (locked) {
-            auto node = node::get_node(id);
-            if (node != nullptr) {
-              uint64_t current_time = std::chrono::duration_cast<std::chrono::milliseconds>(
-                  std::chrono::system_clock::now().time_since_epoch()).count();
-              if (current_time >= (node->get_time_to_update())) {
-                node->process_update(current_time);
-              }
-            }
-            node_locks[id].unlock();
-          } else {
-            continue;
-          }
+          node_locks[id].unlock();
+        } else {
+          continue;
         }
         std::this_thread::sleep_for(WORKER_SLEEP_TIME_MS);
       }
-    }));
-  }
+    });
 
   bool stop_logger = false;
   std::thread logger([&]() {
@@ -105,9 +93,7 @@ int main() {
   std::this_thread::sleep_for(std::chrono::milliseconds(180000));
 
   worker_running = false;
-  for (uint32_t i = 0; i < WORKER_NUMBER; ++i) {
-    worker_threads[i].join();
-  }
+  worker_thread.join();
 
   stop_logger = true;
   logger.join();

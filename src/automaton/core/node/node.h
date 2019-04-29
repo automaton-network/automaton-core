@@ -49,10 +49,6 @@ class node: public network::connection::connection_handler,
 
   virtual void init() = 0;
 
-  void init_worker();
-
-  bool get_worker_stop_signal();
-
   std::string get_id() const;
 
   std::string get_protocol_id() const;
@@ -92,6 +88,10 @@ class node: public network::connection::connection_handler,
     return "";
   }
 
+  void process_update(uint64_t current_time);
+
+  uint64_t get_time_to_update();
+
  protected:
   node(const std::string& id, const std::string& proto_id);
 
@@ -116,6 +116,8 @@ class node: public network::connection::connection_handler,
   peer_id peer_ids;
 
   uint32_t update_time_slice;
+  uint64_t time_to_update;
+  std::mutex time_mutex;
 
   // Network
   std::shared_ptr<network::acceptor> acceptor_;
@@ -131,11 +133,6 @@ class node: public network::connection::connection_handler,
   peer_id get_next_peer_id();
 
   bool address_parser(const std::string& s, std::string* protocol, std::string* address);
-
-  // Worker thread
-  std::mutex worker_mutex;
-  bool worker_stop_signal;
-  std::thread* worker;
 
   std::mutex tasks_mutex;
   std::deque<std::function<std::string()>> tasks;

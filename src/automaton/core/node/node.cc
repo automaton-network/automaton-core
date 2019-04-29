@@ -8,7 +8,6 @@
 #include <map>
 #include <regex>
 #include <sstream>
-#include <thread>
 #include <utility>
 
 #include <boost/algorithm/string/replace.hpp>
@@ -104,7 +103,6 @@ std::shared_ptr<node> node::create(const std::string& type, const std::string& i
   } else {
     auto new_node = it->second(id, proto_id);
     new_node->init();
-    new_node->init_worker();
     return new_node;
   }
 }
@@ -131,6 +129,7 @@ node::node(const string& id,
       nodeid(id)
     , protoid(proto_id)
     , peer_ids(0)
+    , time_to_update(0)
     , acceptor_(nullptr) {
   LOG(DEBUG) << "Node constructor called";
   std::shared_ptr<automaton::core::smartproto::smart_protocol> proto =
@@ -150,15 +149,7 @@ node::node(const string& id,
   }
 }
 
-node::~node() {
-  // Stop worker/update loop
-  worker_mutex.lock();
-  worker_stop_signal = true;
-  worker_mutex.unlock();
-
-  worker->join();
-  delete worker;
-}
+node::~node() {}
 
 std::unique_ptr<msg> node::get_wire_msg(const std::string& blob) {
   auto wire_id = blob[0];
@@ -182,63 +173,6 @@ std::unique_ptr<data::msg> node::create_msg_by_id(uint32_t id, std::shared_ptr<d
 void node::add_task(std::function<std::string()> task) {
   std::lock_guard<std::mutex> lock(tasks_mutex);
   tasks.push_back(task);
-}
-
-void node::init_worker() {
-  lock_guard<mutex> lock(worker_mutex);
-  worker_stop_signal = false;
-  auto self = shared_from_this();
-  worker = new std::thread([self]() {
-    // LOG(DEBUG) << "Worker thread starting in " << nodeid;
-    while (!self->get_worker_stop_signal()) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(self->update_time_slice));
-      auto current_time = std::chrono::duration_cast<std::chrono::milliseconds>(
-         std::chrono::system_clock::now().time_since_epoch()).count();
-
-      // LOG(DEBUG) << "Calling update in " << nodeid;
-      self->script_mutex.lock();
-      self->s_update(current_time);
-      self->script_mutex.unlock();
-
-      // TODO(asen): custom break condition, e.g. max number of tasks per update.
-      // Process tasks pending in the queue.
-      // LOG(DEBUG) << "Executing tasks in " << nodeid;
-      while (!self->tasks.empty()) {
-        // Check to see if we should stop the thread execution.
-        if (self->get_worker_stop_signal()) {
-          break;
-        }
-
-        // Pop a task from the front of the queue.
-        self->tasks_mutex.lock();
-        auto task = self->tasks.front();
-        self->tasks.pop_front();
-        self->tasks_mutex.unlock();
-
-        // Execute task.
-        // LOG(DEBUG) << "  - Executing a task in " << nodeid;
-        self->script_mutex.lock();
-        try {
-          string result = task();
-          if (result.size() > 0) {
-            LOG(FATAL) << "TASK FAILED: " << result;
-          }
-        } catch (const std::exception& ex) {
-          LOG(FATAL) << "TASK FAILED: EXCEPTION1: " << ex.what();
-        } catch (string s) {
-          LOG(FATAL) << "TASK FAILED: EXCEPTION2: " << s;
-        } catch (...) {
-          LOG(FATAL) << "TASK FAILED: EXCEPTION DURING TASK EXECUTION!";
-        }
-        self->script_mutex.unlock();
-      }
-    }
-  });
-}
-
-bool node::get_worker_stop_signal() {
-  lock_guard<mutex> lock(worker_mutex);
-  return worker_stop_signal;
 }
 
 string node::get_id() const {
@@ -351,6 +285,44 @@ void node::dump_logs(const string& html_file) {
 
     return "";
   });
+}
+
+void node::process_update(uint64_t current_time) {
+  time_mutex.lock();
+  time_to_update = current_time + update_time_slice;
+  time_mutex.unlock();
+  script_mutex.lock();
+  s_update(current_time);
+  script_mutex.unlock();
+  while (true) {
+    tasks_mutex.lock();
+    if (tasks.empty()) {
+      tasks_mutex.unlock();
+      break;
+    }
+    auto task = tasks.front();
+    tasks.pop_front();
+    tasks_mutex.unlock();
+    script_mutex.lock();
+    try {
+      string result = task();
+      if (result.size() > 0) {
+        LOG(FATAL) << "TASK FAILED: " << result;
+      }
+    } catch (const std::exception& ex) {
+      LOG(FATAL) << "TASK FAILED: EXCEPTION1: " << ex.what();
+    } catch (string s) {
+      LOG(FATAL) << "TASK FAILED: EXCEPTION2: " << s;
+    } catch (...) {
+      LOG(FATAL) << "TASK FAILED: EXCEPTION DURING TASK EXECUTION!";
+    }
+    script_mutex.unlock();
+  }
+}
+
+uint64_t node::get_time_to_update() {
+  lock_guard<mutex> lock(time_mutex);
+  return time_to_update;
 }
 
 void node::send_message(peer_id p_id, const core::data::msg& msg, uint32_t msg_id) {
