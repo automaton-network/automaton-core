@@ -32,3 +32,17 @@ cc_binary(
     "//automaton/core/testnet",
   ]
 )
+
+cc_binary(
+  name = "blockchain_cpp_node_test_one_mining_thread",
+  srcs = [
+    "blockchain_cpp_node_test.cc",
+  ],
+  deps = [
+    ":blockchain_cpp_node",
+    "//automaton/core/io",
+    "//automaton/core/network:network_tcp",
+    "//automaton/core/network:simulated_connection",
+    "//automaton/core/testnet",
+  ]
+)
