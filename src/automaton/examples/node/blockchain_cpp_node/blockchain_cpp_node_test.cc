@@ -58,7 +58,7 @@ int main() {
       create_connections_vector(1000, 4));
 
   std::vector<std::thread> worker_threads;
-  std::unordered_map<std::string, std::mutex> node_locks;
+  std::unordered_map<std::string, std::unique_ptr<std::mutex> > node_locks;
   std::mutex map_lock;
   for (uint32_t i = 0; i < WORKER_NUMBER; ++i) {
     worker_threads.push_back(std::thread([&]() {
@@ -70,7 +70,11 @@ int main() {
           }
           std::string id = node_ids[i];
           map_lock.lock();
-          bool locked = node_locks[id].try_lock();
+          auto it = node_locks.find(id);
+          if (it == node_locks.end()) {
+            it = node_locks.emplace(id, std::make_unique<std::mutex>()).first;
+          }
+          bool locked = it->second->try_lock();
           map_lock.unlock();
           if (locked) {
             auto node = node::get_node(id);
@@ -81,7 +85,9 @@ int main() {
                 node->process_update(current_time);
               }
             }
-            node_locks[id].unlock();
+            map_lock.lock();
+            node_locks.at(id)->unlock();
+            map_lock.unlock();
           } else {
             continue;
           }
