@@ -16,4 +16,5 @@ cc_library(
     "//automaton/core/io",
     "@json//:json",
   ],
+  linkstatic=True,
 )
