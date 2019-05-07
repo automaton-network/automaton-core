@@ -337,6 +337,29 @@ int main(int argc, char* argv[]) {
     rpc_port = j["rpc_config"]["default_port"];
   }
   i.close();
+
+  bool worker_running = true;
+  std::thread worker_thread = std::thread([&]() {
+      while (worker_running) {
+        std::vector<std::string> node_ids = node::list_nodes();
+        for (uint32_t i = 0; i < node_ids.size(); ++i) {
+          if (!worker_running) {
+            break;
+          }
+          auto node = node::get_node(node_ids[i]);
+          if (node != nullptr) {
+            uint64_t current_time = std::chrono::duration_cast<std::chrono::milliseconds>(
+                std::chrono::system_clock::now().time_since_epoch()).count();
+            if (current_time >= (node->get_time_to_update())) {
+              node->process_update(current_time);
+            }
+          }
+        }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      }
+    });
+
   // Start dump_logs thread.
   std::mutex logger_mutex;
   bool stop_logger = false;
@@ -391,6 +414,9 @@ int main(int argc, char* argv[]) {
   }
 
   rpc_server.stop();
+
+  worker_running = false;
+  worker_thread.join();
 
   stop_logger = true;
   logger.join();
