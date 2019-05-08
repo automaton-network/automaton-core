@@ -29,6 +29,7 @@ cc_binary(
     "//automaton/core/io",
     "//automaton/core/network:network_tcp",
     "//automaton/core/network:simulated_connection",
+    "//automaton/core/node:node_updater",
     "//automaton/core/testnet",
   ]
 )
@@ -43,6 +44,7 @@ cc_binary(
     "//automaton/core/io",
     "//automaton/core/network:network_tcp",
     "//automaton/core/network:simulated_connection",
+    "//automaton/core/node:node_updater",
     "//automaton/core/testnet",
   ]
 )
