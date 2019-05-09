@@ -3,6 +3,7 @@
 #include "automaton/core/data/protobuf/protobuf_schema.h"
 #include "automaton/core/network/tcp_implementation.h"
 #include "automaton/core/node/node.h"
+#include "automaton/core/node/node_updater.h"
 #include "automaton/core/node/lua_node/lua_node.h"
 #include "automaton/core/smartproto/smart_protocol.h"
 #include "automaton/core/testnet/testnet.h"
@@ -10,6 +11,7 @@
 #include "gtest/gtest.h"
 
 using automaton::core::node::node;
+using automaton::core::node::default_node_updater;
 using automaton::core::node::luanode::lua_node;
 using automaton::core::smartproto::smart_protocol;
 using automaton::core::testnet::testnet;
@@ -29,29 +31,11 @@ TEST(testnet, test_all) {
       }),
       true);
 
-  bool worker_running = true;
   auto net = testnet::get_testnet("testnet");
+  std::vector<std::string> ids = net->list_nodes();
 
-  std::thread worker_thread = std::thread([&]() {
-      while (worker_running) {
-        std::vector<std::string> node_ids = net->list_nodes();
-        for (uint32_t i = 0; i < node_ids.size(); ++i) {
-          if (!worker_running) {
-            break;
-          }
-          auto node = node::get_node(node_ids[i]);
-          if (node != nullptr) {
-            uint64_t current_time = std::chrono::duration_cast<std::chrono::milliseconds>(
-                std::chrono::system_clock::now().time_since_epoch()).count();
-            if (current_time >= (node->get_time_to_update())) {
-              node->process_update(current_time);
-            }
-          }
-        }
-
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
-      }
-    });
+  default_node_updater updater(1, 20, std::set<std::string>(ids.begin(), ids.end()));
+  updater.start();
 
   auto msg_factory = smart_protocol::get_protocol("chat")->get_factory();
   auto msg1 = msg_factory->new_message_by_name("Peers");
@@ -85,8 +69,7 @@ TEST(testnet, test_all) {
     EXPECT_EQ(*it, "testnet_" + std::to_string(i));
   }
 
-  worker_running = false;
-  worker_thread.join();
+  updater.stop();
   net = nullptr;
 
   testnet::destroy_testnet("testnet");

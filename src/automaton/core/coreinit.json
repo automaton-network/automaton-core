@@ -35,9 +35,15 @@
 
     {"cmd":"start_testnet", "input":"Network", "output":""}
   ],
+
   "rpc_config" : {
     "default_port" : 33777,
     "username" : "someuser",
     "password" : ""
+  },
+
+  "updater_config" : {
+    "workers_number" : 1,
+    "workers_sleep_time" : 15
   }
 }
