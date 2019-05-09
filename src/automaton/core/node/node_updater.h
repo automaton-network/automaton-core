@@ -17,6 +17,8 @@ class node_updater {
  public:
   node_updater(uint32_t workers_number, uint32_t sleep_time, std::set<std::string> node_list);
 
+  virtual ~node_updater() {}
+
   virtual void update_function() = 0;
 
   void add_node(const std::string& node_id);
@@ -41,6 +43,7 @@ class node_updater {
 class default_node_updater : public node_updater {
  public:
   default_node_updater(uint32_t workers_number, uint32_t sleep_time, std::set<std::string> node_list);
+  ~default_node_updater() {}
 
   void update_function();
 
@@ -52,6 +55,7 @@ class default_node_updater : public node_updater {
 class node_updater_tests : public node_updater {
  public:
   node_updater_tests(uint32_t sleep_time, std::set<std::string> node_list);
+  ~node_updater_tests() {}
 
   void update_function();
 };
