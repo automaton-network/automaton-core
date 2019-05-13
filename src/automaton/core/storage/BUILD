@@ -29,7 +29,7 @@ cc_library(
       "@localboost//:iostreams",
       "@localboost//:filesystem",
     ],
-    #linkstatic = True,
+    linkstatic = True,
     #copts = ["-MT"],
     defines = ["BOOST_ALL_NO_LIB"],
 )
@@ -47,7 +47,7 @@ cc_library(
       "@localboost//:iostreams",
       "@localboost//:filesystem",
     ],
-    #linkstatic = True,
+    linkstatic = True,
     #copts = ["-MT"],
     defines = ["BOOST_ALL_NO_LIB"],
 )
@@ -65,7 +65,7 @@ cc_library(
       "@localboost//:filesystem",
       "//automaton/core/storage:persistent_storage",
     ],
-    #linkstatic = True,
+    linkstatic = True,
     #copts = ["-MT"],
     defines = ["BOOST_ALL_NO_LIB"],
 )

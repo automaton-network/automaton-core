@@ -9,11 +9,12 @@
 */
 
 #include "../JuceLibraryCode/JuceHeader.h"
-#include "MainComponent.h"
+// #include "MainComponent.h"
+#include "Demos/DemosMainComponent.h"
 
 //==============================================================================
 class PlaygroundGUIApplication: public JUCEApplication {
-public:
+ public:
   //==============================================================================
   PlaygroundGUIApplication() {}
 
@@ -22,14 +23,14 @@ public:
   bool moreThanOneInstanceAllowed() override       { return true; }
 
   //==============================================================================
-  void initialise (const String& commandLine) override {
+  void initialise(const String& commandLine) override {
     // This method is where you should put your application's initialisation code..
-    mainWindow.reset (new MainWindow (getApplicationName()));
+    mainWindow.reset(new MainWindow(getApplicationName()));
   }
 
   void shutdown() override {
     // Add your application's shutdown code here..
-    mainWindow = nullptr; // (deletes our window)
+    mainWindow = nullptr;  // (deletes our window)
   }
 
   //==============================================================================
@@ -39,7 +40,7 @@ public:
     quit();
   }
 
-  void anotherInstanceStarted (const String& commandLine) override {
+  void anotherInstanceStarted(const String& commandLine) override {
       // When another instance of the app is launched while this one is running,
       // this method is invoked, and the commandLine parameter tells you what
       // the other instance's command-line arguments were.
@@ -48,10 +49,10 @@ public:
   //==============================================================================
   /*
       This class implements the desktop window that contains an instance of
-      our MainComponent class.
+      our DemoMainComponent class.
   */
   class MainWindow    : public DocumentWindow {
-  public:
+   public:
     MainWindow(String name):
       DocumentWindow(name,
                      Desktop::getInstance()
@@ -59,7 +60,7 @@ public:
                        .findColour(ResizableWindow::backgroundColourId),
                      DocumentWindow::allButtons) {
       setUsingNativeTitleBar(false);
-      setContentOwned(new MainComponent(), true);
+      setContentOwned(new DemosMainComponent(), true);
 
       setFullScreen(true);
       setResizable(true, true);
@@ -67,8 +68,7 @@ public:
       setVisible(true);
     }
 
-    void closeButtonPressed() override
-    {
+    void closeButtonPressed() override {
         // This is called when the user tries to close this window. Here, we'll just
         // ask the app to quit when this happens, but you can change this to do
         // whatever you need.
@@ -82,11 +82,11 @@ public:
        subclass also calls the superclass's method.
     */
 
-  private:
+   private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MainWindow)
   };
 
-private:
+ private:
   std::unique_ptr<MainWindow> mainWindow;
 };
 

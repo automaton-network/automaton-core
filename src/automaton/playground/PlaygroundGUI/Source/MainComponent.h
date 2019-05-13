@@ -16,7 +16,7 @@
   your controls and content.
 */
 class MainComponent: public Component {
-public:
+ public:
   //==============================================================================
   MainComponent();
   ~MainComponent();
@@ -25,7 +25,7 @@ public:
   void paint(Graphics&) override;
   void resized() override;
 
-private:
+ private:
   //==============================================================================
   // Your private member variables go here...
 

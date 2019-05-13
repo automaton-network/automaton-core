@@ -139,9 +139,9 @@ git_repo "https://github.com/orlp/ed25519.git" "ed25519" "7fa6712ef5d581a6981ec2
   curl -L https://github.com/ThePhD/sol2/releases/download/v2.20.6/sol.hpp -o sol2/single/sol/sol.hpp
 
 [ ! -d boost ] && \
-  get_archive "https://dl.bintray.com/boostorg/release/1.68.0/source/boost_1_68_0.tar.gz" \
-  "boost_1_68_0.tar.gz" "da3411ea45622579d419bfda66f45cd0f8c32a181d84adfa936f5688388995cf"
-[ -d boost_1_68_0 ] && mv boost_1_68_0 boost
+  get_archive "https://dl.bintray.com/boostorg/release/1.70.0/source/boost_1_70_0.tar.gz" \
+  "boost_1_70_0.tar.gz" "882b48708d211a5f48e60b0124cf5863c1534cd544ecd0664bb534a4b5d506e9"
+[ -d boost_1_70_0 ] && mv boost_1_70_0 boost
 
 [ ! -d zlib-1.2.11 ] && get_archive "https://zlib.net/zlib-1.2.11.tar.gz" \
   "zlib-1.2.11.tar.gz" "c3e5e9fdd5004dcb542feda5ee4f0ff0744628baf8ed2dd5d66f8ca1197cb1a1"
