@@ -6,7 +6,7 @@
 
 DemosMainComponent::DemosMainComponent() {
   menuBar.reset(new MenuBarComponent(this));
-  addAndMakeVisible (menuBar.get());
+  addAndMakeVisible(menuBar.get());
 
   tabbedComponent.reset(new TabbedComponent(TabbedButtonBar::TabsAtTop));
   addAndMakeVisible(tabbedComponent.get());
@@ -30,7 +30,7 @@ void DemosMainComponent::paint(Graphics& g) {
 
 void DemosMainComponent::resized() {
   auto b = getLocalBounds();
-  
+
   auto height = LookAndFeel::getDefaultLookAndFeel().getDefaultMenuBarHeight();
   menuBar->setBounds(b.removeFromTop(height));
 
