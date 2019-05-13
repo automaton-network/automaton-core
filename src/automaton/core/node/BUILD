@@ -24,3 +24,17 @@ cc_library(
       "//conditions:default": [],
   }),
 )
+
+cc_library(
+  name = "node_updater",
+  srcs = [
+    "node_updater.cc",
+  ],
+  hdrs = [
+    "node_updater.h",
+  ],
+  deps = [
+    ":node",
+  ],
+  linkstatic=True,
+)

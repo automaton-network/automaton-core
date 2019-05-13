@@ -16,6 +16,7 @@
 #include "automaton/core/network/tcp_implementation.h"
 #include "automaton/core/node/lua_node/lua_node.h"
 #include "automaton/core/node/node.h"
+#include "automaton/core/node/node_updater.h"
 #include "automaton/core/script/engine.h"
 #include "automaton/core/smartproto/smart_protocol.h"
 #include "automaton/core/testnet/testnet.h"
@@ -30,6 +31,7 @@ using automaton::core::io::get_file_contents;
 using automaton::core::network::http_server;
 using automaton::core::node::luanode::lua_node;
 using automaton::core::node::node;
+using automaton::core::node::default_node_updater;
 using automaton::core::script::engine;
 using automaton::core::smartproto::smart_protocol;
 using automaton::core::testnet::testnet;
@@ -118,6 +120,7 @@ int main(int argc, char* argv[]) {
       return std::shared_ptr<node>(new lua_node(id, proto_id));
     });
 
+  default_node_updater* updater;
 {
   automaton::core::cli::cli cli;
   engine script(core_factory);
@@ -205,6 +208,7 @@ int main(int argc, char* argv[]) {
   script.set_function("launch_node", [&](std::string node_id, std::string protocol_id, std::string address) {
     LOG(INFO) << "launching node ... " << node_id << " on " << protocol_id << " @ " << address;
     node::launch_node("lua", node_id, protocol_id, address);
+    updater->add_node(node_id);
     return "";
   });
 
@@ -224,6 +228,10 @@ int main(int argc, char* argv[]) {
     }
     if (!success) {
       throw std::runtime_error("Testnet creation failed!");
+    }
+    std::shared_ptr<testnet> net = testnet::get_testnet(id);
+    for (auto nid : net->list_nodes()) {
+      updater->add_node(nid);
     }
   });
 
@@ -297,6 +305,8 @@ int main(int argc, char* argv[]) {
 
   std::unordered_map<std::string, std::pair<std::string, std::string> > rpc_commands;
   uint32_t rpc_port = 0;
+  uint32_t updater_workers_number = 0;
+  uint32_t updater_workers_sleep_time = 0;
 
   std::ifstream i("automaton/core/coreinit.json");
   if (!i.is_open()) {
@@ -335,8 +345,14 @@ int main(int argc, char* argv[]) {
       rpc_commands[c["cmd"]] = std::make_pair(c["input"], c["output"]);
     }
     rpc_port = j["rpc_config"]["default_port"];
+
+    updater_workers_number = j["updater_config"]["workers_number"];
+    updater_workers_sleep_time = j["updater_config"]["workers_sleep_time"];
   }
   i.close();
+  updater = new default_node_updater(updater_workers_number, updater_workers_sleep_time, std::set<std::string>());
+  updater->start();
+
   // Start dump_logs thread.
   std::mutex logger_mutex;
   bool stop_logger = false;
@@ -391,6 +407,9 @@ int main(int argc, char* argv[]) {
   }
 
   rpc_server.stop();
+
+  updater->stop();
+  delete updater;
 
   stop_logger = true;
   logger.join();

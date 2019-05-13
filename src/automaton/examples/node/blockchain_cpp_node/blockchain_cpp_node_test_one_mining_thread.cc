@@ -1,23 +1,21 @@
-#include <chrono>
 #include <memory>
+#include <set>
 #include <unordered_map>
 
 #include "automaton/core/io/io.h"
 #include "automaton/core/network/simulated_connection.h"
 #include "automaton/core/network/tcp_implementation.h"
+#include "automaton/core/node/node_updater.h"
 #include "automaton/core/testnet/testnet.h"
 #include "automaton/examples/node/blockchain_cpp_node/blockchain_cpp_node.h"
 
-using std::chrono::system_clock;
-
 using automaton::core::io::bin2hex;
 using automaton::core::node::node;
+using automaton::core::node::node_updater_tests;
 using automaton::core::smartproto::smart_protocol;
 using automaton::core::testnet::testnet;
 
-auto WORKER_SLEEP_TIME_MS = std::chrono::milliseconds(20);
-
-bool worker_running = true;
+auto WORKER_SLEEP_TIME_MS = 20;
 
 /*
 returns connection graph
@@ -53,37 +51,13 @@ int main() {
   std::shared_ptr<automaton::core::network::simulation> sim = automaton::core::network::simulation::get_simulator();
   sim->simulation_start(50);
   automaton::core::network::tcp_init();
+
   testnet::create_testnet("blockchain", "testnet", "doesntmatter", testnet::network_protocol_type::simulation, 1000,
       create_connections_vector(1000, 4));
 
-  std::unordered_map<std::string, std::unique_ptr<std::mutex>> node_locks;
-  std::mutex map_lock;
-  std::thread worker_thread = std::thread([&]() {
-      while (worker_running) {
-        std::vector<std::string> node_ids = node::list_nodes();
-        std::string id = node_ids[std::rand()%1000];
-        map_lock.lock();
-        auto it = node_locks.find(id);
-        if (it == node_locks.end()) {
-          it = node_locks.emplace(id, std::make_unique<std::mutex>()).first;
-        }
-        bool locked = it->second->try_lock();
-        map_lock.unlock();
-        if (locked) {
-          auto node = node::get_node(id);
-          if (node != nullptr) {
-            // protocol update time and node's time to update are not used here
-            node->process_update(0);
-          }
-          map_lock.lock();
-          node_locks.at(id)->unlock();
-          map_lock.unlock();
-        } else {
-          continue;
-        }
-        std::this_thread::sleep_for(WORKER_SLEEP_TIME_MS);
-      }
-    });
+  std::vector<std::string> ids = testnet::get_testnet("testnet")->list_nodes();
+  node_updater_tests updater(WORKER_SLEEP_TIME_MS, std::set<std::string>(ids.begin(), ids.end()));
+  updater.start();
 
   bool stop_logger = false;
   std::thread logger([&]() {
@@ -98,8 +72,7 @@ int main() {
 
   std::this_thread::sleep_for(std::chrono::milliseconds(180000));
 
-  worker_running = false;
-  worker_thread.join();
+  updater.stop();
 
   stop_logger = true;
   logger.join();
