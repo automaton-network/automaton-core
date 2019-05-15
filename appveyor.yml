@@ -16,6 +16,7 @@ for:
     only:
       - image: Ubuntu1604
   cache:
+  - src/local_third_party/bitcoin -> download_and_build_third_party_libs.sh
   - src/local_third_party/cryptopp -> download_and_build_third_party_libs.sh
   - src/local_third_party/LuaJIT -> download_and_build_third_party_libs.sh
   - src/local_third_party/sol2 -> download_and_build_third_party_libs.sh
