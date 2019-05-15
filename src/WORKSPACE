@@ -51,7 +51,7 @@ new_local_repository(
 local_repository(
   name = "gtest",
   path = "local_third_party/googletest",
-  # build_file = "local_third_party/gtest.BUILD",
+  build_file = "local_third_party/gtest.BUILD",
 )
 
 new_local_repository(

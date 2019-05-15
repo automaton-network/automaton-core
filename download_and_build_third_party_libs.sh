@@ -219,18 +219,31 @@ unset GREP_OPTIONS
 # make
 # cd ..
 
-# Build JUCE Projucer
+# Build GTest
 print_separator "=" 80
-echo "  BUILDING Projucer"
+echo "  BUILDING GTest"
 print_separator "=" 80
 
-if $darwin; then
-  # TODO(asen): Need to do build for Mac OS
-  pass;
-else
-  cd JUCE/extras/Projucer/Builds/LinuxMakefile
-  make -j$CPUCOUNT CPPFLAGS="-DJUCER_ENABLE_GPL_MODE=1" CONFIG=Release # V=1 for verbose
-  cd ../../../../..
+cd googletest
+mkdir -p build && cd build
+[ ! -f CMakeCache.txt ] && cmake .. -DCMAKE_BUILD_TYPE=Release
+make -j$CPUCOUNT
+cd ../..
+
+# Build JUCE Projucer -- only when not in CI
+if [ ! $CI ]; then
+  print_separator "=" 80
+  echo "  BUILDING Projucer"
+  print_separator "=" 80
+
+  if $darwin; then
+    # TODO(asen): Need to do build for Mac OS
+    pass;
+  else
+    cd JUCE/extras/Projucer/Builds/LinuxMakefile
+    make -j$CPUCOUNT CPPFLAGS="-DJUCER_ENABLE_GPL_MODE=1" CONFIG=Release # V=1 for verbose
+    cd ../../../../..
+  fi
 fi
 
 # Build crypto++
@@ -284,7 +297,7 @@ if [ ! -f bitcoin/src/secp256k1/.libs/libsecp256k1.a ]
 then
   cd bitcoin/src/secp256k1
   ./autogen.sh
-  ./configure
+  ./configure --enable-module-recovery
   make -j$CPUCOUNT
   ./tests
   cd ../../..
