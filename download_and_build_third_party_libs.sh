@@ -219,6 +219,17 @@ unset GREP_OPTIONS
 # make
 # cd ..
 
+# Build GTest
+print_separator "=" 80
+echo "  BUILDING GTest"
+print_separator "=" 80
+
+cd googletest
+mkdir -p build && cd build
+[ ! -f CMakeCache.txt ] && cmake .. -DCMAKE_BUILD_TYPE=Release
+make -j$CPUCOUNT
+cd ../..
+
 # Build JUCE Projucer
 print_separator "=" 80
 echo "  BUILDING Projucer"
@@ -284,7 +295,7 @@ if [ ! -f bitcoin/src/secp256k1/.libs/libsecp256k1.a ]
 then
   cd bitcoin/src/secp256k1
   ./autogen.sh
-  ./configure
+  ./configure --enable-module-recovery
   make -j$CPUCOUNT
   ./tests
   cd ../../..

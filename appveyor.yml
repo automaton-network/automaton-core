@@ -54,14 +54,14 @@ install:
 # - cmd: Powershell.exe -executionpolicy remotesigned -File .\download_and_build_third_party_libs_windows.ps1
 # - cmd: pwd
 # - cmd: dir src\local_third_party
-- sh: >-
-    sudo apt-get install pkg-config zip g++ zlib1g-dev unzip python
-
-    sudo wget https://github.com/bazelbuild/bazel/releases/download/0.21.0/bazel-0.21.0-installer-linux-x86_64.sh
-
-    sudo chmod +x bazel-0.21.0-installer-linux-x86_64.sh
-
-    sudo ./bazel-0.21.0-installer-linux-x86_64.sh
+# - sh: >-
+#     sudo apt-get install pkg-config zip g++ zlib1g-dev unzip python
+#
+#     sudo wget https://github.com/bazelbuild/bazel/releases/download/0.21.0/bazel-0.21.0-installer-linux-x86_64.sh
+#
+#     sudo chmod +x bazel-0.21.0-installer-linux-x86_64.sh
+#
+#     sudo ./bazel-0.21.0-installer-linux-x86_64.sh
 - sh: ./download_and_build_third_party_libs.sh
 # examine build state
 - sh: pwd
@@ -72,5 +72,8 @@ build_script:
 
 test_script:
 # - cmd: bazel test --test_output=errors --test_size_filters=small --test_tag_filters=-flaky //automaton/tests/...
-- sh: cd automaton && ./lint.sh && ./lint_ui.sh
-- sh: bazel test --test_output=errors --test_size_filters=small --incompatible_package_name_is_a_function=false //automaton/tests/...
+- sh: cd automaton && ./lint.sh && ./lint_ui.sh && cd ..
+- sh: mkdir -p build && cd build
+- sh: cmake -DCMAKE_BUILD_TYPE=Release .. && make -j8 && make -j8 test CTEST_OUTPUT_ON_FAILURE=TRUE
+- sh: cd ..
+# - sh: bazel test --test_output=errors --test_size_filters=small --incompatible_package_name_is_a_function=false //automaton/tests/...
