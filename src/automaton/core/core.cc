@@ -1,4 +1,5 @@
 #include <future>
+#include <fstream>
 #include <iostream>
 #include <regex>
 #include <string>
@@ -122,6 +123,7 @@ int main(int argc, char* argv[]) {
 
   default_node_updater* updater;
 {
+  automaton::core::io::init_logger();
   automaton::core::cli::cli cli;
   engine script(core_factory);
   script.bind_core();
@@ -179,13 +181,15 @@ int main(int argc, char* argv[]) {
 
   node_type.set("known_peers", [](lua_node& n) {
     LOG(DEBUG) << "getting known peers... " << &n;
-    LOG(DEBUG) << n.list_known_peers();
+    // TODO(asen): need STL support for logger
+    // LOG(DEBUG) << n.list_known_peers();
     return sol::as_table(n.list_known_peers());
   });
 
   node_type.set("peers", [](lua_node& n) {
     LOG(DEBUG) << "getting peers... " << &n;
-    LOG(DEBUG) << n.list_connected_peers();
+    // TODO(asen): need STL support for logger
+    // LOG(DEBUG) << n.list_connected_peers();
     return sol::as_table(n.list_connected_peers());
   });
 

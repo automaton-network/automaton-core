@@ -6,9 +6,13 @@
 #include <cerrno>
 #include <fstream>
 #include <iomanip>
+#include <iostream>
+#include <memory>
 #include <string>
 
-INITIALIZE_EASYLOGGINGPP
+#include <g3log/logmessage.hpp>
+
+// INITIALIZE_EASYLOGGINGPP
 
 namespace automaton {
 namespace core {
@@ -105,30 +109,38 @@ std::string zero_padded(int num, int width) {
 const char* DEFAULT_LOG_CONFIG_FILENAME = "log.cfg";
 const char* DEFAILT_LOG_OUTPUT_FILENAME = "automaton-core.log";
 
-bool init_logger() {
-  // Load configuration from file
-  if (automaton::core::io::file_exists(DEFAULT_LOG_CONFIG_FILENAME)) {
-    el::Configurations conf(DEFAULT_LOG_CONFIG_FILENAME);
-  } else {
-    el::Loggers::reconfigureAllLoggers(el::ConfigurationType::Format,
-        std::string("%datetime %levshort [%fbase:%line]: %msg"));
+struct ColorCoutSink {
+// Linux xterm color
+// http://stackoverflow.com/questions/2616906/how-do-i-output-coloured-text-to-a-linux-terminal
+  enum FG_Color { YELLOW = 33, RED = 31, GREEN = 32, WHITE = 37 };
 
-    el::Loggers::reconfigureAllLoggers(el::ConfigurationType::ToFile, "true");
-    el::Loggers::reconfigureAllLoggers(el::ConfigurationType::ToStandardOutput, "false");
-    el::Loggers::reconfigureAllLoggers(
-        el::ConfigurationType::Filename, DEFAILT_LOG_OUTPUT_FILENAME);
+  FG_Color GetColor(const LEVELS level) const {
+     if (level.value == WARNING.value) { return YELLOW; }
+     if (level.value == DEBUG.value) { return GREEN; }
+     if (g3::internal::wasFatal(level)) { return RED; }
 
-    el::Loggers::setLoggingLevel(el::Level::Global);
-    // el::Loggers::setVerboseLevel(9);
+     return WHITE;
   }
 
-  el::Loggers::addFlag(el::LoggingFlag::ColoredTerminalOutput);
-  el::Loggers::addFlag(el::LoggingFlag::LogDetailedCrashReason);
+  void ReceiveLogMessage(g3::LogMessageMover logEntry) {
+     auto level = logEntry.get()._level;
+     auto color = GetColor(level);
+
+     std::cout << "\033[" << color << "m"
+       << logEntry.get().toString() << "\033[m" << std::endl;
+  }
+};
+
+using g3::LogWorker;
+
+bool init_logger() {
+  std::unique_ptr<LogWorker> logworker {LogWorker::createLogWorker()};
+  auto sinkHandle = logworker->addSink(std::make_unique<ColorCoutSink>(),
+                                   &ColorCoutSink::ReceiveLogMessage);
+  g3::initializeLogging(logworker.get());
 
   return true;
 }
-
-bool _init_logger = init_logger();
 
 }  // namespace io
 }  // namespace core

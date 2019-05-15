@@ -4,6 +4,10 @@
 # 3. Run the script from its directory
 
 $LOCAL_3P="local_third_party"
+
+$G3LOG_VER="1.3.2"
+
+
 cd .\src\
 New-Item -ItemType Directory -Path .\$LOCAL_3P
 cd .\$LOCAL_3P
@@ -81,12 +85,58 @@ if(!(Test-Path -Path .\bzip2-1.0.6)) {
   "bzip2-1.0.6.zip" "C60C0ABC89A76C170B3EF39E7C516DBDEA806D65231204C1803A610FA9DBC464"
 }
 
+if(!(Test-Path -Path .\g3log)) {
+    Get-Archive "https://github.com/KjellKod/g3log/archive/$G3LOG_VER.zip" `
+  "g3log-$G3LOG_VER.zip" "1c141aa62c30985e8fd8c56bddbf2e32f080bf839a48f53c9593ecdebfb8a175"
+}
+if(Test-Path -Path g3log-$G3LOG_VER) {
+    Move-Item -Path g3log-$G3LOG_VER -Destination g3log
+}
+
+
 #if(!(Test-Path -Path .\xz-5.2.3)) {
 #    Get-Archive "http://phoenixnap.dl.sourceforge.net/project/lzmautils/xz-5.2.3.tar.gz" `
 #  "xz-5.2.3.tar.gz" "71928b357d0a09a12a4b4c5fafca8c31c19b0e7d3b8ebb19622e96f26dbf28cb"
 #}
 
 #  ======== Build libs ========
+
+
+#  ====== Build cryptlib ======
+echo ("="*80)
+echo "  BUILDING cryptopp"
+echo ("="*80)
+
+cd cryptopp
+msbuild /t:Build /p:platform="x86" /p:configuration=Release cryptlib.vcxproj /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
+cmd /r dir *.lib /s
+cd ..
+
+#  ====== Build protobuf ======
+echo ("="*80)
+echo "  BUILDING protobuf"
+echo ("="*80)
+
+cd protobuf
+mkdir build_msvc
+cd build_msvc
+cmake -Dprotobuf_BUILD_SHARED_LIBS=OFF -Dprotobuf_UNICODE=ON -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_GENERATOR_PLATFORM=x64 ../cmake
+msbuild protobuf.sln /p:Configuration=Release /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
+cd ..\..
+
+
+#  ====== Build g3log ======
+echo ("="*80)
+echo "  BUILDING g3log"
+echo ("="*80)
+
+cd .\g3log
+md build
+cd build
+cmake .. -DG3_SHARED_LIB=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_GENERATOR_PLATFORM=x64
+cmake --build . --config Release
+cd ..\..
+
 
 #  ====== Create lua.hpp with extern includes ======
 echo ("="*80)
@@ -100,6 +150,7 @@ $lua_extern_includes = "extern `"C`" {
 }"
 $lua_extern_includes | Out-File -FilePath .\lua\lua.hpp -Encoding utf8
 
+
 #  ====== Building LuaJIT ======
 # echo ("="*80)
 # echo "  BUILDING LuaJIT"
@@ -108,6 +159,7 @@ $lua_extern_includes | Out-File -FilePath .\lua\lua.hpp -Encoding utf8
 # cd LuaJIT\src
 # .\msvcbuild.bat
 # cd ..\..
+
 
 #  ====== Building libzmq ======
 # echo ("="*80)
@@ -125,6 +177,7 @@ $lua_extern_includes | Out-File -FilePath .\lua\lua.hpp -Encoding utf8
 #make
 #cd ..
 
+
 #  ====== Building zmqpp ======
 #echo ("="*80)
 #echo "  BUILDING zmqpp"
@@ -135,6 +188,7 @@ $lua_extern_includes | Out-File -FilePath .\lua\lua.hpp -Encoding utf8
 #$sedi 's/LIBRARY_LIBS =/LIBRARY_LIBS = -L..\/libzmq\/src\/.libs/' Makefile
 #make
 #cd ..
+
 
 #  ====== Building replxx ======
 echo ("="*80)
@@ -149,6 +203,7 @@ if (!(Test-Path .\CMakeCache.txt)) {
 }
 msbuild.exe replxx.sln /p:configuration=Release
 cd ..\..
+
 
 #  ====== Building boost ======
 echo ("="*80)

@@ -1,7 +1,12 @@
 #!/bin/bash
 
+CPUCOUNT=$(grep -c "^processor" /proc/cpuinfo)
+
 PROTOBUF_VER="3.6.1.2"
 JUCE_VER="5.4.3"
+CRYPTOPP_VER="7_0_0"
+LUA_VER="5.3.5"
+G3LOG_VER="1.3.2"
 
 darwin=false;
 case "`uname`" in
@@ -98,15 +103,20 @@ git_repo "https://github.com/orlp/ed25519.git" "ed25519" "7fa6712ef5d581a6981ec2
   "easyloggingpp-9.96.7.tar.gz" "237c80072b9b480a9f2942b903b4b0179f65e146e5dcc64864dc91792dedd722"
 [ -d easyloggingpp-9.96.7 ] && mv easyloggingpp-9.96.7 easyloggingpp
 
+[ ! -d g3log ] && \
+  get_archive "https://github.com/KjellKod/g3log/archive/$G3LOG_VER.tar.gz" \
+  "g3log-$G3LOG_VER.tar.gz" "0ed1983654fdd8268e051274904128709c3d9df8234acf7916e9015199b0b247"
+[ -d g3log-$G3LOG_VER ] && mv g3log-$G3LOG_VER g3log
+
 [ ! -d replxx ] && \
   get_archive "https://github.com/AmokHuginnsson/replxx/archive/release-0.0.1.tar.gz" \
   "replxx-release-0.0.1.tar.gz" "af0576e401e43d88fadabdc193e7cbed20d0a8538ae3d9228732211d1b255348"
 [ -d replxx-release-0.0.1 ] && mv replxx-release-0.0.1 replxx
 
 [ ! -d lua ] && \
-  get_archive "https://www.lua.org/ftp/lua-5.3.5.tar.gz" \
-  "lua-5.3.5.tar.gz" "0c2eed3f960446e1a3e4b9a1ca2f3ff893b6ce41942cf54d5dd59ab4b3b058ac"
-[ -d lua-5.3.5 ] && mv lua-5.3.5/src lua && rm -rf lua-5.3.5
+  get_archive "https://www.lua.org/ftp/lua-$LUA_VER.tar.gz" \
+  "lua-$LUA_VER.tar.gz" "0c2eed3f960446e1a3e4b9a1ca2f3ff893b6ce41942cf54d5dd59ab4b3b058ac"
+[ -d lua-$LUA_VER ] && mv lua-$LUA_VER/src lua && rm -rf lua-$LUA_VER
 
 [ ! -d LuaJIT ] && \
   get_archive "https://github.com/LuaJIT/LuaJIT/archive/v2.0.5.tar.gz" \
@@ -119,9 +129,9 @@ git_repo "https://github.com/orlp/ed25519.git" "ed25519" "7fa6712ef5d581a6981ec2
 [ -d googletest-release-1.8.1 ] && mv googletest-release-1.8.1 googletest
 
 [ ! -d cryptopp ] && \
-  get_archive "https://github.com/weidai11/cryptopp/archive/CRYPTOPP_7_0_0.tar.gz" \
-  "CRYPTOPP_7_0_0.tar.gz" "3ee97903882b5f58c88b6f9d2ce50fd1000be95479180c7b4681cd3f4c1c7629" && \
-[ -d cryptopp-CRYPTOPP_7_0_0 ] && mv cryptopp-CRYPTOPP_7_0_0 cryptopp
+  get_archive "https://github.com/weidai11/cryptopp/archive/CRYPTOPP_$CRYPTOPP_VER.tar.gz" \
+  "CRYPTOPP_$CRYPTOPP_VER.tar.gz" "3ee97903882b5f58c88b6f9d2ce50fd1000be95479180c7b4681cd3f4c1c7629" && \
+[ -d cryptopp-CRYPTOPP_$CRYPTOPP_VER ] && mv cryptopp-CRYPTOPP_$CRYPTOPP_VER cryptopp
 
 [ ! -d protobuf ] && \
   get_archive "https://github.com/protocolbuffers/protobuf/archive/v$PROTOBUF_VER.tar.gz" \
@@ -154,35 +164,34 @@ git_repo "https://github.com/orlp/ed25519.git" "ed25519" "7fa6712ef5d581a6981ec2
   "xz-5.2.3.tar.gz" "71928b357d0a09a12a4b4c5fafca8c31c19b0e7d3b8ebb19622e96f26dbf28cb"
 
 [ ! -d JUCE ] && \
-  get_archive "https://github.com/WeAreROLI/JUCE/archive/$JUCE_VER.zip" \
-  "JUCE-$JUCE_VER.zip" "a55c9c49c039c79ef733c53d463e51c7089dc602b27d99b7a4ed37f753918976"
+  get_archive "https://github.com/WeAreROLI/JUCE/archive/$JUCE_VER.tar.gz" \
+  "JUCE-$JUCE_VER.tar.gz" "05cfec616c854d0f8f6646c0d8a7ac868410b25a3ba2c839879a7904504d5403"
 [ -d JUCE-$JUCE_VER ] && mv JUCE-$JUCE_VER JUCE
 
 [ ! -d bitcoin ] && \
   get_archive "https://github.com/bitcoin/bitcoin/archive/v0.17.1.tar.gz" \
   "v0.17.1.tar.gz" "d51bae80fc0a460ce752d04097c4a1271a66b55260d53165d82313488117d290"
 [ -d bitcoin-0.17.1 ] && mv bitcoin-0.17.1 bitcoin
+
+# Build Lua
+print_separator "=" 80
+echo "  BUILDING Lua"
+print_separator "=" 80
+
+cd lua
+make -j$CPUCOUNT linux a
+cd ..
+
 # Build LuaJIT
 print_separator "=" 80
 echo "  BUILDING LuaJIT"
 print_separator "=" 80
 
-# Create hpp file
-# cd lua
-# cat > lua.hpp << EOL
-# extern "C" {
-# #include "lua.h"
-# #include "lualib.h"
-# #include "lauxlib.h"
-# }
-# EOL
-# cd ..
-
 cd LuaJIT
 if $darwin; then
-  make MACOSX_DEPLOYMENT_TARGET=`sw_vers -productVersion`
+  make -j$CPUCOUNT MACOSX_DEPLOYMENT_TARGET=`sw_vers -productVersion`
 else
-  make
+  make -j$CPUCOUNT
 fi
 cd ..
 
@@ -193,6 +202,7 @@ cd ..
 
 unset GREP_COLOR
 unset GREP_OPTIONS
+
 # cd libzmq
 # [ ! -f configure ] && ./autogen.sh && ./configure
 # make
@@ -209,6 +219,40 @@ unset GREP_OPTIONS
 # make
 # cd ..
 
+# Build JUCE Projucer
+print_separator "=" 80
+echo "  BUILDING Projucer"
+print_separator "=" 80
+
+if $darwin; then
+  # TODO(asen): Need to do build for Mac OS
+  pass;
+else
+  cd JUCE/extras/Projucer/Builds/LinuxMakefile
+  make -j$CPUCOUNT CPPFLAGS="-DJUCER_ENABLE_GPL_MODE=1" CONFIG=Release # V=1 for verbose
+  cd ../../../../..
+fi
+
+# Build crypto++
+print_separator "=" 80
+echo "  BUILDING crypto++"
+print_separator "=" 80
+
+cd cryptopp
+make -j$CPUCOUNT
+cd ..
+
+# Build protobuf
+print_separator "=" 80
+echo "  BUILDING protobuf"
+print_separator "=" 80
+
+cd protobuf
+[ ! -f configure ] && ./autogen.sh
+[ ! -f Makefile ] && ./configure
+make -j$CPUCOUNT
+cd ..
+
 # Build replxx
 print_separator "=" 80
 echo "  BUILDING replxx"
@@ -216,16 +260,32 @@ print_separator "=" 80
 
 cd replxx
 mkdir -p build && cd build
-[ ! -f CMakeCache.txt ] && cmake -DCMAKE_BUILD_TYPE=Release ..
-make replxx
+[ ! -f CMakeCache.txt ] && cmake .. -DCMAKE_BUILD_TYPE=Release
+make -j$CPUCOUNT replxx
 cd ../..
+
+# Build g3log
+print_separator "=" 80
+echo "  BUILDING g3log"
+print_separator "=" 80
+
+cd g3log
+mkdir -p build && cd build
+[ ! -f CMakeCache.txt ] && cmake .. -DG3_SHARED_LIB=OFF -DCMAKE_BUILD_TYPE=Release
+make -j$CPUCOUNT
+cd ../..
+
+# Build libsecp256k1
+print_separator "=" 80
+echo "  BUILDING libsecp256k1"
+print_separator "=" 80
 
 if [ ! -f bitcoin/src/secp256k1/.libs/libsecp256k1.a ]
 then
   cd bitcoin/src/secp256k1
   ./autogen.sh
   ./configure
-  make
+  make -j$CPUCOUNT
   ./tests
   cd ../../..
 fi

@@ -5,6 +5,8 @@
 #include "automaton/core/io/io.h"
 #include "automaton/core/data/protobuf/protobuf_factory.h"
 #include "automaton/core/data/protobuf/protobuf_schema.h"
+#include "automaton/tests/data/proto_files.h"
+
 #include "gtest/gtest.h"
 
 using automaton::core::data::protobuf::protobuf_factory;
@@ -13,7 +15,7 @@ using automaton::core::io::get_file_contents;
 
 TEST(protobuf_factory, find_enum) {
   protobuf_factory pb_factory;
-  protobuf_schema loaded_schema(get_file_contents("automaton/tests/data/many_enums.proto"));
+  protobuf_schema loaded_schema(MANY_ENUMS_PROTO);
   pb_factory.import_schema(&loaded_schema, "test", "");
   int id = pb_factory.get_enum_id("enum5");
   std::vector <std::pair<std::string, int> > info = pb_factory.get_enum_values(id);

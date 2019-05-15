@@ -11,4 +11,5 @@ cc_library(
     "*.c",
   ]),
   includes = ["."],
+  linkstatic=1,
 )

@@ -18,5 +18,5 @@ cc_library(
     "ELPP_THREAD_SAFE",
     "ELPP_STL_LOGGING",
   ],
-  linkstatic=True,
+  linkstatic=1,
 )

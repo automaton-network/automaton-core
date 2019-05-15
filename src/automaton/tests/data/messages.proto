@@ -1,9 +1,0 @@
-syntax = "proto3";
-
-message TestMsg {
-	string name = 1;
-}
-
-message TestMsg2 {
-	TestMsg msg = 1;
-}

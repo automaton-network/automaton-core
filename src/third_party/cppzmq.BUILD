@@ -25,5 +25,5 @@ cc_library (
   deps = [
     "@libzmq//:libzmq",
   ],
-  linkstatic = True,
+  linkstatic=1,
 )

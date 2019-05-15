@@ -10,6 +10,7 @@
 
 #include "automaton/core/crypto/cryptopp/Keccak_256_cryptopp.h"
 #include "automaton/core/crypto/cryptopp/SHA256_cryptopp.h"
+
 #include "automaton/core/data/factory.h"
 #include "automaton/core/data/protobuf/protobuf_factory.h"
 #include "automaton/core/data/protobuf/protobuf_schema.h"

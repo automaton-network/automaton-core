@@ -24,7 +24,7 @@ cc_binary(
     "@cryptopp//:cryptopp",
     "@json//:json",
   ],
-  linkstatic = True,
+  linkstatic=1,
 )
 
 cc_binary(
@@ -35,5 +35,5 @@ cc_binary(
   deps = [
     "//automaton/core/network:network_tcp",
   ],
-  linkstatic = True,
+  linkstatic=1,
 )
