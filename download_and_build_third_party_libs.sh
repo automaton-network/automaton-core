@@ -230,18 +230,20 @@ mkdir -p build && cd build
 make -j$CPUCOUNT
 cd ../..
 
-# Build JUCE Projucer
-print_separator "=" 80
-echo "  BUILDING Projucer"
-print_separator "=" 80
+# Build JUCE Projucer -- only when not in CI
+if [ ! $CI ]; then
+  print_separator "=" 80
+  echo "  BUILDING Projucer"
+  print_separator "=" 80
 
-if $darwin; then
-  # TODO(asen): Need to do build for Mac OS
-  pass;
-else
-  cd JUCE/extras/Projucer/Builds/LinuxMakefile
-  make -j$CPUCOUNT CPPFLAGS="-DJUCER_ENABLE_GPL_MODE=1" CONFIG=Release # V=1 for verbose
-  cd ../../../../..
+  if $darwin; then
+    # TODO(asen): Need to do build for Mac OS
+    pass;
+  else
+    cd JUCE/extras/Projucer/Builds/LinuxMakefile
+    make -j$CPUCOUNT CPPFLAGS="-DJUCER_ENABLE_GPL_MODE=1" CONFIG=Release # V=1 for verbose
+    cd ../../../../..
+  fi
 fi
 
 # Build crypto++
