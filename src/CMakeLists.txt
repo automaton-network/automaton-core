@@ -88,7 +88,17 @@ target_link_libraries(
 add_executable(automaton-core-cli automaton/core/core.cc)
 target_link_libraries(automaton-core-cli automaton-core)
 
+# === TOOLS ===
+
+add_executable(
+  automaton-miner
+  automaton/tools/miner/miner_main.cc
+  automaton/tools/miner/miner.cc
+)
+target_link_libraries(automaton-miner automaton-core)
+
 # === TESTS ===
+
 enable_testing()
 SET(CTEST_OUTPUT_ON_FAILURE ON)
 
