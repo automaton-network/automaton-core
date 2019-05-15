@@ -21,4 +21,5 @@ cc_library(
   defines = [
     "SOL_CHECK_ARGUMENTS",
   ],
+  linkstatic=1,
 )

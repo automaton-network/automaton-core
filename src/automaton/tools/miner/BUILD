@@ -14,7 +14,7 @@ cc_library(
     "@bitcoin//:secp256k1",
     "//automaton/core/io",
   ],
-  linkstatic=True,
+  linkstatic=1,
 )
 
 cc_binary(
@@ -27,5 +27,6 @@ cc_binary(
     "//automaton/core/io",
     "//automaton/tools/miner:miner_lib",
   ],
-  linkstatic=True,
+  linkstatic=1,
+  linkopts = ["-pthread"],
 )

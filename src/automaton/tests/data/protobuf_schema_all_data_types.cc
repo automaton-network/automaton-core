@@ -2,9 +2,10 @@
 #include <iostream>
 #include <string>
 
-#include "automaton/core/io/io.h"
 #include "automaton/core/data/protobuf/protobuf_factory.h"
 #include "automaton/core/data/protobuf/protobuf_schema.h"
+#include "automaton/core/io/io.h"
+#include "automaton/tests/data/proto_files.h"
 #include "gtest/gtest.h"
 
 using automaton::core::data::protobuf::protobuf_factory;
@@ -25,7 +26,7 @@ const char* TEST_MSG = "TestMsg5";
 
 TEST(protobuf_factory, all_data_types) {
   protobuf_factory pb_factory;
-  protobuf_schema loaded_schema(get_file_contents("automaton/tests/data/many_fields.proto"));
+  protobuf_schema loaded_schema(MANY_FIELDS_PROTO);
   pb_factory.import_schema(&loaded_schema, "test", "");
   int k;
   int id = pb_factory.get_schema_id(TEST_MSG);

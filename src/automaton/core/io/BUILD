@@ -13,7 +13,7 @@ cc_library(
     "io.h",
   ],
   deps = [
-    "@easyloggingpp//:easyloggingpp",
+    "@g3log//:g3log",
   ],
-  linkstatic=True,
+  linkstatic=1,
 )

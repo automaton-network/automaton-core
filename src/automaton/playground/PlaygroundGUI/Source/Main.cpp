@@ -59,7 +59,7 @@ class PlaygroundGUIApplication: public JUCEApplication {
                        .getDefaultLookAndFeel()
                        .findColour(ResizableWindow::backgroundColourId),
                      DocumentWindow::allButtons) {
-      setUsingNativeTitleBar(false);
+      setUsingNativeTitleBar(true);
       setContentOwned(new DemosMainComponent(), true);
 
       setFullScreen(true);

@@ -5,6 +5,8 @@
 #include "automaton/core/io/io.h"
 #include "automaton/core/data/protobuf/protobuf_factory.h"
 #include "automaton/core/data/protobuf/protobuf_schema.h"
+#include "automaton/tests/data/proto_files.h"
+
 #include "gtest/gtest.h"
 
 using automaton::core::data::msg;
@@ -17,12 +19,9 @@ class test_import_dependencies : public ::testing::Test {
  protected:
   // You can define per-test set-up and tear-down logic as usual.
   virtual void SetUp() {
-    pb_schema1.reset(
-        new protobuf_schema(get_file_contents("automaton/tests/data/schema1.proto")));
-    pb_schema2.reset(
-        new protobuf_schema(get_file_contents("automaton/tests/data/schema2.proto")));
-    pb_schema3.reset(
-        new protobuf_schema(get_file_contents("automaton/tests/data/schema3.proto")));
+    pb_schema1.reset(new protobuf_schema(SCHEMA1_PROTO));
+    pb_schema2.reset(new protobuf_schema(SCHEMA2_PROTO));
+    pb_schema3.reset(new protobuf_schema(SCHEMA3_PROTO));
     pb_factory.reset(new protobuf_factory());
     setup_schema_dependencies();
   }

@@ -23,4 +23,5 @@ cc_library(
     "ENABLE_MODULE_RECOVERY",
     "USE_NUM_NONE",
   ],
+  linkstatic=1,
 )

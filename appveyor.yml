@@ -19,10 +19,11 @@ for:
   - src/local_third_party/cryptopp -> download_and_build_third_party_libs.sh
   - src/local_third_party/LuaJIT -> download_and_build_third_party_libs.sh
   - src/local_third_party/sol2 -> download_and_build_third_party_libs.sh
-  - src/local_third_party/easyloggingpp -> download_and_build_third_party_libs.sh
+  - src/local_third_party/g3log -> download_and_build_third_party_libs.sh
   - src/local_third_party/ed25519 -> download_and_build_third_party_libs.sh
   - src/local_third_party/protobuf -> download_and_build_third_party_libs.sh
   - src/local_third_party/lua -> download_and_build_third_party_libs.sh
+  - src/local_third_party/JUCE -> download_and_build_third_party_libs.sh
   - src/local_third_party/bazel-0.21.0-installer-linux-x86_64.sh
   - src/local_third_party/boost_1_68_0.tar.gz
   - src/local_third_party/bzip2-1.0.6.tar.gz
@@ -40,16 +41,19 @@ for:
   - src\local_third_party\LuaJIT -> download_and_build_third_party_libs_windows.ps1
   - src\local_third_party\replxx -> download_and_build_third_party_libs_windows.ps1
   - src\local_third_party\cryptopp -> download_and_build_third_party_libs_windows.ps1
-  - src\local_third_party\easyloggingpp -> download_and_build_third_party_libs_windows.ps1
   - src\local_third_party\ed25519 -> download_and_build_third_party_libs_windows.ps1
   - src\local_third_party\googletest -> download_and_build_third_party_libs_windows.ps1
   - src\local_third_party\protobuf -> download_and_build_third_party_libs_windows.ps1
+  - src\local_third_party\g3log -> download_and_build_third_party_libs_windows.ps1
+  - src\local_third_party\JUCE -> download_and_build_third_party_libs_windows.ps1
+  - src\local_third_party\zlib-1.2.11.zip -> download_and_build_third_party_libs_windows.ps1
+  - src\local_third_party\*.zip -> download_and_build_third_party_libs_windows.ps1
 
 install:
-- cmd: choco install bazel
-- cmd: Powershell.exe -executionpolicy remotesigned -File .\download_and_build_third_party_libs_windows.ps1
-- cmd: pwd
-- cmd: dir src\local_third_party
+# - cmd: choco install bazel
+# - cmd: Powershell.exe -executionpolicy remotesigned -File .\download_and_build_third_party_libs_windows.ps1
+# - cmd: pwd
+# - cmd: dir src\local_third_party
 - sh: >-
     sudo apt-get install pkg-config zip g++ zlib1g-dev unzip python
 
@@ -67,6 +71,6 @@ build_script:
 # - bazel build --incompatible_package_name_is_a_function=false //automaton/...
 
 test_script:
-- cmd: bazel test --test_output=errors --test_size_filters=small --test_tag_filters=-flaky //automaton/tests/...
+# - cmd: bazel test --test_output=errors --test_size_filters=small --test_tag_filters=-flaky //automaton/tests/...
 - sh: cd automaton && ./lint.sh && ./lint_ui.sh
 - sh: bazel test --test_output=errors --test_size_filters=small --incompatible_package_name_is_a_function=false //automaton/tests/...

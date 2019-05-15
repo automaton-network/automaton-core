@@ -11,4 +11,5 @@ cc_library(
     "include/*.hxx",
   ]),
   includes = ["include"],
+  linkstatic=1,
 )

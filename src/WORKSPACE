@@ -19,6 +19,12 @@ new_local_repository(
 )
 
 new_local_repository(
+  name = "g3log",
+  path = "local_third_party/g3log",
+  build_file = "third_party/g3log.BUILD",
+)
+
+new_local_repository(
   name = "cppzmq",
   path = "local_third_party/cppzmq",
   build_file = "third_party/cppzmq.BUILD",
@@ -48,9 +54,10 @@ local_repository(
   # build_file = "local_third_party/gtest.BUILD",
 )
 
-local_repository(
+new_local_repository(
   name = "com_google_protobuf",
   path = "local_third_party/protobuf",
+  build_file = "third_party/protobuf.BUILD",
 )
 
 new_local_repository(

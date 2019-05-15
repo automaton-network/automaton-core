@@ -6,6 +6,8 @@
 #include "automaton/core/data/msg.h"
 #include "automaton/core/data/protobuf/protobuf_factory.h"
 #include "automaton/core/data/protobuf/protobuf_schema.h"
+#include "automaton/tests/data/proto_files.h"
+
 #include "gtest/gtest.h"
 
 using automaton::core::data::msg;
@@ -17,7 +19,7 @@ const char* TEST_MSG = "TestMsg";
 
 TEST(protobuf_factory, setting_fields) {
   protobuf_factory pb_factory;
-  protobuf_schema loaded_schema(get_file_contents("automaton/tests/data/test.proto"));
+  protobuf_schema loaded_schema(TEST_PROTO);
   pb_factory.import_schema(&loaded_schema, "test", "");
 
   // *** String functions ***

@@ -1,10 +1,35 @@
 #ifndef AUTOMATON_CORE_IO_IO_H__
 #define AUTOMATON_CORE_IO_IO_H__
 
-#include <easylogging++.h>
-
 #include <chrono>
 #include <string>
+
+#include <g3log/g3log.hpp>
+#include <g3log/logworker.hpp>
+#include <g3log/loglevels.hpp>
+
+
+// Backward compatibility with easylogging++
+
+#define CHECK_NOTNULL(x) CHECK(x != nullptr)
+#define CHECK_BOUNDS(x, xlo, xhi) CHECK((x >= xlo) && (x <= xhi))
+#define VLOG(x) LOG(INFO)
+#define CHECK_LT(x, y) CHECK(x < y)
+#define CHECK_GT(x, y) CHECK(x > y)
+
+// TODO(asen): do a better stacktrace
+
+namespace el {
+namespace base {
+namespace debug {
+
+inline std::string StackTrace() { return ""; }
+
+}
+}
+}
+
+#define ERROR DEBUG
 
 namespace automaton {
 namespace core {
@@ -42,8 +67,8 @@ std::string get_date_string(std::chrono::system_clock::time_point t);
 
 std::string zero_padded(int num, int width);
 
-/// Ensures initialization of the logger prior to calling main(...)
-extern bool _init_logger;
+// This must be called after main entry point.
+extern bool init_logger();
 
 }  // namespace io
 }  // namespace core

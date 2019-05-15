@@ -13,4 +13,5 @@ cc_library(
   ],
   hdrs = ["json.hpp"],
   includes = ["."],
+  linkstatic=1,
 )

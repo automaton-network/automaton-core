@@ -46,6 +46,23 @@
         <MODULEPATH id="juce_gui_extra" path="../../../local_third_party/JUCE/modules"/>
       </MODULEPATHS>
     </XCODE_MAC>
+    <LINUX_MAKE targetFolder="Builds/LinuxMakefile" smallIcon="MDnkQK" bigIcon="MDnkQK"
+                extraDefs="ELPP_DISABLE_LOGS&#10;ELPP_NO_LOG_TO_FILE&#10;ELPP_NO_DEFAULT_LOG_FILE&#10;ELPP_FEATURE_PERFORMANCE_TRACKING&#10;ELPP_FEATURE_CRASH_LOG&#10;ELPP_THREAD_SAFE&#10;ELPP_STL_LOGGING&#10;"
+                extraCompilerFlags="-I ../../../../..&#10;-I ../../../../../local_third_party/boost&#10;-I ../../../../../local_third_party/cryptopp&#10;-I ../../../../../local_third_party/g3log/src&#10;-I ../../../../../local_third_party/g3log/build/include&#10;-I ../../../../../local_third_party/lua&#10;-I ../../../../../local_third_party/protobuf/src&#10;-I ../../../../../local_third_party/sol2/single/sol&#10;"
+                extraLinkerFlags="../../../../../build/libautomaton-core.a&#10;../../../../../local_third_party/g3log/build/libg3logger.a&#10;../../../../../local_third_party/protobuf/src/.libs/libprotobuf.a&#10;../../../../../local_third_party/protobuf/src/.libs/libprotobuf-lite.a&#10;../../../../../local_third_party/cryptopp/libcryptopp.a&#10;../../../../../local_third_party/lua/liblua.a&#10;../../../../../local_third_party/boost/stage/lib/libboost_system.a&#10;../../../../../local_third_party/boost/stage/lib/libboost_filesystem.a&#10;../../../../../local_third_party/boost/stage/lib/libboost_iostreams.a">
+      <CONFIGURATIONS>
+        <CONFIGURATION isDebug="1" name="Debug"/>
+        <CONFIGURATION isDebug="0" name="Release"/>
+      </CONFIGURATIONS>
+      <MODULEPATHS>
+        <MODULEPATH id="juce_core" path="../../../local_third_party/JUCE/modules"/>
+        <MODULEPATH id="juce_data_structures" path="../../../local_third_party/JUCE/modules"/>
+        <MODULEPATH id="juce_events" path="../../../local_third_party/JUCE/modules"/>
+        <MODULEPATH id="juce_graphics" path="../../../local_third_party/JUCE/modules"/>
+        <MODULEPATH id="juce_gui_basics" path="../../../local_third_party/JUCE/modules"/>
+        <MODULEPATH id="juce_gui_extra" path="../../../local_third_party/JUCE/modules"/>
+      </MODULEPATHS>
+    </LINUX_MAKE>
     <VS2017 targetFolder="Builds/VisualStudio2017" smallIcon="MDnkQK" bigIcon="MDnkQK">
       <CONFIGURATIONS>
         <CONFIGURATION isDebug="1" name="Debug"/>
@@ -60,20 +77,20 @@
         <MODULEPATH id="juce_gui_extra" path="../../../local_third_party/JUCE/modules"/>
       </MODULEPATHS>
     </VS2017>
-    <LINUX_MAKE targetFolder="Builds/LinuxMakefile" smallIcon="MDnkQK" bigIcon="MDnkQK">
+    <CODEBLOCKS_LINUX targetFolder="Builds/CodeBlocksLinux">
       <CONFIGURATIONS>
         <CONFIGURATION isDebug="1" name="Debug"/>
         <CONFIGURATION isDebug="0" name="Release"/>
       </CONFIGURATIONS>
       <MODULEPATHS>
-        <MODULEPATH id="juce_core" path="../../../local_third_party/JUCE/modules"/>
-        <MODULEPATH id="juce_data_structures" path="../../../local_third_party/JUCE/modules"/>
-        <MODULEPATH id="juce_events" path="../../../local_third_party/JUCE/modules"/>
-        <MODULEPATH id="juce_graphics" path="../../../local_third_party/JUCE/modules"/>
-        <MODULEPATH id="juce_gui_basics" path="../../../local_third_party/JUCE/modules"/>
-        <MODULEPATH id="juce_gui_extra" path="../../../local_third_party/JUCE/modules"/>
+        <MODULEPATH id="juce_gui_extra" path="../../juce"/>
+        <MODULEPATH id="juce_gui_basics" path="../../juce"/>
+        <MODULEPATH id="juce_graphics" path="../../juce"/>
+        <MODULEPATH id="juce_events" path="../../juce"/>
+        <MODULEPATH id="juce_data_structures" path="../../juce"/>
+        <MODULEPATH id="juce_core" path="../../juce"/>
       </MODULEPATHS>
-    </LINUX_MAKE>
+    </CODEBLOCKS_LINUX>
   </EXPORTFORMATS>
   <MODULES>
     <MODULE id="juce_core" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
@@ -85,6 +102,7 @@
   </MODULES>
   <LIVE_SETTINGS>
     <OSX/>
+    <LINUX/>
   </LIVE_SETTINGS>
-  <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1"/>
+  <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1" JUCE_WEB_BROWSER="0"/>
 </JUCERPROJECT>
