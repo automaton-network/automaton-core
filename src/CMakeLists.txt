@@ -1,13 +1,22 @@
 cmake_minimum_required(VERSION 3.0)
-project(AUTOMATON_CORE)
+project(automaton-network)
+
+set (CPACK_PACKAGE_VERSION_MAJOR "0")
+set (CPACK_PACKAGE_VERSION_MINOR "1")
+set (CPACK_PACKAGE_VERSION_PATCH "0")
+set (CPACK_PACKAGE_VENDOR "Automaton Network")
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
+
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/lua
+  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/replxx/include
   ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/boost
   ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/json-3.1.2
   ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/cryptopp
@@ -20,6 +29,7 @@ include_directories(
 
 file(
   GLOB CRYPTO_FILES
+  automaton/core/cli/*.cc
   automaton/core/common/*.cc
   automaton/core/crypto/*.cc
   automaton/core/crypto/cryptopp/*.cc
@@ -39,3 +49,26 @@ file(
 )
 
 add_library(automaton-core STATIC ${CRYPTO_FILES})
+
+add_executable(
+  automaton-core-cli
+  automaton/core/core.cc
+)
+set (CMAKE_CXX_FLAGS "-Wl,--no-as-needed")
+
+target_link_libraries(
+  automaton-core-cli
+  automaton-core
+  Threads::Threads
+  ${CMAKE_DL_LIBS}
+
+  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/boost/stage/lib/libboost_system.a
+  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/cryptopp/libcryptopp.a
+  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/g3log/build/libg3logger.a
+  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/lua/liblua.a
+  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/protobuf/src/.libs/libprotobuf-lite.a
+  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/protobuf/src/.libs/libprotobuf.a
+  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/replxx/build/libreplxx.a
+  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/boost/stage/lib/libboost_filesystem.a
+  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/boost/stage/lib/libboost_iostreams.a
+)
