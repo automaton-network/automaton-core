@@ -97,8 +97,6 @@ add_executable(
 )
 target_link_libraries(automaton-miner automaton-core)
 
-# === TESTS ===
-
 enable_testing()
 SET(CTEST_OUTPUT_ON_FAILURE ON)
 
