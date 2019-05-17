@@ -18,6 +18,8 @@ for:
   cache:
   - src/build -> src/CMakeLists.txt
   - src/local_third_party/bitcoin -> download_and_build_third_party_libs.sh
+  - src/local_third_party/boost/boost -> download_and_build_third_party_libs.sh
+  - src/local_third_party/boost/stage -> download_and_build_third_party_libs.sh
   - src/local_third_party/googletest -> download_and_build_third_party_libs.sh
   - src/local_third_party/cryptopp -> download_and_build_third_party_libs.sh
   - src/local_third_party/LuaJIT -> download_and_build_third_party_libs.sh
@@ -27,7 +29,6 @@ for:
   - src/local_third_party/protobuf -> download_and_build_third_party_libs.sh
   - src/local_third_party/lua -> download_and_build_third_party_libs.sh
   - src/local_third_party/JUCE -> download_and_build_third_party_libs.sh
-  # - src/local_third_party/bazel-0.21.0-installer-linux-x86_64.sh
   - src/local_third_party/boost_1_70_0.tar.gz
   - src/local_third_party/bzip2-1.0.6.tar.gz
   - src/local_third_party/CRYPTOPP_7_0_0.tar.gz
