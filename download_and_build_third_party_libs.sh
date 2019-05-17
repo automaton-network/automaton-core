@@ -89,7 +89,6 @@ function get_archive() {
 # git_repo "https://github.com/ThePhD/sol2.git" "sol2" "254466eb4b3ae630c731a557987f3adb1a8f86b0"
 # git_repo "https://github.com/AmokHuginnsson/replxx.git" "replxx" "3cb884e3fb4b1a28efeb716fac75f77eecc7ea3d"
 # git_repo "https://github.com/lua/lua.git" "lua" "e354c6355e7f48e087678ec49e340ca0696725b1"
-# git_repo "https://github.com/muflihun/easyloggingpp.git" "easyloggingpp" "a5317986d74b6dd3956021cb7fbb0669cce398b2"
 # git_repo "https://github.com/weidai11/cryptopp.git" "cryptopp" "c8d8caf70074655a2562ae1ea45cb30e28fee2b4"
 git_repo "https://github.com/orlp/ed25519.git" "ed25519" "7fa6712ef5d581a6981ec2b08ee623314cd1d1c4"
 # git_repo "https://github.com/google/googletest.git" "googletest" "2fe3bd994b3189899d93f1d5a881e725e046fdc2"
@@ -97,11 +96,6 @@ git_repo "https://github.com/orlp/ed25519.git" "ed25519" "7fa6712ef5d581a6981ec2
 # git_repo "https://github.com/nelhage/rules_boost.git" "com_github_nelhage_rules_boost" "fe787183c14f2a5c6e5e1e75a7c57d2e799d3d19"
 # git_repo "https://github.com/protocolbuffers/protobuf.git" "protobuf" "48cb18e5c419ddd23d9badcfe4e9df7bde1979b2"
 # git_repo "https://github.com/svaarala/duktape.git" "duktape" "d7fdb67f18561a50e06bafd196c6b423af9ad6fe"
-
-[ ! -d easyloggingpp ] && \
-  get_archive "https://github.com/zuhd-org/easyloggingpp/archive/v9.96.7.tar.gz" \
-  "easyloggingpp-9.96.7.tar.gz" "237c80072b9b480a9f2942b903b4b0179f65e146e5dcc64864dc91792dedd722"
-[ -d easyloggingpp-9.96.7 ] && mv easyloggingpp-9.96.7 easyloggingpp
 
 [ ! -d g3log ] && \
   get_archive "https://github.com/KjellKod/g3log/archive/$G3LOG_VER.tar.gz" \
@@ -172,143 +166,180 @@ git_repo "https://github.com/orlp/ed25519.git" "ed25519" "7fa6712ef5d581a6981ec2
 [ -d bitcoin-0.17.1 ] && mv bitcoin-0.17.1 bitcoin
 
 # Build Lua
-print_separator "=" 80
-echo "  BUILDING Lua"
-print_separator "=" 80
+if [ ! -f lua/liblua.a ]; then
+  print_separator "=" 80
+  echo "  BUILDING Lua"
+  print_separator "=" 80
 
-cd lua
-make -j$CPUCOUNT linux a
-cd ..
+  cd lua
+  make -j$CPUCOUNT linux a
+  cd ..
+else
+  print_separator "=" 80
+  echo "  Lua ALREADY BUILT"
+  print_separator "=" 80
+fi
 
 # Build LuaJIT
-print_separator "=" 80
-echo "  BUILDING LuaJIT"
-print_separator "=" 80
+if [ ! -f LuaJIT/src/libluajit.a ]; then
+  print_separator "=" 80
+  echo "  BUILDING LuaJIT"
+  print_separator "=" 80
 
-cd LuaJIT
-if $darwin; then
-  make -j$CPUCOUNT MACOSX_DEPLOYMENT_TARGET=`sw_vers -productVersion`
+  cd LuaJIT
+  if $darwin; then
+    make -j$CPUCOUNT MACOSX_DEPLOYMENT_TARGET=`sw_vers -productVersion`
+  else
+    make -j$CPUCOUNT
+  fi
+  cd ..
 else
-  make -j$CPUCOUNT
+  print_separator "=" 80
+  echo "  LuaJIT ALREADY BUILT"
+  print_separator "=" 80
 fi
-cd ..
-
-# Build libzmq
-# print_separator "=" 80
-# echo "   BUILDING libzmq"
-# print_separator "=" 80
 
 unset GREP_COLOR
 unset GREP_OPTIONS
 
-# cd libzmq
-# [ ! -f configure ] && ./autogen.sh && ./configure
-# make
-# cd ..
-
-# Build zmqpp
-# print_separator "=" 80
-# echo "  BUILDING zmqpp"
-# print_separator "=" 80
-
-# cd zmqpp
-# $sedi 's/CUSTOM_INCLUDE_PATH =/CUSTOM_INCLUDE_PATH = -I..\/libzmq\/include/' Makefile
-# $sedi 's/LIBRARY_LIBS =/LIBRARY_LIBS = -L..\/libzmq\/src\/.libs/' Makefile
-# make
-# cd ..
-
 # Build GTest
-print_separator "=" 80
-echo "  BUILDING GTest"
-print_separator "=" 80
+if [ ! -f googletest/build/googlemock/gtest/libgtest_main.a ]; then
+  print_separator "=" 80
+  echo "  BUILDING GTest"
+  print_separator "=" 80
 
-cd googletest
-mkdir -p build && cd build
-[ ! -f CMakeCache.txt ] && cmake .. -DCMAKE_BUILD_TYPE=Release
-make -j$CPUCOUNT
-cd ../..
+  cd googletest
+  mkdir -p build && cd build
+  [ ! -f CMakeCache.txt ] && cmake .. -DCMAKE_BUILD_TYPE=Release
+  make -j$CPUCOUNT
+  cd ../..
+else
+  print_separator "=" 80
+  echo "  GTest ALREADY BUILT"
+  print_separator "=" 80
+fi
 
 # Build JUCE Projucer -- only when not in CI
-if [ ! $CI ]; then
-  print_separator "=" 80
-  echo "  BUILDING Projucer"
-  print_separator "=" 80
+if [ ! -f JUCE/extras/Projucer/Builds/LinuxMakefile/build/Projucer ]; then
+  if [ ! $CI ]; then
+    print_separator "=" 80
+    echo "  BUILDING Projucer"
+    print_separator "=" 80
 
-  if $darwin; then
-    # TODO(asen): Need to do build for Mac OS
-    pass;
-  else
-    cd JUCE/extras/Projucer/Builds/LinuxMakefile
-    make -j$CPUCOUNT CPPFLAGS="-DJUCER_ENABLE_GPL_MODE=1" CONFIG=Release # V=1 for verbose
-    cd ../../../../..
+    if $darwin; then
+      # TODO(asen): Need to do build for Mac OS
+      pass;
+    else
+      cd JUCE/extras/Projucer/Builds/LinuxMakefile
+      make -j$CPUCOUNT CPPFLAGS="-DJUCER_ENABLE_GPL_MODE=1" CONFIG=Release # V=1 for verbose
+      cd ../../../../..
+    fi
   fi
+else
+  print_separator "=" 80
+  echo "  Projucer ALREADY BUILT"
+  print_separator "=" 80
 fi
 
 # Build crypto++
-print_separator "=" 80
-echo "  BUILDING crypto++"
-print_separator "=" 80
 
-cd cryptopp
-make -j$CPUCOUNT
-cd ..
+if [ ! -f cryptopp/libcryptopp.a ]; then
+  print_separator "=" 80
+  echo "  BUILDING crypto++"
+  print_separator "=" 80
+
+  cd cryptopp
+  make -j$CPUCOUNT
+  cd ..
+else
+  print_separator "=" 80
+  echo "  crypto++ ALREADY BUILT"
+  print_separator "=" 80
+fi
 
 # Build protobuf
-print_separator "=" 80
-echo "  BUILDING protobuf"
-print_separator "=" 80
+if [ ! -f protobuf/src/.libs/libprotobuf.a ]; then
+  print_separator "=" 80
+  echo "  BUILDING protobuf"
+  print_separator "=" 80
 
-cd protobuf
-[ ! -f configure ] && ./autogen.sh
-[ ! -f Makefile ] && ./configure
-make -j$CPUCOUNT
-cd ..
+  cd protobuf
+  [ ! -f configure ] && ./autogen.sh
+  [ ! -f Makefile ] && ./configure
+  make -j$CPUCOUNT
+  cd ..
+else
+  print_separator "=" 80
+  echo "  protobuf ALREADY BUILT"
+  print_separator "=" 80
+fi
 
 # Build replxx
-print_separator "=" 80
-echo "  BUILDING replxx"
-print_separator "=" 80
+if [ ! -f replxx/build/libreplxx.a ]; then
+  print_separator "=" 80
+  echo "  BUILDING replxx"
+  print_separator "=" 80
 
-cd replxx
-mkdir -p build && cd build
-[ ! -f CMakeCache.txt ] && cmake .. -DCMAKE_BUILD_TYPE=Release
-make -j$CPUCOUNT replxx
-cd ../..
+  cd replxx
+  mkdir -p build && cd build
+  [ ! -f CMakeCache.txt ] && cmake .. -DCMAKE_BUILD_TYPE=Release
+  make -j$CPUCOUNT replxx
+  cd ../..
+else
+  print_separator "=" 80
+  echo "  replxx ALREADY BUILT"
+  print_separator "=" 80
+fi
 
 # Build g3log
-print_separator "=" 80
-echo "  BUILDING g3log"
-print_separator "=" 80
+if [ ! -f g3log/build/libg3logger.a ]; then
+  print_separator "=" 80
+  echo "  BUILDING g3log"
+  print_separator "=" 80
 
-cd g3log
-mkdir -p build && cd build
-[ ! -f CMakeCache.txt ] && cmake .. -DG3_SHARED_LIB=OFF -DCMAKE_BUILD_TYPE=Release
-make -j$CPUCOUNT
-cd ../..
+  cd g3log
+  mkdir -p build && cd build
+  [ ! -f CMakeCache.txt ] && cmake .. -DG3_SHARED_LIB=OFF -DCMAKE_BUILD_TYPE=Release
+  make -j$CPUCOUNT
+  cd ../..
+else
+  print_separator "=" 80
+  echo "  g3log ALREADY BUILT"
+  print_separator "=" 80
+fi
 
 # Build libsecp256k1
-print_separator "=" 80
-echo "  BUILDING libsecp256k1"
-print_separator "=" 80
+if [ ! -f bitcoin/src/secp256k1/.libs/libsecp256k1.a ]; then
+  print_separator "=" 80
+  echo "  BUILDING libsecp256k1"
+  print_separator "=" 80
 
-if [ ! -f bitcoin/src/secp256k1/.libs/libsecp256k1.a ]
-then
   cd bitcoin/src/secp256k1
   ./autogen.sh
   ./configure --enable-module-recovery
   make -j$CPUCOUNT
   ./tests
   cd ../../..
+else
+  print_separator "=" 80
+  echo "  libsecp256k1 ALREADY BUILT"
+  print_separator "=" 80
 fi
 
 # Build boost
-print_separator "=" 80
-echo "  BUILDING boost"
-print_separator "=" 80
+if [ ! -f boost/stage/lib/libboost_filesystem.a ]; then
+  print_separator "=" 80
+  echo "  BUILDING boost"
+  print_separator "=" 80
 
-cd boost
-[ ! -f b2 ] && ./bootstrap.sh
-[ ! -d stage ] && ./b2 \
-  --with-filesystem --with-system --with-iostreams \
-  cxxstd=14 link=static runtime-link=static stage
-cd ..
+  cd boost
+  [ ! -f b2 ] && ./bootstrap.sh
+  [ ! -d stage ] && ./b2 \
+    --with-filesystem --with-system --with-iostreams \
+    cxxstd=14 link=static runtime-link=static stage
+  cd ..
+else
+  print_separator "=" 80
+  echo "  boost ALREADY BUILT"
+  print_separator "=" 80
+fi
