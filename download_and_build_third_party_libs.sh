@@ -142,10 +142,10 @@ git_repo "https://github.com/orlp/ed25519.git" "ed25519" "7fa6712ef5d581a6981ec2
   mkdir json-3.1.2 && \
   curl -L https://github.com/nlohmann/json/releases/download/v3.2.0/json.hpp -o json-3.1.2/json.hpp
 
-[ ! -d sol2 ] && \
-  mkdir sol2 && \
-  mkdir sol2/single && \
-  mkdir sol2/single/sol && \
+[ ! -f sol2/single/sol/sol.hpp ] && \
+  mkdir -p sol2 && \
+  mkdir -p sol2/single && \
+  mkdir -p sol2/single/sol && \
   curl -L https://github.com/ThePhD/sol2/releases/download/v2.20.6/sol.hpp -o sol2/single/sol/sol.hpp
 
 [ ! -d boost ] && \
