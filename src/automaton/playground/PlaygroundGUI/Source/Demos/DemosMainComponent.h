@@ -2,8 +2,7 @@
 
 #include "../../JuceLibraryCode/JuceHeader.h"
 
-class EmbeddedFonts
-{
+class EmbeddedFonts {
  private:
   Font play;
   Font playBold;
@@ -24,7 +23,6 @@ class DemosMainComponent:
   public ApplicationCommandTarget,
   public MenuBarModel {
  public:
-
   EmbeddedFonts fonts;
 
   enum CommandIDs {
