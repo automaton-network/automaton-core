@@ -22,7 +22,7 @@ TEST(persistent_blobstore, create_mapped_file) {
   data.push_back(999999999);
   {
     persistent_storage storage1;
-    storage1.map_file("mapped_file_with_fixed_size_data.txt", sizeof(uint64_t));
+    storage1.map_file("build/mapped_file_with_fixed_size_data.txt", sizeof(uint64_t));
     for (int i = 0; i < data.size(); i++) {
       storage1.store(data[i].size(), reinterpret_cast<const uint8_t*>(data[i].data()));
     }
@@ -30,7 +30,7 @@ TEST(persistent_blobstore, create_mapped_file) {
   uint32_t sz;
   uint8_t* pData;
   persistent_storage storage1;
-  storage1.map_file("mapped_file_with_fixed_size_data.txt");
+  storage1.map_file("build/mapped_file_with_fixed_size_data.txt");
   for (int i = 0; i < data.size(); i++) {
     pData = storage1.get(ids[i], &sz);
     std::cout << std::string(reinterpret_cast<char*>(pData), sz) << std::endl;
