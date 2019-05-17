@@ -34,5 +34,5 @@ void DemosMainComponent::resized() {
   auto height = LookAndFeel::getDefaultLookAndFeel().getDefaultMenuBarHeight();
   menuBar->setBounds(b.removeFromTop(height));
 
-  tabbedComponent->setBounds(8, 8 + height, getWidth() - 16, getHeight() - 16);
+  tabbedComponent->setBounds(8, 8 + height, getWidth() - 16, getHeight() - 16 - height);
 }

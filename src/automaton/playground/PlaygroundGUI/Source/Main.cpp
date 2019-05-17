@@ -53,13 +53,19 @@ class PlaygroundGUIApplication: public JUCEApplication {
   */
   class MainWindow    : public DocumentWindow {
    public:
+    LookAndFeel_V2 lnf;
+
     MainWindow(String name):
       DocumentWindow(name,
                      Desktop::getInstance()
                        .getDefaultLookAndFeel()
                        .findColour(ResizableWindow::backgroundColourId),
                      DocumentWindow::allButtons) {
-      setUsingNativeTitleBar(true);
+
+
+      LookAndFeel::setDefaultLookAndFeel(&lnf);
+
+      setUsingNativeTitleBar(false);
       setContentOwned(new DemosMainComponent(), true);
 
       setFullScreen(true);
