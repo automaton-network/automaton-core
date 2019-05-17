@@ -5,8 +5,12 @@
   <MAINGROUP id="r0wjCp" name="PlaygroundGUI">
     <GROUP id="{874C0493-36CA-5084-DAA0-C4287D2E83CF}" name="Resources">
       <FILE id="MDnkQK" name="BIG_A_BLACK_CIRCLE_BACK_1000x1000.png" compile="0"
-            resource="0" file="Resources/BIG_A_BLACK_CIRCLE_BACK_1000x1000.png"
+            resource="1" file="Resources/BIG_A_BLACK_CIRCLE_BACK_1000x1000.png"
             xcodeResource="1"/>
+      <FILE id="wDMuyB" name="Play-Bold.ttf" compile="0" resource="1" file="../../../../media/fonts/play/Play-Bold.ttf"
+            xcodeResource="0"/>
+      <FILE id="rY58xT" name="Play-Regular.ttf" compile="0" resource="1"
+            file="../../../../media/fonts/play/Play-Regular.ttf" xcodeResource="0"/>
     </GROUP>
     <GROUP id="{CEE97623-2FD9-0F00-2BC4-1AF90751FA41}" name="Source">
       <GROUP id="{A93C79BF-CA8F-22F3-0EDD-09BDADF361D1}" name="Demos">
