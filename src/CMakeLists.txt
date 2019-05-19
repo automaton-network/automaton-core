@@ -1,10 +1,12 @@
 cmake_minimum_required(VERSION 3.0)
 project(automaton-network)
 
-set (CPACK_PACKAGE_VERSION_MAJOR "0")
-set (CPACK_PACKAGE_VERSION_MINOR "1")
-set (CPACK_PACKAGE_VERSION_PATCH "0")
-set (CPACK_PACKAGE_VENDOR "Automaton Network")
+set(CPACK_PACKAGE_VERSION_MAJOR "0")
+set(CPACK_PACKAGE_VERSION_MINOR "1")
+set(CPACK_PACKAGE_VERSION_PATCH "0")
+set(CPACK_PACKAGE_VENDOR "Automaton Network")
+
+SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -v")
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -12,7 +14,11 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
-set (CMAKE_CXX_FLAGS "-Wl,--no-as-needed")
+
+if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
+  # This is needed, otherwise linking with libdl fails on Linux
+  set(CMAKE_CXX_FLAGS "-Wl,--no-as-needed -v")
+endif()
 
 set(LOCAL_THIRD_PARTY_LIBS
   ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/bitcoin/src/secp256k1/.libs/libsecp256k1.a
@@ -21,6 +27,7 @@ set(LOCAL_THIRD_PARTY_LIBS
   ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/boost/stage/lib/libboost_system.a
   ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/cryptopp/libcryptopp.a
   ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/g3log/build/libg3logger.a
+  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/gmp/.libs/libgmp.a
   ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/lua/liblua.a
   ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/protobuf/src/.libs/libprotobuf-lite.a
   ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/protobuf/src/.libs/libprotobuf-lite.a
@@ -42,6 +49,7 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/ed25519/src
   ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/g3log/build/include
   ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/g3log/src
+  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/gmp
   ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/googletest/googlemock/include
   ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/googletest/googletest/include
   ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/json-3.1.2
@@ -81,7 +89,6 @@ target_link_libraries(
   automaton-core
   Threads::Threads
   ${CMAKE_DL_LIBS}
-  gmp
   ${LOCAL_THIRD_PARTY_LIBS}
 )
 

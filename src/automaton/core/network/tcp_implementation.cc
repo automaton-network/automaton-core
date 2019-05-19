@@ -64,19 +64,19 @@ tcp_connection::tcp_connection(connection_id id, const std::string& addr,
 }
 
 tcp_connection::~tcp_connection() {
-  // LOG(DEBUG) << "Connection destructor";
+  // LOG(DBUG) << "Connection destructor";
   connection_mutex.lock();
   set_state(connection::state::disconnected);
   if (asio_socket.is_open()) {
     boost::system::error_code boost_error_code_shut;
     asio_socket.shutdown(boost::asio::ip::tcp::socket::shutdown_both, boost_error_code_shut);
     if (boost_error_code_shut) {
-      // LOG(DEBUG) << address << " -> " <<  boost_error_code_shut.message();
+      // LOG(DBUG) << address << " -> " <<  boost_error_code_shut.message();
     }
     boost::system::error_code boost_error_code_close;
     asio_socket.close(boost_error_code_close);
     if (boost_error_code_close) {
-      // LOG(DEBUG) << address << " -> " <<  boost_error_code_close.message();
+      // LOG(DBUG) << address << " -> " <<  boost_error_code_close.message();
     }
     connection_mutex.unlock();
   } else {
@@ -85,9 +85,9 @@ tcp_connection::~tcp_connection() {
   boost::system::error_code boost_error_code;
   asio_socket.release(boost_error_code);
   if (boost_error_code) {
-    // LOG(DEBUG) << address << " -> " <<  boost_error_code.message();
+    // LOG(DBUG) << address << " -> " <<  boost_error_code.message();
   }
-  // LOG(DEBUG) << "/ Connection destructor";
+  // LOG(DBUG) << "/ Connection destructor";
 }
 
 bool tcp_connection::init() {
@@ -149,7 +149,7 @@ void tcp_connection::connect() {
 
 void tcp_connection::async_send(const std::string& msg, uint32_t message_id) {
   if (tcp_initialized && asio_socket.is_open() && msg.size() > 0) {
-    // LOG(DEBUG) << "ASYNC SEND MSG ID" << message_id << " data: " << io::bin2hex(msg);
+    // LOG(DBUG) << "ASYNC SEND MSG ID" << message_id << " data: " << io::bin2hex(msg);
     std::string* message = new std::string(msg);
     std::shared_ptr<tcp_connection> self = shared_from_this();
     std::shared_ptr<connection_handler> c_handler = handler;
@@ -158,7 +158,7 @@ void tcp_connection::async_send(const std::string& msg, uint32_t message_id) {
     asio_socket.async_write_some(boost::asio::buffer(*message),
         [self, c_handler, cid, addr, message_id, message](const boost::system::error_code& boost_error_code,
         size_t bytes_transferred) {
-      // LOG(DEBUG) << "ASYNC SEND CALLBACK " << bytes_transferred;
+      // LOG(DBUG) << "ASYNC SEND CALLBACK " << bytes_transferred;
       if (boost_error_code) {
         LOG(ERROR) << addr << " -> " <<  boost_error_code.message();
         if (boost_error_code == boost::asio::error::broken_pipe) {
@@ -172,7 +172,7 @@ void tcp_connection::async_send(const std::string& msg, uint32_t message_id) {
         }
        // if (bytes_transferred < message.size())
       } else {
-        // LOG(DEBUG)
+        // LOG(DBUG)
         //     << "SUCCESSFULLY SENT MESSAGE WITH "
         //     << message->size() << " BYTES TO " << id << " msg_id " << message_id;
         c_handler->on_message_sent(cid, message_id, status::ok());
@@ -264,12 +264,12 @@ void tcp_connection::disconnect() {
     boost::system::error_code boost_error_code_shut;
     asio_socket.shutdown(boost::asio::ip::tcp::socket::shutdown_both, boost_error_code_shut);
     if (boost_error_code_shut) {
-      // LOG(DEBUG) << address << " -> " <<  boost_error_code_shut.message();
+      // LOG(DBUG) << address << " -> " <<  boost_error_code_shut.message();
     }
     boost::system::error_code boost_error_code_close;
     asio_socket.close(boost_error_code_close);
     if (boost_error_code_close) {
-      // LOG(DEBUG) << address << " -> " <<  boost_error_code_close.message();
+      // LOG(DBUG) << address << " -> " <<  boost_error_code_close.message();
     }
     connection_mutex.unlock();
     handler->on_disconnected(id);
@@ -312,20 +312,20 @@ tcp_acceptor::tcp_acceptor(acceptor_id id, const std::string& address, std::shar
 }
 
 tcp_acceptor::~tcp_acceptor() {
-  // LOG(DEBUG) << "Acceptor destructor";
+  // LOG(DBUG) << "Acceptor destructor";
   if (asio_acceptor.is_open()) {
     boost::system::error_code boost_error_code_close;
     asio_acceptor.close(boost_error_code_close);
     if (boost_error_code_close) {
-      // LOG(DEBUG) << address << " -> " <<  boost_error_code_close.message();
+      // LOG(DBUG) << address << " -> " <<  boost_error_code_close.message();
     }
     boost::system::error_code boost_error_code_release;
     asio_acceptor.release(boost_error_code_release);
     if (boost_error_code_release) {
-      // LOG(DEBUG) << address << " -> " <<  boost_error_code_close.message();
+      // LOG(DBUG) << address << " -> " <<  boost_error_code_close.message();
     }
   }
-  // LOG(DEBUG) << "/ Acceptor destructor";
+  // LOG(DBUG) << "/ Acceptor destructor";
 }
 
 bool tcp_acceptor::init() {
@@ -367,42 +367,42 @@ void tcp_acceptor::start_accepting() {
     std::shared_ptr<connection::connection_handler> ac_handler = accepted_connections_handler;
     asio_acceptor.async_accept(asio_io_service, [self, a_handler, ac_handler]
         (const boost::system::error_code& boost_error_code, boost::asio::ip::tcp::socket socket_) {
-       // LOG(DEBUG) << "async_accept";
+       // LOG(DBUG) << "async_accept";
        if (!boost_error_code) {
-         // LOG(DEBUG) << "async_accept -> no error";
+         // LOG(DBUG) << "async_accept -> no error";
           boost::asio::ip::tcp::endpoint remote_endpoint = socket_.remote_endpoint();
           std::string remote_address = (remote_endpoint.address()).to_string() +
               ":" + std::to_string(remote_endpoint.port());
           connection_id id = 0;
-          // LOG(DEBUG) << "async_accept calling on_requested conn";
+          // LOG(DBUG) << "async_accept calling on_requested conn";
           bool accepted = a_handler->on_requested(self->get_id(), remote_address, &id);
           if (accepted) {
-            // LOG(DEBUG) << "async_accept ACCEPTED";
+            // LOG(DBUG) << "async_accept ACCEPTED";
             std::shared_ptr<connection> new_con(new tcp_connection(id, remote_address, socket_, ac_handler));
-            // LOG(DEBUG) << "async_accept calling on_connected acc";
+            // LOG(DBUG) << "async_accept calling on_connected acc";
             a_handler->on_connected(self->get_id(), std::move(new_con), remote_address);
             if (ac_handler) {
-              // LOG(DEBUG) << "async_accept calling on_connected conn";
+              // LOG(DBUG) << "async_accept calling on_connected conn";
               ac_handler->on_connected(id);
             }
           }
-          // LOG(DEBUG) << "async_accept calling start_accepting";
+          // LOG(DBUG) << "async_accept calling start_accepting";
           self->start_accepting();
         } else {
-          // LOG(DEBUG) << "async_accept -> error";
+          // LOG(DBUG) << "async_accept -> error";
           self->set_state(acceptor::state::not_accepting);
           // TODO(kari): Handle errors
           if (boost_error_code == boost::asio::error::operation_aborted) {
-            // LOG(DEBUG) << "end of async_accept 0";
+            // LOG(DBUG) << "end of async_accept 0";
             return;
           }
           LOG(ERROR) << boost_error_code.message();
-          // LOG(DEBUG) << "async_accept calling on_error";
+          // LOG(DBUG) << "async_accept calling on_error";
           a_handler->on_acceptor_error(self->get_id(), status::unknown(boost_error_code.message()));
           // TODO(kari): start listen again? depends on the errors
           // start_accepting();
         }
-        // LOG(DEBUG) << "end of async_accept";
+        // LOG(DBUG) << "end of async_accept";
       });
   } else if (!tcp_initialized) {
     LOG(ERROR) <<  "Not initialized";
@@ -419,7 +419,7 @@ void tcp_acceptor::stop_accepting() {
     boost::system::error_code boost_error_code_close;
     asio_acceptor.close(boost_error_code_close);
     if (boost_error_code_close) {
-      // LOG(DEBUG) << address << " -> " <<  boost_error_code_close.message();
+      // LOG(DBUG) << address << " -> " <<  boost_error_code_close.message();
     }
   }
 }
@@ -455,7 +455,7 @@ void tcp_init() {
       return std::shared_ptr<acceptor>(new tcp_acceptor(id, address, handler, connections_handler));
     });
   worker_thread = new std::thread([]() {
-    LOG(DEBUG) << "asio_io_service starting...";
+    LOG(DBUG) << "asio_io_service starting...";
     try {
       asio_io_service.run();
     } catch (const std::exception& ex) {
@@ -464,17 +464,17 @@ void tcp_init() {
     } catch (...) {
       LOG(FATAL) << "EXCEPTION!!!!";
     }
-    LOG(DEBUG) << "asio_io_service stopped.";
+    LOG(DBUG) << "asio_io_service stopped.";
   });
   tcp_initialized = true;
 }
 
 void tcp_release() {
-  LOG(DEBUG) << "Stopping io_service";
+  LOG(DBUG) << "Stopping io_service";
   asio_io_service.stop();
-  LOG(DEBUG) << "joining worker_thread..";
+  LOG(DBUG) << "joining worker_thread..";
   worker_thread->join();
-  LOG(DEBUG) << "tcp_release done.";
+  LOG(DBUG) << "tcp_release done.";
   tcp_initialized = false;
 }
 

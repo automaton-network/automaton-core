@@ -53,7 +53,7 @@ std::shared_ptr<client_handler> handler_c;
 void client() {
   connection_c = connection::create("tcp", 1, SERVER_ADDRESS, std::move(handler_c));
   if (connection_c->init()) {
-    LOG(DEBUG) << "Connection init was successful!";
+    LOG(DBUG) << "Connection init was successful!";
     connection_c -> connect();
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
     connection_c -> async_read(buffer_c, 256, 0, 0);

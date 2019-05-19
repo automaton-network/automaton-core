@@ -38,7 +38,7 @@ void module::bind_schemas() {
     auto output_id =
         factory.get_schema_id(name_with_api_version() + "." + func.first + ".response");
 
-    LOG(DEBUG) << "Binding " << func.first << "<" << input_id << ", " << output_id << ">";
+    LOG(DBUG) << "Binding " << func.first << "<" << input_id << ", " << output_id << ">";
     func.second.output_schema_id = output_id;
     func.second.input_schema_id = input_id;
   }
@@ -46,7 +46,7 @@ void module::bind_schemas() {
   for (auto& impl : implementations_) {
     auto full_scope_implementation = name_with_api_version() + "." + impl.first;
     auto constructor_id = factory.get_schema_id(full_scope_implementation);
-    LOG(DEBUG) << "Binding " << impl.first <<  "<" << constructor_id << ">";
+    LOG(DBUG) << "Binding " << impl.first <<  "<" << constructor_id << ">";
     impl.second.constructor_schema_id = constructor_id;
 
     for (auto& concept : impl.second.concepts) {
@@ -68,7 +68,7 @@ void module::bind_schemas() {
           mi.input_schema_id = factory.get_schema_id(method_schema_name + ".request");
           mi.output_schema_id = factory.get_schema_id(method_schema_name + ".response");;
           concept.methods.push_back(mi);
-          LOG(DEBUG) << impl.first << "."
+          LOG(DBUG) << impl.first << "."
               << method_name
               << "<" << mi.input_schema_id
               << ", " << mi.output_schema_id
@@ -104,7 +104,7 @@ void module::add_implementation(const std::string implementation,
   info.func = f;
   info.constructor_schema_id = 0;
   for (auto& concept : concepts) {
-    LOG(DEBUG) << implementation << " : concept " << concept;
+    LOG(DBUG) << implementation << " : concept " << concept;
     concept_info ci;
     ci.name = concept;
 

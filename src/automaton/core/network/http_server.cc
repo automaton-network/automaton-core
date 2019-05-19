@@ -71,7 +71,7 @@ void http_server::handle_accept(http_session* new_session, const boost::system::
 }
 
 void http_server::run() {
-  LOG(DEBUG) << "server starting.";
+  LOG(DBUG) << "server starting.";
   worker = new std::thread([this]() {
     try {
       io_service.run();
@@ -79,7 +79,7 @@ void http_server::run() {
     catch (std::exception& e) {
       LOG(ERROR) << "HTTP server error: " << e.what();
     }
-    LOG(DEBUG) << "server stopped.";
+    LOG(DBUG) << "server stopped.";
   });
 }
 

@@ -133,19 +133,19 @@ void string_replace(std::string* str,
 
 struct byte_array {
   explicit byte_array(size_t size) {
-    LOG(DEBUG) << "Creating array " << this << " with size " << size;
+    LOG(DBUG) << "Creating array " << this << " with size " << size;
     buffer.resize(size, 0);
   }
 
   ~byte_array() {
-    LOG(DEBUG) << "Destroying array " << this << " with size " << buffer.size();
+    LOG(DBUG) << "Destroying array " << this << " with size " << buffer.size();
   }
 
   void set(size_t key, int value) {
     if (key >= buffer.size()) {
       throw sol::error("Out of range!");
     }
-    LOG(DEBUG) << "Setting key " << key << " to " << value;
+    LOG(DBUG) << "Setting key " << key << " to " << value;
     buffer[key] = value;
   }
 
