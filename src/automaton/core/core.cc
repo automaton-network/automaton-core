@@ -180,16 +180,16 @@ int main(int argc, char* argv[]) {
   });
 
   node_type.set("known_peers", [](lua_node& n) {
-    LOG(DEBUG) << "getting known peers... " << &n;
+    LOG(DBUG) << "getting known peers... " << &n;
     // TODO(asen): need STL support for logger
-    // LOG(DEBUG) << n.list_known_peers();
+    // LOG(DBUG) << n.list_known_peers();
     return sol::as_table(n.list_known_peers());
   });
 
   node_type.set("peers", [](lua_node& n) {
-    LOG(DEBUG) << "getting peers... " << &n;
+    LOG(DBUG) << "getting peers... " << &n;
     // TODO(asen): need STL support for logger
-    // LOG(DEBUG) << n.list_connected_peers();
+    // LOG(DBUG) << n.list_connected_peers();
     return sol::as_table(n.list_connected_peers());
   });
 
@@ -418,16 +418,16 @@ int main(int argc, char* argv[]) {
   stop_logger = true;
   logger.join();
 
-  LOG(DEBUG) << "Destroying lua state & objects";
+  LOG(DBUG) << "Destroying lua state & objects";
 
   sim->simulation_stop();
 }
 
-  LOG(DEBUG) << "tcp_release";
+  LOG(DBUG) << "tcp_release";
 
   automaton::core::network::tcp_release();
 
-  LOG(DEBUG) << "tcp_release done.";
+  LOG(DBUG) << "tcp_release done.";
 
   return 0;
 }

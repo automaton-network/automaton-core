@@ -131,7 +131,7 @@ node::node(const string& id,
     , peer_ids(0)
     , time_to_update(0)
     , acceptor_(nullptr) {
-  LOG(DEBUG) << "Node constructor called";
+  LOG(DBUG) << "Node constructor called";
   std::shared_ptr<automaton::core::smartproto::smart_protocol> proto =
       automaton::core::smartproto::smart_protocol::get_protocol(proto_id);
   if (!proto) {
@@ -335,12 +335,12 @@ void node::send_message(peer_id p_id, const core::data::msg& msg, uint32_t msg_i
     msg_blob.insert(0, 1, static_cast<char>(wire_id));
     send_blob(p_id, msg_blob, msg_id);
   } else {
-    LOG(DEBUG) << "Could not serialize message!";
+    LOG(DBUG) << "Could not serialize message!";
   }
 }
 
 void node::send_blob(peer_id p_id, const string& blob, uint32_t msg_id) {
-  LOG(DEBUG) << (acceptor_ ? acceptor_->get_address() : "N/A") <<
+  LOG(DBUG) << (acceptor_ ? acceptor_->get_address() : "N/A") <<
       " sending message " << core::io::bin2hex(blob) << " to peer " << p_id;
   uint32_t blob_size = blob.size();
   if (blob_size > MAX_MESSAGE_SIZE) {
@@ -382,7 +382,7 @@ bool node::connect(peer_id p_id) {
 // VLOG(9) << "LOCK " << this << " " << (acceptor_ ? acceptor_->get_address() : "N/A") << " peer " << p_id;
   lock_guard<mutex> lock(peers_mutex);
   if (connected_peers.find(p_id) != connected_peers.end()) {
-    LOG(DEBUG) << "Peer " << p_id << " is already connected!";
+    LOG(DBUG) << "Peer " << p_id << " is already connected!";
     // VLOG(9) << "UNLOCK " << this << " " << (acceptor_ ? acceptor_->get_address() : "N/A") << " peer " << p_id;
     return false;
   }
@@ -433,13 +433,13 @@ bool node::set_acceptor(const string& address) {
   try {
     string protocol, addr;
     if (!address_parser(address, &protocol, &addr)) {
-      LOG(DEBUG) << "Address was not parsed!";
+      LOG(DBUG) << "Address was not parsed!";
       return false;
     }
     auto self = shared_from_this();
     new_acceptor = std::shared_ptr<acceptor>(acceptor::create(protocol, 1, addr, self, self));
     if (new_acceptor && !new_acceptor->init()) {
-      LOG(DEBUG) << "Acceptor initialization failed! Acceptor was not created! " << address;
+      LOG(DBUG) << "Acceptor initialization failed! Acceptor was not created! " << address;
       return false;
     }
   } catch (std::exception& e) {
@@ -479,19 +479,19 @@ peer_id node::add_peer(const string& address) {
   try {
     string protocol, addr;
     if (!address_parser(address, &protocol, &addr)) {
-      LOG(DEBUG) << "Address was not parsed! " << address;
+      LOG(DBUG) << "Address was not parsed! " << address;
     } else {
       std::shared_ptr<node> self = shared_from_this();
       new_connection = std::shared_ptr<connection>(connection::create(protocol, info.id, addr, self));
       if (new_connection && !new_connection->init()) {
-        LOG(DEBUG) << "Connection initialization failed! Connection was not created!";
+        LOG(DBUG) << "Connection initialization failed! Connection was not created!";
       }
     }
   } catch (std::exception& e) {
     LOG(ERROR) << e.what();
   }
   if (new_connection == nullptr) {
-    LOG(DEBUG) << "No new connection";
+    LOG(DBUG) << "No new connection";
   } else {
     info.connection = new_connection;
   }
@@ -554,9 +554,9 @@ bool node::address_parser(const string& s, string* protocol, string* address) {
     *address = match[2];
     return true;
   } else {
-    LOG(DEBUG) << "match size: " << match.size();
+    LOG(DBUG) << "match size: " << match.size();
     for (uint32_t i = 0; i < match.size(); i++) {
-      LOG(DEBUG) << "match " << i << " -> " << match[i];
+      LOG(DBUG) << "match " << i << " -> " << match[i];
     }
     *protocol = "";
     *address = "";
@@ -565,7 +565,7 @@ bool node::address_parser(const string& s, string* protocol, string* address) {
 }
 
 void node::on_message_received(peer_id c, std::shared_ptr<char> buffer, uint32_t bytes_read, uint32_t mid) {
-  LOG(DEBUG) << "RECEIVED: " << core::io::bin2hex(string(buffer.get(), bytes_read)) << " from peer " << c;
+  LOG(DBUG) << "RECEIVED: " << core::io::bin2hex(string(buffer.get(), bytes_read)) << " from peer " << c;
   switch (mid) {
     case WAITING_HEADER: {
       if (bytes_read != HEADER_SIZE) {
@@ -580,7 +580,7 @@ void node::on_message_received(peer_id c, std::shared_ptr<char> buffer, uint32_t
       message_size += (buffer.get()[2] & 0x000000ff);
       message_size += ((buffer.get()[1] & 0x000000ff) << 8);
       message_size += ((buffer.get()[0] & 0x000000ff) << 16);
-      LOG(DEBUG) << "MESSAGE SIZE: " << message_size;
+      LOG(DBUG) << "MESSAGE SIZE: " << message_size;
       if (!message_size || message_size > MAX_MESSAGE_SIZE) {
         LOG(ERROR) << "Invalid message size!";
         s_on_error(c, "Invalid message size!");
@@ -593,7 +593,7 @@ void node::on_message_received(peer_id c, std::shared_ptr<char> buffer, uint32_t
         if (it != known_peers.end() && it->second.connection && it->second.connection->get_state() ==
             connection::state::connected) {
           auto connection_ = it->second.connection;
-          LOG(DEBUG) << (acceptor_ ? acceptor_->get_address() : "N/A") << " waits message with size " << message_size
+          LOG(DBUG) << (acceptor_ ? acceptor_->get_address() : "N/A") << " waits message with size " << message_size
               << " from peer " << c;
           // VLOG(9) << "UNLOCK " << this << " " << (acceptor_ ? acceptor_->get_address() : "N/A");
           peers_mutex.unlock();
@@ -614,7 +614,7 @@ void node::on_message_received(peer_id c, std::shared_ptr<char> buffer, uint32_t
       auto it = known_peers.find(c);
       if (it != known_peers.end() && it->second.connection && it->second.connection->get_state() ==
           connection::state::connected) {
-        LOG(DEBUG) << (acceptor_ ? acceptor_->get_address() : "N/A") << " received message " <<
+        LOG(DBUG) << (acceptor_ ? acceptor_->get_address() : "N/A") << " received message " <<
             core::io::bin2hex(blob) << " from peer " << c;
         // VLOG(9) << "UNLOCK " << this << " " << (acceptor_ ? acceptor_->get_address() : "N/A");
         peers_mutex.unlock();
@@ -633,7 +633,7 @@ void node::on_message_received(peer_id c, std::shared_ptr<char> buffer, uint32_t
 }
 
 void node::on_message_sent(peer_id c, uint32_t id, const common::status& s) {
-  LOG(DEBUG) << "Message to peer " << c << " with msg_id " << id << " was sent " <<
+  LOG(DBUG) << "Message to peer " << c << " with msg_id " << id << " was sent " <<
       (s.code == status::OK ? "successfully" : "unsuccessfully");
   s_on_msg_sent(c, id, s);
 }
@@ -649,7 +649,7 @@ void node::on_connected(peer_id c) {
     peers_mutex.unlock();
     return;
   }
-  LOG(DEBUG) << "Connected to " << c;
+  LOG(DBUG) << "Connected to " << c;
   connected_peers.insert(c);
   it->second.connection->async_read(it->second.buffer, MAX_MESSAGE_SIZE, HEADER_SIZE, WAITING_HEADER);
   // VLOG(9) << "UNLOCK " << this << " " << (acceptor_ ? acceptor_->get_address() : "N/A") << " peer " << c
@@ -659,7 +659,7 @@ void node::on_connected(peer_id c) {
 }
 
 void node::on_disconnected(peer_id c) {
-  LOG(DEBUG) << c << " -> on_disconnected";
+  LOG(DBUG) << c << " -> on_disconnected";
   // VLOG(9) << "LOCK " << this << " " << (acceptor_ ? acceptor_->get_address() : "N/A") << " peer " << c;
   peers_mutex.lock();
   auto it = connected_peers.find(c);
@@ -677,7 +677,7 @@ void node::on_disconnected(peer_id c) {
 }
 
 void node::on_connection_error(peer_id c, const common::status& s) {
-  LOG(DEBUG) << c << " -> on_error " << s;
+  LOG(DBUG) << c << " -> on_error " << s;
   std::stringstream ss;
   ss << "Connection error:: " << s;
   s_on_error(c, ss.str());
@@ -685,7 +685,7 @@ void node::on_connection_error(peer_id c, const common::status& s) {
 }
 
 bool node::on_requested(acceptor_id a, const string& address, peer_id* id) {
-  LOG(DEBUG) << "Requested connection to " << acceptor_->get_address() << " from " << address;
+  LOG(DBUG) << "Requested connection to " << acceptor_->get_address() << " from " << address;
   // VLOG(9) << "LOCK " << this << " " << (acceptor_ ? acceptor_->get_address() : "N/A") << " addr " << address;
   lock_guard<mutex> lock(peers_mutex);
   for (auto it = known_peers.begin(); it != known_peers.end(); ++it) {
@@ -708,7 +708,7 @@ bool node::on_requested(acceptor_id a, const string& address, peer_id* id) {
 
 void node::on_connected(acceptor_id a, std::shared_ptr<network::connection> c, const string& address) {
   peer_id id = c->get_id();
-  LOG(DEBUG) << "Connected in acceptor " << acceptor_->get_address() << " peer with id " <<
+  LOG(DBUG) << "Connected in acceptor " << acceptor_->get_address() << " peer with id " <<
       id << " (" << address << ')';
   // VLOG(9) << "LOCK " << this << " " << (acceptor_ ? acceptor_->get_address() : "N/A") << " addr " << address;
   peers_mutex.lock();
@@ -720,13 +720,13 @@ void node::on_connected(acceptor_id a, std::shared_ptr<network::connection> c, c
     return;
   }
   it->second.connection = std::shared_ptr<network::connection> (c);
-  LOG(DEBUG) << "Connected to " << address << " now " << c->get_address();
+  LOG(DBUG) << "Connected to " << address << " now " << c->get_address();
   // VLOG(9) << "UNLOCK " << this << " " << (acceptor_ ? acceptor_->get_address() : "N/A") << " addr " << address;
   peers_mutex.unlock();
 }
 
 void node::on_acceptor_error(acceptor_id a, const common::status& s)  {
-  LOG(DEBUG) << acceptor_->get_address() << " -> on_error in acceptor:: " << s;
+  LOG(DBUG) << acceptor_->get_address() << " -> on_error in acceptor:: " << s;
 }
 
 }  // namespace node

@@ -93,16 +93,16 @@ void lua_node::init_bindings(vector<schema*> schemas,
   for (uint32_t wire_id = 0; wire_id < wire_msgs.size(); ++wire_id) {
     string wire_msg = wire_msgs[wire_id];
     string function_name = "on_" + wire_msg;
-    LOG(DEBUG) << wire_id << ": " << function_name;
+    LOG(DBUG) << wire_id << ": " << function_name;
     script_on_msg[wire_id] = engine[function_name];
   }
 
   for (auto cmd : commands) {
     if (engine[cmd] != sol::lua_nil) {
-      LOG(DEBUG) << "command: " << cmd;
+      LOG(DBUG) << "command: " << cmd;
       script_on_cmd[cmd] = engine[cmd];
     } else {
-      LOG(DEBUG) << "command: " << cmd << " does not exist!";
+      LOG(DBUG) << "command: " << cmd << " does not exist!";
     }
   }
 }

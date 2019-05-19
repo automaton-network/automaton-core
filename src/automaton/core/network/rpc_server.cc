@@ -89,7 +89,7 @@ void server::handle_accept(session* new_session, const boost::system::error_code
 }
 
 void server::run() {
-  LOG(DEBUG) << "server starting.";
+  LOG(DBUG) << "server starting.";
   worker = new std::thread([this]() {
     try {
       io_service.run();
@@ -97,7 +97,7 @@ void server::run() {
     catch (std::exception& e) {
       LOG(ERROR) << "Could not run io_service in server";
     }
-    LOG(DEBUG) << "server stopped.";
+    LOG(DBUG) << "server stopped.";
   });
 }
 

@@ -42,7 +42,7 @@ int main() {
   el::Loggers::setVerboseLevel(9);
 
   LOG(TRACE) << "This is trace log!";
-  LOG(DEBUG) << "This is debug log!";
+  LOG(DBUG) << "This is debug log!";
   LOG(INFO) << "This is info log!";
   LOG(WARNING) << "This is warning log!";
   LOG(ERROR) << "This is error log!";

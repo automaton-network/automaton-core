@@ -84,7 +84,7 @@ void func() {
       connection::create("sim", get_new_id(), "10:100:10:1", std::move(handlerC));
   if (connection_c->init()) {
     connections[connection_c->get_id()] = connection_c;
-    LOG(DEBUG) << "Connection init was successful!";
+    LOG(DBUG) << "Connection init was successful!";
     connection_c -> connect();
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
     connection_c -> async_read(bufferC, 256, 0);
@@ -115,7 +115,7 @@ int main() {
   std::shared_ptr<lis_handler> l_handler = std::make_shared<lis_handler>();
   std::shared_ptr<acceptor> acceptorB = acceptor::create("sim", 1, "1:10:1", std::move(l_handler), std::move(handlerA));
   if (acceptorB->init()) {
-    LOG(DEBUG) << "Acceptor init was successful!";
+    LOG(DBUG) << "Acceptor init was successful!";
     acceptorB->start_accepting();
   } else {
     LOG(ERROR) << "Acceptor init failed!";

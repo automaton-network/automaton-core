@@ -87,7 +87,7 @@ void func() {
   std::shared_ptr<connection> connection_c = connection::create("tcp", get_new_id(), address_a, std::move(handlerC));
   if (connection_c->init()) {
     connections[connection_c->get_id()] = connection_c;
-    LOG(DEBUG) << "Connection init was successful!";
+    LOG(DBUG) << "Connection init was successful!";
     connection_c -> connect();
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
     connection_c -> async_read(bufferC, 256, 0);
@@ -119,9 +119,9 @@ int main() {
   std::shared_ptr<acceptor> acceptorB =
       acceptor::create("tcp", 1, address_a, std::move(l_handler), std::move(handlerA));
   if (acceptorB->init()) {
-    LOG(DEBUG) << "Acceptor init was successful!";
+    LOG(DBUG) << "Acceptor init was successful!";
     acceptorB->start_accepting();
-    LOG(DEBUG) << acceptorB.use_count() << " -> " << acceptorB->get_state();
+    LOG(DBUG) << acceptorB.use_count() << " -> " << acceptorB->get_state();
   } else {
     LOG(ERROR) << "Acceptor init failed!";
   }

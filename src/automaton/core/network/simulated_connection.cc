@@ -88,7 +88,7 @@ std::shared_ptr<simulation> simulation::get_simulator() {
 }
 
 void simulation::handle_disconnect(uint32_t dest) {
-  // LOG(DEBUG) << "disconnect 0";
+  // LOG(DBUG) << "disconnect 0";
   /**
     This event is created when the other endpoint has called disconnect().
     Sets connection state to disconnected.
@@ -119,11 +119,11 @@ void simulation::handle_disconnect(uint32_t dest) {
   });
   remove_connection(destination->local_connection_id);
   destination->local_connection_id = 0;
-  // LOG(DEBUG) << "disconnect 1";
+  // LOG(DBUG) << "disconnect 1";
 }
 
 void simulation::handle_request(uint32_t src, uint32_t dest) {
-  // LOG(DEBUG) << "attempt 0";
+  // LOG(DBUG) << "attempt 0";
   /**
   This event is created when the other endpoint has called connect(). On_requested is called
   and if it returns true, new event with type accept is created, new connection is created
@@ -152,7 +152,7 @@ void simulation::handle_request(uint32_t src, uint32_t dest) {
   std::string source_address = source->get_address();
   connection_id cid = 0;
   if (acceptor_->get_handler()->on_requested(acceptor_->get_id(), source_address, &cid)) {
-    // LOG(DEBUG) << "accepted";
+    // LOG(DBUG) << "accepted";
     const connection_params& params = source->parameters;
     // Getting the smaller bandwidth from both sides
     auto bandwidth = acceptor_->parameters.bandwidth < source->parameters.bandwidth ?
@@ -191,13 +191,13 @@ void simulation::handle_request(uint32_t src, uint32_t dest) {
       LOG(ERROR) << "Error while initializing connection";
     }
   } else {
-    // LOG(DEBUG) << "refused";
+    // LOG(DBUG) << "refused";
     add_task(time_of_handling, std::bind(&simulation::handle_refuse, this, src));
   }
 }
 
 void simulation::handle_message(uint32_t src, uint32_t dest, const std::string& msg) {
-  // LOG(DEBUG) << "message 0";
+  // LOG(DBUG) << "message 0";
   std::shared_ptr<simulated_connection> destination =
       std::dynamic_pointer_cast<simulated_connection>(get_connection(dest));
   std::shared_ptr<simulated_connection> source = std::dynamic_pointer_cast<simulated_connection>(get_connection(src));
@@ -220,7 +220,7 @@ void simulation::handle_message(uint32_t src, uint32_t dest, const std::string& 
   destination->recv_buf_mutex.unlock();
   destination->reading_q_mutex.unlock();
   if (!source) {
-    // LOG(DEBUG) << "message 01";
+    // LOG(DBUG) << "message 01";
     return;
   }
   source->sending_q_mutex.lock();
@@ -235,7 +235,7 @@ void simulation::handle_message(uint32_t src, uint32_t dest, const std::string& 
     add_task(get_time() + 1, std::bind(&simulated_connection::handle_send, source));
   }
   source->sending_q_mutex.unlock();
-  // LOG(DEBUG) << "message 1";
+  // LOG(DBUG) << "message 1";
   return;
 }
 
@@ -261,10 +261,10 @@ void simulation::handle_accept(uint32_t dest) {
 void simulation::handle_refuse(uint32_t dest) {
   std::shared_ptr<simulated_connection> destination =
       std::dynamic_pointer_cast<simulated_connection>(get_connection(dest));
-  // LOG(DEBUG) << "refuse 0";
+  // LOG(DBUG) << "refuse 0";
   if (!destination) {
     // new event error
-    // LOG(DEBUG) << "refuse 2";
+    // LOG(DBUG) << "refuse 2";
     return;
   }
   destination->set_state(connection::state::disconnected);
@@ -275,11 +275,11 @@ void simulation::handle_refuse(uint32_t dest) {
   add_task(get_time() + 1, [destination](){
     destination->get_handler()->on_connection_error(destination->get_id(), status::internal("Connection refused!"));
   });
-  // LOG(DEBUG) << "refuse 1";
+  // LOG(DBUG) << "refuse 1";
 }
 
 void simulation::handle_ack(uint32_t dest, const status& s) {
-  // LOG(DEBUG) << "<handle_ack>";
+  // LOG(DBUG) << "<handle_ack>";
   std::shared_ptr<simulated_connection> destination =
       std::dynamic_pointer_cast<simulated_connection>(get_connection(dest));
 
@@ -300,16 +300,16 @@ void simulation::handle_ack(uint32_t dest, const status& s) {
 }
 
 uint32_t simulation::process(uint64_t time_) {
-  // LOG(DEBUG) << "process time: " << time_;
+  // LOG(DBUG) << "process time: " << time_;
   int events_processed = 0;
   tasks_mutex.lock();
 
   auto current_time = get_time();
-  // LOG(DEBUG) << "Cur time: " << current_time << " process time: " << time_;
+  // LOG(DBUG) << "Cur time: " << current_time << " process time: " << time_;
   while (current_time <= time_) {
     set_time(current_time);
     if (tasks.count(current_time)) {
-      // LOG(DEBUG) << "PROCESSING TIME: " << current_time;
+      // LOG(DBUG) << "PROCESSING TIME: " << current_time;
       for (auto& t : tasks.at(current_time)) {
         events_processed++;
         tasks_mutex.unlock();
@@ -432,23 +432,23 @@ bool simulated_connection::init() {
 }
 
 void simulated_connection::async_send(const std::string& message, uint32_t msg_id = 0) {
-  // LOG(DEBUG) << id << " <async_send>";
+  // LOG(DBUG) << id << " <async_send>";
   if (message.size() < 1) {
     LOG(ERROR) << "Send called but no message: id -> " << msg_id;
-    // LOG(DEBUG) << id << " </async_send>";
+    // LOG(DBUG) << id << " </async_send>";
     return;
   }
   if (get_state() == disconnected) {
     LOG(ERROR) << "Cannot send message! Call connect first!";
-    // LOG(DEBUG) << id << " </async_send>";
+    // LOG(DBUG) << id << " </async_send>";
     return;
   }
-  // LOG(DEBUG) << "Send called with message <" << io::bin2hex(message) << ">";
+  // LOG(DBUG) << "Send called with message <" << io::bin2hex(message) << ">";
   outgoing_packet packet;
   packet.message = message;
   packet.bytes_send = 0;
   packet.id = msg_id;
-  // LOG(DEBUG) << id << " pushing message <" << io::bin2hex(message) << "> with id: " << msg_id;
+  // LOG(DBUG) << id << " pushing message <" << io::bin2hex(message) << "> with id: " << msg_id;
   sending_q_mutex.lock();
   sending.push(std::move(packet));
   sending_q_mutex.unlock();
@@ -456,11 +456,11 @@ void simulated_connection::async_send(const std::string& message, uint32_t msg_i
     std::shared_ptr<simulation> sim = simulation::get_simulator();
     sim->add_task(sim->get_time() + 1, std::bind(&simulated_connection::handle_send, shared_from_this()));
   }
-  // LOG(DEBUG) << id << " </async_send>";
+  // LOG(DBUG) << id << " </async_send>";
 }
 
 void simulated_connection::handle_send() {
-  // LOG(DEBUG) << id << " <handle_send>";
+  // LOG(DBUG) << id << " <handle_send>";
   if (get_state() != connection::state::connected) {
     return;
   }
@@ -468,7 +468,7 @@ void simulated_connection::handle_send() {
   /// nothing to send or waiting for ACK
   if (sending.empty() || sending.front().message.size() == sending.front().bytes_send) {
     sending_q_mutex.unlock();
-    // LOG(DEBUG) << id << " </handle_send 1 >";
+    // LOG(DBUG) << id << " </handle_send 1 >";
     return;
   }
   std::shared_ptr<simulation> sim = simulation::get_simulator();
@@ -491,11 +491,11 @@ void simulated_connection::handle_send() {
   set_time_stamp(time_of_handling);
   sim->add_task(time_of_handling,
       std::bind(&simulation::handle_message, sim, local_connection_id, remote_connection_id, message));
-  // LOG(DEBUG) << "</handle_send 2>";
+  // LOG(DBUG) << "</handle_send 2>";
 }
 
 void simulated_connection::handle_read() {
-  // LOG(DEBUG) << "<handle_read>";
+  // LOG(DBUG) << "<handle_read>";
   if (get_state() != connection::state::connected) {
     return;
   }
@@ -531,7 +531,7 @@ void simulated_connection::handle_read() {
   }
   recv_buf_mutex.unlock();
   reading_q_mutex.unlock();
-  // LOG(DEBUG) << id << " </handle_read 1>";
+  // LOG(DBUG) << id << " </handle_read 1>";
 }
 
 void simulated_connection::async_read(std::shared_ptr<char> buffer, uint32_t buffer_size, uint32_t num_bytes = 0,
@@ -548,7 +548,7 @@ void simulated_connection::async_read(std::shared_ptr<char> buffer, uint32_t buf
         num_bytes << ")! Reading aborted!";
     return;
   }
-  //  LOG(DEBUG) << id << " Setting buffers in connection: " << get_address();
+  //  LOG(DBUG) << id << " Setting buffers in connection: " << get_address();
   incoming_packet packet;
   packet.buffer = buffer;
   packet.buffer_size = buffer_size;
@@ -564,7 +564,7 @@ void simulated_connection::async_read(std::shared_ptr<char> buffer, uint32_t buf
   reading_q_mutex.lock();
   reading_q_mutex.unlock();
   recv_buf_mutex.unlock();
-  // LOG(DEBUG) << id  << " </async_read>";
+  // LOG(DBUG) << id  << " </async_read>";
 }
 
 bool simulated_connection::parse_address(const std::string& address_, connection_params* params,
@@ -611,7 +611,7 @@ void simulated_connection::connect() {
     LOG(ERROR) << id << " Cannot connect: No address to connect to!";
     return;
   }
-  // LOG(DEBUG) << id << " <connect>";
+  // LOG(DBUG) << id << " <connect>";
   connection_state = connection::state::connecting;
   std::shared_ptr<simulation> sim = simulation::get_simulator();
   sim->add_connection(shared_from_this());
@@ -619,12 +619,12 @@ void simulated_connection::connect() {
   uint32_t ts = get_time_stamp();
   uint64_t time_of_handling = (t > ts ? t : ts) + 1 + get_lag();
   set_time_stamp(time_of_handling);
-  // LOG(DEBUG) << id << " </connect>";
+  // LOG(DBUG) << id << " </connect>";
   sim->add_task(time_of_handling, std::bind(&simulation::handle_request, sim, local_connection_id, remote_address));
 }
 
 void simulated_connection::disconnect() {
-    // LOG(DEBUG) << id << " <disconnect>";
+    // LOG(DBUG) << id << " <disconnect>";
     if (connection_state != connection::state::connected) {
       return;
     }
@@ -649,7 +649,7 @@ void simulated_connection::disconnect() {
         handler->on_disconnected(c_id);
       }
     });
-    // LOG(DEBUG) << id << " </disconnect>";
+    // LOG(DBUG) << id << " </disconnect>";
     sim->add_task(time_of_handling, std::bind(&simulation::handle_disconnect, sim, remote_connection_id));
     remote_connection_id = 0;
 }
@@ -671,7 +671,7 @@ uint32_t simulated_connection::get_time_stamp() const {
 }
 
 void simulated_connection::clear_queues() {
-  LOG(DEBUG) << id << " Clearing queues";
+  LOG(DBUG) << id << " Clearing queues";
   std::lock_guard<std::mutex> sending_lock(sending_q_mutex);
   std::lock_guard<std::mutex> reading_lock(reading_q_mutex);
   std::lock_guard<std::mutex> recv_lock(recv_buf_mutex);
@@ -684,7 +684,7 @@ void simulated_connection::clear_queues() {
 }
 
 void simulated_connection::cancel_operations() {
-  LOG(DEBUG) << id << " Canceling operations";
+  LOG(DBUG) << id << " Canceling operations";
   std::shared_ptr<simulation> sim = simulation::get_simulator();
   std::lock_guard<std::mutex> sending_lock(sending_q_mutex);
   std::lock_guard<std::mutex> reading_lock(reading_q_mutex);
