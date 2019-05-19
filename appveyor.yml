@@ -24,6 +24,7 @@ for:
   - src/local_third_party/cryptopp -> download_and_build_third_party_libs.sh
   - src/local_third_party/ed25519 -> download_and_build_third_party_libs.sh
   - src/local_third_party/g3log -> download_and_build_third_party_libs.sh
+  - src/local_third_party/gmp -> download_and_build_third_party_libs.sh
   - src/local_third_party/googletest -> download_and_build_third_party_libs.sh
   - src/local_third_party/lua -> download_and_build_third_party_libs.sh
   - src/local_third_party/LuaJIT -> download_and_build_third_party_libs.sh

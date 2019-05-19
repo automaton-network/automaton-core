@@ -1,12 +1,12 @@
 #!/bin/bash
 
-CPUCOUNT=$(grep -c "^processor" /proc/cpuinfo)
 
 PROTOBUF_VER="3.6.1.2"
 JUCE_VER="5.4.3"
 CRYPTOPP_VER="7_0_0"
 LUA_VER="5.3.5"
 G3LOG_VER="1.3.2"
+GMPVER="6.1.2"
 
 darwin=false;
 case "`uname`" in
@@ -15,9 +15,13 @@ esac
 
 if $darwin; then
   sedi="sed -i ''"
+  CPUCOUNT=$(sysctl -n hw.ncpu)
 else
   sedi="sed -i "
+  CPUCOUNT=$(grep -c "^processor" /proc/cpuinfo)
 fi
+
+echo "$CPUCOUNT logical cores"
 
 print_separator() {
  str=$1
@@ -96,6 +100,11 @@ git_repo "https://github.com/orlp/ed25519.git" "ed25519" "7fa6712ef5d581a6981ec2
 # git_repo "https://github.com/nelhage/rules_boost.git" "com_github_nelhage_rules_boost" "fe787183c14f2a5c6e5e1e75a7c57d2e799d3d19"
 # git_repo "https://github.com/protocolbuffers/protobuf.git" "protobuf" "48cb18e5c419ddd23d9badcfe4e9df7bde1979b2"
 # git_repo "https://github.com/svaarala/duktape.git" "duktape" "d7fdb67f18561a50e06bafd196c6b423af9ad6fe"
+
+[ ! -d gmp ] && \
+  get_archive "https://gmplib.org/download/gmp/gmp-$GMPVER.tar.xz" \
+  "gmp-$GMPVER.tar.xz" "87b565e89a9a684fe4ebeeddb8399dce2599f9c9049854ca8c0dfbdea0e21912"
+[ -d "gmp-$GMPVER" ] && mv "gmp-$GMPVER" gmp
 
 [ ! -d g3log ] && \
   get_archive "https://github.com/KjellKod/g3log/archive/$G3LOG_VER.tar.gz" \
@@ -299,12 +308,27 @@ if [ ! -f g3log/build/libg3logger.a ]; then
 
   cd g3log
   mkdir -p build && cd build
-  [ ! -f CMakeCache.txt ] && cmake .. -DG3_SHARED_LIB=OFF -DCMAKE_BUILD_TYPE=Release
+  [ ! -f CMakeCache.txt ] && cmake .. -DCHANGE_G3LOG_DEBUG_TO_DBUG=ON -DG3_SHARED_LIB=OFF -DCMAKE_BUILD_TYPE=Release
   make -j$CPUCOUNT
   cd ../..
 else
   print_separator "=" 80
   echo "  g3log ALREADY BUILT"
+  print_separator "=" 80
+fi
+
+if [ ! -f gmp/.libs/libgmp.a ]; then
+  print_separator "=" 80
+  echo "  BUILDING gmp"
+  print_separator "=" 80
+
+  cd gmp
+  ./configure
+  make -j$CPUCOUNT
+  cd ..
+else
+  print_separator "=" 80
+  echo "  gmp ALREADY BUILT"
   print_separator "=" 80
 fi
 
