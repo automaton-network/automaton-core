@@ -81,7 +81,7 @@ function get_archive() {
     echo "  Extracting $filename"
     print_separator "=" 80
 
-    tar -xzf $filename
+    tar -xf $filename
   fi;
 }
 
