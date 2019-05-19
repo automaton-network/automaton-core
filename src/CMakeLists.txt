@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 3.0)
 project(automaton-network)
 
-set (CPACK_PACKAGE_VERSION_MAJOR "0")
-set (CPACK_PACKAGE_VERSION_MINOR "1")
-set (CPACK_PACKAGE_VERSION_PATCH "0")
-set (CPACK_PACKAGE_VENDOR "Automaton Network")
+set(CPACK_PACKAGE_VERSION_MAJOR "0")
+set(CPACK_PACKAGE_VERSION_MINOR "1")
+set(CPACK_PACKAGE_VERSION_PATCH "0")
+set(CPACK_PACKAGE_VENDOR "Automaton Network")
 
 SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -v")
 
@@ -14,7 +14,11 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
-# set (CMAKE_CXX_FLAGS "-Wl,--no-as-needed -v")
+
+if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
+  # This is needed, otherwise linking with libdl fails on Linux
+  set(CMAKE_CXX_FLAGS "-Wl,--no-as-needed -v")
+endif()
 
 set(LOCAL_THIRD_PARTY_LIBS
   ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/bitcoin/src/secp256k1/.libs/libsecp256k1.a
