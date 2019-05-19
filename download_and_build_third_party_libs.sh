@@ -7,6 +7,7 @@ CRYPTOPP_VER="7_0_0"
 LUA_VER="5.3.5"
 G3LOG_VER="1.3.2"
 GMPVER="6.1.2"
+ED25519VER="7fa6712ef5d581a6981ec2b08ee623314cd1d1c4"
 
 darwin=false;
 case "`uname`" in
@@ -77,11 +78,17 @@ function get_archive() {
     echo "Error: Wrong hash [$filesha] Expected [$sha]"
     exit 1
   else
-    print_separator "=" 80
-    echo "  Extracting $filename"
-    print_separator "=" 80
-
-    tar -xf $filename
+    if [ ${filename: -7} == ".tar.gz" ] || [ ${filename: -7} == ".tar.xz" ]; then
+      print_separator "=" 80
+      echo "  Untarring $filename"
+      print_separator "=" 80
+      tar -xf $filename
+    elif [ ${filename: -4} == ".zip" ]; then
+      print_separator "=" 80
+      echo "  Unzipping $filename"
+      print_separator "=" 80
+      unzip -o $filename
+    fi
   fi;
 }
 
@@ -94,12 +101,17 @@ function get_archive() {
 # git_repo "https://github.com/AmokHuginnsson/replxx.git" "replxx" "3cb884e3fb4b1a28efeb716fac75f77eecc7ea3d"
 # git_repo "https://github.com/lua/lua.git" "lua" "e354c6355e7f48e087678ec49e340ca0696725b1"
 # git_repo "https://github.com/weidai11/cryptopp.git" "cryptopp" "c8d8caf70074655a2562ae1ea45cb30e28fee2b4"
-git_repo "https://github.com/orlp/ed25519.git" "ed25519" "7fa6712ef5d581a6981ec2b08ee623314cd1d1c4"
+# git_repo "https://github.com/orlp/ed25519.git" "ed25519" "7fa6712ef5d581a6981ec2b08ee623314cd1d1c4"
 # git_repo "https://github.com/google/googletest.git" "googletest" "2fe3bd994b3189899d93f1d5a881e725e046fdc2"
 # git_repo "https://github.com/nlohmann/json.git" "json" "359f98d14065bf4e53eeb274f5987fd08f16e5bf"
 # git_repo "https://github.com/nelhage/rules_boost.git" "com_github_nelhage_rules_boost" "fe787183c14f2a5c6e5e1e75a7c57d2e799d3d19"
 # git_repo "https://github.com/protocolbuffers/protobuf.git" "protobuf" "48cb18e5c419ddd23d9badcfe4e9df7bde1979b2"
 # git_repo "https://github.com/svaarala/duktape.git" "duktape" "d7fdb67f18561a50e06bafd196c6b423af9ad6fe"
+
+[ ! -d ed25519 ] && \
+  get_archive "https://github.com/orlp/ed25519/archive/$ED25519VER.zip" \
+  "ed25519-$ED25519VER.zip" "9eafd6483fb95cbd5acaced55be662b8d5b3a79e7f1fb2b7faf834b08daf989f"
+[ -d ed25519-$ED25519VER ] && mv ed25519-$ED25519VER ed25519
 
 [ ! -d gmp ] && \
   get_archive "https://gmplib.org/download/gmp/gmp-$GMPVER.tar.xz" \
