@@ -15,7 +15,7 @@ find_package(Threads REQUIRED)
 
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
   # This is needed, otherwise linking with libdl fails on Linux
-  set(CMAKE_CXX_FLAGS "-Wl,--no-as-needed -v")
+  set(CMAKE_CXX_FLAGS "-Wl,--no-as-needed")
 endif()
 
 set(LOCAL_THIRD_PARTY_LIBS
