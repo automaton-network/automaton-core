@@ -6,8 +6,6 @@ set(CPACK_PACKAGE_VERSION_MINOR "1")
 set(CPACK_PACKAGE_VERSION_PATCH "0")
 set(CPACK_PACKAGE_VENDOR "Automaton Network")
 
-SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -v")
-
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -17,7 +15,7 @@ find_package(Threads REQUIRED)
 
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
   # This is needed, otherwise linking with libdl fails on Linux
-  set(CMAKE_CXX_FLAGS "-Wl,--no-as-needed -v")
+  set(CMAKE_CXX_FLAGS "-Wl,--no-as-needed")
 endif()
 
 set(LOCAL_THIRD_PARTY_LIBS

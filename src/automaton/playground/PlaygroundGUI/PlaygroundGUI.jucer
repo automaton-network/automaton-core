@@ -14,16 +14,12 @@
     </GROUP>
     <GROUP id="{CEE97623-2FD9-0F00-2BC4-1AF90751FA41}" name="Source">
       <GROUP id="{A93C79BF-CA8F-22F3-0EDD-09BDADF361D1}" name="Demos">
-        <FILE id="BbB0qS" name="DemoAccount.cpp" compile="1" resource="0" file="Source/Demos/DemoAccount.cpp"/>
-        <FILE id="qKNIZy" name="DemoAccount.h" compile="0" resource="0" file="Source/Demos/DemoAccount.h"/>
         <FILE id="itdVJt" name="DemosMainComponent.cpp" compile="1" resource="0"
               file="Source/Demos/DemosMainComponent.cpp"/>
         <FILE id="hfHjxE" name="DemosMainComponent.h" compile="0" resource="0"
               file="Source/Demos/DemosMainComponent.h"/>
         <FILE id="PWvkef" name="DemoMiner.cpp" compile="1" resource="0" file="Source/Demos/DemoMiner.cpp"/>
         <FILE id="puqPk8" name="DemoMiner.h" compile="0" resource="0" file="Source/Demos/DemoMiner.h"/>
-        <FILE id="f6ExSp" name="DemoNetwork.cpp" compile="1" resource="0" file="Source/Demos/DemoNetwork.cpp"/>
-        <FILE id="bnVqxv" name="DemoNetwork.h" compile="0" resource="0" file="Source/Demos/DemoNetwork.h"/>
       </GROUP>
       <GROUP id="{D62FB906-6D23-F538-9E50-51D60BE97FA9}" name="Components"/>
       <FILE id="f60Dju" name="MainComponent.h" compile="0" resource="0" file="Source/MainComponent.h"/>
