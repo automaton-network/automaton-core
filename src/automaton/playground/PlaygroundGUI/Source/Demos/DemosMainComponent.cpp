@@ -1,19 +1,35 @@
-#include "DemoAccount.h"
 #include "DemoMiner.h"
-#include "DemoNetwork.h"
 
 #include "DemosMainComponent.h"
 
+class DemoBlank: public Component {
+ public:
+  DemoBlank() {}
+  ~DemoBlank() {}
+
+  void paint(Graphics& g) override {
+  }
+
+  void resized() override {
+  }
+
+ private:
+  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(DemoBlank)
+};
+
+
 DemosMainComponent::DemosMainComponent() {
-  menuBar.reset(new MenuBarComponent(this));
-  addAndMakeVisible(menuBar.get());
+  // menuBar.reset(new MenuBarComponent(this));
+  // addAndMakeVisible(menuBar.get());
 
   tabbedComponent.reset(new TabbedComponent(TabbedButtonBar::TabsAtTop));
   addAndMakeVisible(tabbedComponent.get());
   tabbedComponent->setTabBarDepth(37);
-  tabbedComponent->addTab(TRANS("Account"), Colour(0xff245230), new DemoAccount(), true);
-  tabbedComponent->addTab(TRANS("Miner"), Colour(0xff522424), new DemoMiner(), true);
-  tabbedComponent->addTab(TRANS("Network"), Colour(0xff243352), new DemoNetwork(), true);
+  tabbedComponent->addTab(TRANS("Miner"), Colour(0xff404040), new DemoMiner(), true);
+  tabbedComponent->addTab(TRANS("Treasury"), Colour(0xff404040), new DemoBlank(), true);
+  tabbedComponent->addTab(TRANS("Protocols"), Colour(0xff404040), new DemoBlank(), true);
+  tabbedComponent->addTab(TRANS("DApps"), Colour(0xff404040), new DemoBlank(), true);
+  tabbedComponent->addTab(TRANS("Network"), Colour(0xff404040), new DemoBlank(), true);
   tabbedComponent->setCurrentTabIndex(0);
 
   setSize(800, 600);
@@ -31,8 +47,8 @@ void DemosMainComponent::paint(Graphics& g) {
 void DemosMainComponent::resized() {
   auto b = getLocalBounds();
 
-  auto height = LookAndFeel::getDefaultLookAndFeel().getDefaultMenuBarHeight();
-  menuBar->setBounds(b.removeFromTop(height));
+  // auto height = LookAndFeel::getDefaultLookAndFeel().getDefaultMenuBarHeight();
+  // menuBar->setBounds(b.removeFromTop(height));
 
-  tabbedComponent->setBounds(8, 8 + height, getWidth() - 16, getHeight() - 16 - height);
+  tabbedComponent->setBounds(8, 8, getWidth() - 16, getHeight() - 16);
 }

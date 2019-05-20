@@ -63,7 +63,7 @@ class PlaygroundGUIApplication: public JUCEApplication {
                      DocumentWindow::allButtons) {
       LookAndFeel::setDefaultLookAndFeel(&lnf);
 
-      setUsingNativeTitleBar(false);
+      setUsingNativeTitleBar(true);
       setContentOwned(new DemosMainComponent(), true);
 
       setFullScreen(true);
