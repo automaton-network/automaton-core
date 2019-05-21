@@ -109,7 +109,6 @@ echo ("="*80)
 
 cd cryptopp
 msbuild /t:Build /p:platform="x86" /p:configuration=Release cryptlib.vcxproj /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
-cmd /r dir *.lib /s
 cd ..
 
 #  ====== Build protobuf ======
@@ -229,5 +228,7 @@ if ($env:APPVEYOR) {
   .\b2 --with-filesystem --with-system --with-iostreams cxxstd=14 link=static stage
   cd ..
 }
+
+cmd /r dir *.lib /s
 
 echo "Done."
