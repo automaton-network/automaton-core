@@ -68,7 +68,7 @@ for:
 
 install:
 # - cmd: choco install bazel
-# - cmd: Powershell.exe -executionpolicy remotesigned -File .\download_and_build_third_party_libs_windows.ps1
+- cmd: Powershell.exe -executionpolicy remotesigned -File .\download_and_build_third_party_libs_windows.ps1
 # - cmd: pwd
 # - cmd: dir src\local_third_party
 # - sh: >-
