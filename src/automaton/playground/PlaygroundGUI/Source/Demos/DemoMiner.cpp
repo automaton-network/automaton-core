@@ -69,7 +69,7 @@ Colour HSV(double h, double s, double v) {
 //==============================================================================
 DemoMiner::DemoMiner() {
   setSize(800, 600);
-  startTimer(10);
+  startTimer(20);
 //  AlertWindow::showMessageBoxAsync(
 //      AlertWindow::InfoIcon,
 //      "leading bits",
@@ -79,59 +79,70 @@ DemoMiner::DemoMiner() {
 DemoMiner::~DemoMiner() {
 }
 
+String sepitoa(uint64 n, bool lz = false) {
+  if (n < 1000) {
+    if (!lz) {
+      return String(n);
+    } else {
+      return
+          ((n < 100) ? String("0") : String("")) +
+          ((n < 10) ? String("0") : String("")) +
+          String(n);
+    }
+  } else {
+    return sepitoa(n / 1000, lz) + "," + sepitoa(n % 1000, true);
+  }
+}
+
+static unsigned int my_seed;
+
 void DemoMiner::paint(Graphics& g) {
   int k = sz;
   int k2 = gap;
-  int m = 64;
-  int n = 64;
   unsigned int slots_owned = 0;
-  static unsigned int my_seed;
 
   g.setColour(Colours::white);
-  g.drawRect(19 - k2, 99 - k2, m * k + k2 + 2, n * k + k2 + 2);
+  g.drawRect(19 - k2, 119 - k2, m * k + k2 + 2, n * k + k2 + 2);
+
+  min_leading_bits = 32;
+  for (int x = 0; x < m; x++) {
+    for (int y = 0; y < n; y++) {
+      if (leading_bits(slots[x][y].diff) < min_leading_bits) {
+        min_leading_bits = leading_bits(slots[x][y].diff);
+      }
+    }
+  }
+
   for (int x = 0; x < m; x++) {
     for (int y = 0; y < n; y++) {
       int i = y * 256 + x;
       if (slots[x][y].diff == 0) {
         slots[x][y].bg = Colours::black;
       }
-      unsigned int r = rand_r(&my_seed);
-      r |= 0xff000000;
-      // float rr = float(r) / RAND_MAX;
-      // float cc = (r >> 16) / 255.0;
-      if (r > slots[x][y].diff) {
-        unsigned int reward = (t - slots[x][y].tm);
-        if (slots[x][y].tm != 0) {
-          total_supply += reward;
-        }
-        if (slots[x][y].owner == 1) {
-          total_balance += reward;
-        }
-        slots[x][y].diff = r;
-        slots[x][y].owner = (rand_r(&my_seed) % 10000 < mining_power) ? 1 : 0;
-        slots[x][y].tm = t;
-      }
-      if (leading_bits(r) > max_leading_bits) {
-        max_leading_bits = leading_bits(r);
-      }
-
-      double lb = 1.0 * leading_bits(slots[x][y].diff) / max_leading_bits;
+      double lb =
+        1.0 * (leading_bits(slots[x][y].diff) - min_leading_bits + 1) / (max_leading_bits - min_leading_bits + 1);
       slots[x][y].bg = HSV(200, 1.0 - lb, lb);
       g.setColour(slots[x][y].bg);
-      g.fillRect(20 + x * k, 100 + y * k, k - k2, k - k2);
+      g.fillRect(20 + x * k, 120 + y * k, k - k2, k - k2);
       if (slots[x][y].owner == 1) {
         slots_owned++;
-        g.setColour(Colours::yellow);
-        g.drawRect(19 + x * k, 99 + y * k, k + 1, k + 1);
+        g.setColour(Colours::red);
+        g.drawRect(19 + x * k, 119 + y * k, k + 1, k + 1);
       }
     }
   }
 
+  double coeff = (1.0 - pow(total_supply, 2.0) / pow(supply_cap, 2.0));
+
   g.setColour(Colours::white);
   g.drawMultiLineText(
+      " coeff: " + String(coeff) + "\n" +
+      " days: " + String(t / periods_per_day) + "\n" +
       " Slots owned: " + String(slots_owned) + "\n" +
-      " My Balance: " + String(total_balance) + " AUTO\n" +
-      " Total Supply: " + String(total_supply) + " AUTO",
+      " My Balance: " + sepitoa(total_balance) + " AUTO\n" +
+      " Total Supply: " + sepitoa(total_supply) + " AUTO" +
+      " Supply Cap: " + sepitoa(supply_cap) + " AUTO\n" +
+      " Treasury: " + sepitoa(total_supply / 2) + " AUTO",
       20, 40, 500, Justification::left);
 }
 
@@ -139,7 +150,38 @@ void DemoMiner::resized() {
 }
 
 void DemoMiner::update() {
-  t++;
+  for (int zz = 0; zz < iters; zz++) {
+    t++;
+    double coeff = (1.0 - pow(total_supply, 2.0) / pow(supply_cap, 2.0));
+    for (int x = 0; x < m; x++) {
+      for (int y = 0; y < n; y++) {
+        int i = y * 256 + x;
+        if (slots[x][y].diff == 0) {
+          slots[x][y].bg = Colours::black;
+        }
+
+        unsigned int r = rand_r(&my_seed);
+        r |= 0xf0000000;
+        // float rr = float(r) / RAND_MAX;
+        // float cc = (r >> 16) / 255.0;
+        if (r > slots[x][y].diff) {
+          unsigned int reward = coeff * (t - slots[x][y].tm) * reward_per_period;
+          if (slots[x][y].tm != 0) {
+            total_supply += reward;
+          }
+          if (slots[x][y].owner == 1) {
+            total_balance += reward / 2;
+          }
+          slots[x][y].diff = r;
+          slots[x][y].owner = (rand_r(&my_seed) % 10000 < mining_power) ? 1 : 0;
+          slots[x][y].tm = t;
+        }
+        if (leading_bits(r) > max_leading_bits) {
+          max_leading_bits = leading_bits(r);
+        }
+      }
+    }
+  }
 }
 
 void DemoMiner::timerCallback() {

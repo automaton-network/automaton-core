@@ -24,17 +24,25 @@ class DemoMiner:
     int tm;
   };
 
+  const uint64 supply_cap = 1UL << 40;
+  const uint32 m = 256;
+  const uint32 n = 256;
+  const uint64 reward_per_period = 20000;
+  const double periods_per_day = 1.0;
+  const uint32 iters = 1;
+
   slot slots[256][256];
-  unsigned int total_balance = 0;
-  unsigned int total_supply = 0;
+  uint64 total_balance = 0;
+  uint64 total_supply = 0;
 
   unsigned int max_leading_bits = 1;
+  unsigned int min_leading_bits = 0;
 
   unsigned int t;
 
-  uint32 sz = 5;
-  uint32 gap = 1;
-  uint32 mining_power = 25;
+  uint32 sz = 1;
+  uint32 gap = 0;
+  uint32 mining_power = 10;
 
   void timerCallback() override;
 
