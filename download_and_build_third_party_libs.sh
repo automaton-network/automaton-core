@@ -193,7 +193,11 @@ if [ ! -f lua/liblua.a ]; then
   print_separator "=" 80
 
   cd lua
-  make -j$CPUCOUNT linux a
+  if $darwin; then
+    make -j$CPUCOUNT macosx a
+  else
+    make -j$CPUCOUNT linux a
+  fi
   cd ..
 else
   print_separator "=" 80
@@ -248,8 +252,12 @@ if [ ! -f JUCE/extras/Projucer/Builds/LinuxMakefile/build/Projucer ]; then
     print_separator "=" 80
 
     if $darwin; then
-      # TODO(asen): Need to do build for Mac OS
-      pass;
+      # defaults write com.apple.dt.Xcode IDEBuildOperationMaxNumberOfConcurrentCompileTasks `sysctl -n hw.ncpu`
+      pwd
+      xcodebuild \
+        -configuration Release \
+        GCC_PREPROCESSOR_DEFINITIONS='$GCC_PREPROCESSOR_DEFINITIONS JUCER_ENABLE_GPL_MODE=1' \
+        -project ./JUCE/extras/Projucer/Builds/MacOSX/Projucer.xcodeproj
     else
       cd JUCE/extras/Projucer/Builds/LinuxMakefile
       make -j$CPUCOUNT CPPFLAGS="-DJUCER_ENABLE_GPL_MODE=1" CONFIG=Release # V=1 for verbose
