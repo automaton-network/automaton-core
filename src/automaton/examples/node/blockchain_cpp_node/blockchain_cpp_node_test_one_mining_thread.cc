@@ -88,23 +88,20 @@ int main() {
   node_updater_tests updater(WORKER_SLEEP_TIME_MS, std::set<std::string>(ids.begin(), ids.end()));
   updater.start();
 
-  bool stop_logger = false;
-  std::thread logger([&]() {
-    while (!stop_logger) {
-      // Dump logs once per second.
-      std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-      for (auto n : node::list_nodes()) {
-        node::get_node(n)->dump_logs("logs/blockchain/" + n + ".html");
-      }
-    }
-  });
-
-  std::this_thread::sleep_for(std::chrono::milliseconds(180000));
+  // bool stop_logger = false;
+  // std::thread logger([&]() {
+  //   while (!stop_logger) {
+  //     std::this_thread::sleep_for(std::chrono::milliseconds(LOGGER_SLEEP_TIME_MS));
+  //     for (auto n : node::list_nodes()) {
+  //       node::get_node(n)->dump_logs("logs/blockchain/" + n + ".html");
+  //     }
+  //   }
+  // });
+  std::this_thread::sleep_for(std::chrono::milliseconds(SIMULATION_TIME));
 
   updater.stop();
-
-  stop_logger = true;
-  logger.join();
+  // stop_logger = true;
+  // logger.join();
 
   // automaton::core::network::tcp_release();
   sim->simulation_stop();
@@ -133,6 +130,9 @@ int main() {
 
   for (auto it = blocks_sz.begin(); it != blocks_sz.end(); ++it) {
     std::cout << it->first << " -> " << it->second << " nodes" << std::endl;
+  }
+  for (auto n : node::list_nodes()) {
+    node::get_node(n)->dump_logs("logs/blockchain/" + n + ".html");
   }
   testnet::destroy_testnet("testnet");
   return 0;
