@@ -61,6 +61,7 @@ class blockchain_cpp_node : public automaton::core::node::node {
   uint32_t get_blocks_size() {
     return blocks.size();
   }
+
  private:
   void s_on_blob_received(uint32_t id, const std::string& blob);
   void s_on_msg_sent(uint32_t c, uint32_t id, const automaton::core::common::status& s);
