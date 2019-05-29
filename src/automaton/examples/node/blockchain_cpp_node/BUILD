@@ -37,7 +37,7 @@ cc_binary(
 cc_binary(
   name = "blockchain_cpp_node_test_one_mining_thread",
   srcs = [
-    "blockchain_cpp_node_test.cc",
+    "blockchain_cpp_node_test_one_mining_thread.cc",
   ],
   deps = [
     ":blockchain_cpp_node",
