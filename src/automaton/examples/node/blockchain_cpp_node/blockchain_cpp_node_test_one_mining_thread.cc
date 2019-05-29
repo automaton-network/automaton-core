@@ -15,7 +15,12 @@ using automaton::core::node::node_updater_tests;
 using automaton::core::smartproto::smart_protocol;
 using automaton::core::testnet::testnet;
 
-auto WORKER_SLEEP_TIME_MS = 20;
+const uint32_t WORKER_SLEEP_TIME_MS = 3000;
+const uint32_t NODES = 10000;
+const uint32_t PEERS = 15;
+const uint32_t SIMULATION_SLEEP_TIME_MS = 30;
+const uint32_t LOGGER_SLEEP_TIME_MS = 100;
+const uint32_t SIMULATION_TIME = 120000;  // from updater.start() to .stop(), doesn't include time to connect
 
 /*
 returns connection graph
@@ -40,6 +45,26 @@ std::unordered_map<uint32_t, std::vector<uint32_t> > create_connections_vector(u
   return result;
 }
 
+std::unordered_map<uint32_t, std::vector<uint32_t> > create_rnd_connections_vector(uint32_t n, uint32_t p) {
+  std::unordered_map<uint32_t, std::vector<uint32_t> > result;
+  uint32_t k;
+  if (p >= ((n + 1) / 2)) {
+    std::cout << "'p' is too big! Setting 'p' to max valid number of peers for 'n' = " << n << " : " <<
+        ((n + 1) / 2 - 1) << std::endl;
+    return result;
+  }
+  for (uint32_t i = 1; i <= n; ++i) {
+    std::set<uint32_t> peers;
+    while (peers.size() < p) {
+      k = std::rand() % NODES + 1;
+      if (k == i) {continue;}
+      peers.insert(k);
+    }
+    result[i] = std::vector<uint32_t>(peers.begin(), peers.end());
+  }
+  return result;
+}
+
 int main() {
   std::unique_ptr<g3::LogWorker> logworker {g3::LogWorker::createLogWorker()};
   auto l_handler = logworker->addDefaultLogger("demo", "./");
@@ -53,11 +78,11 @@ int main() {
     std::cout << "Blockchain protocol was NOT loaded!!!" << std::endl;
   }
   std::shared_ptr<automaton::core::network::simulation> sim = automaton::core::network::simulation::get_simulator();
-  sim->simulation_start(50);
-  automaton::core::network::tcp_init();
+  sim->simulation_start(SIMULATION_SLEEP_TIME_MS);
+  // automaton::core::network::tcp_init();
 
-  testnet::create_testnet("blockchain", "testnet", "doesntmatter", testnet::network_protocol_type::simulation, 1000,
-      create_connections_vector(1000, 4));
+  testnet::create_testnet("blockchain", "testnet", "doesntmatter", testnet::network_protocol_type::simulation, NODES,
+      create_connections_vector(NODES, PEERS));
 
   std::vector<std::string> ids = testnet::get_testnet("testnet")->list_nodes();
   node_updater_tests updater(WORKER_SLEEP_TIME_MS, std::set<std::string>(ids.begin(), ids.end()));
@@ -81,11 +106,13 @@ int main() {
   stop_logger = true;
   logger.join();
 
-  automaton::core::network::tcp_release();
+  // automaton::core::network::tcp_release();
   sim->simulation_stop();
 
   std::unordered_map<std::string, uint32_t> counter;
   std::unordered_map<std::string, block> blocks;
+
+  std::unordered_map<uint32_t, uint32_t> blocks_sz;
 
   std::cout << "ALL BLOCKCHAIN TOPS:" << std::endl;
   for (auto n : node::list_nodes()) {
@@ -93,13 +120,20 @@ int main() {
     block b = node->get_blockchain_top();
     counter[b.block_hash()]++;
     blocks[b.block_hash()] = b;
+    blocks_sz[node->get_blocks_size()]++;
+    if (blocks_sz[node->get_blocks_size()] == 1) {
+      std::cout << "check " << n << std::endl;
+    }
   }
   std::cout << "=============================================" << std::endl;
   for (auto it = counter.begin(); it != counter.end(); ++it) {
-    std::cout << bin2hex(it->first) << "@ height " << blocks[it->first].height << " -> " << it->second <<
+    std::cout << bin2hex(it->first) << " @ height " << blocks[it->first].height << " -> " << it->second <<
         " nodes" << std::endl;
   }
 
+  for (auto it = blocks_sz.begin(); it != blocks_sz.end(); ++it) {
+    std::cout << it->first << " -> " << it->second << " nodes" << std::endl;
+  }
   testnet::destroy_testnet("testnet");
   return 0;
 }
