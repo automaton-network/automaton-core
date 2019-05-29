@@ -206,15 +206,15 @@ void node::log(const string& logger, const string& msg) {
 }
 
 void node::dump_logs(const string& html_file) {
-  auto self = shared_from_this();
-  add_task([self, html_file](){
-    ofstream f;
-    f.open(html_file, ios_base::trunc);
-    if (!f.is_open()) {
-      LOG(ERROR) << "Error while opening " << html_file;
-      return "";
-    }
-    f << R"(
+  // auto self = shared_from_this();
+  // add_task([self, html_file](){
+  ofstream f;
+  f.open(html_file, ios_base::trunc);
+  if (!f.is_open()) {
+    LOG(ERROR) << "Error while opening " << html_file;
+    return;
+  }
+  f << R"(
 <html>
 <head>
 <meta charset="utf-8"/>
@@ -256,35 +256,32 @@ void node::dump_logs(const string& html_file) {
 <br/>
 )";
 
-    self->log_mutex.lock();
-    for (auto log : self->logs) {
-      f << "<a class='button' href='#" << log.first << "'>";
-      f << log.first << std::endl;
-      f << "</a>\n";
+  log_mutex.lock();
+  for (auto log : logs) {
+    f << "<a class='button' href='#" << log.first << "'>";
+    f << log.first << std::endl;
+    f << "</a>\n";
+  }
+  log_mutex.unlock();
+
+  f << "<hr />\n";
+  f << s_debug_html();
+  f << "<hr />\n";
+
+  log_mutex.lock();
+  for (auto log : logs) {
+    f << "<br/><span class='button' id='" << log.first << "'>" << log.first << "</span>";
+    f << "<pre>";
+    for (auto msg : log.second) {
+      html_escape(&msg);
+      f << msg << "\n";
     }
-    self->log_mutex.unlock();
+    f << "</pre>\n";
+  }
+  log_mutex.unlock();
 
-    f << "<hr />\n";
-    f << self->s_debug_html();
-    f << "<hr />\n";
-
-    self->log_mutex.lock();
-    for (auto log : self->logs) {
-      f << "<br/><span class='button' id='" << log.first << "'>" << log.first << "</span>";
-      f << "<pre>";
-      for (auto msg : log.second) {
-        html_escape(&msg);
-        f << msg << "\n";
-      }
-      f << "</pre>\n";
-    }
-    self->log_mutex.unlock();
-
-    f << "</body></html>\n";
-    f.close();
-
-    return "";
-  });
+  f << "</body></html>\n";
+  f.close();
 }
 
 void node::process_update(uint64_t current_time) {
