@@ -41,6 +41,10 @@ std::unordered_map<uint32_t, std::vector<uint32_t> > create_connections_vector(u
 }
 
 int main() {
+  std::unique_ptr<g3::LogWorker> logworker {g3::LogWorker::createLogWorker()};
+  auto l_handler = logworker->addDefaultLogger("demo", "./");
+  g3::initializeLogging(logworker.get());
+
   node::register_node_type("blockchain", [](const std::string& id, const std::string& proto_id)->
       std::shared_ptr<automaton::core::node::node> {
       return std::shared_ptr<automaton::core::node::node>(new blockchain_cpp_node(id, proto_id));
