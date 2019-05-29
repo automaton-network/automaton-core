@@ -63,6 +63,9 @@ class simulation {
   std::mutex tasks_mutex;
   std::unordered_map<uint64_t, std::vector<std::function<void()> > > tasks;
 
+  std::mutex handlers_tasks_mutex;
+  std::queue<std::function<void()> > handlers_tasks;
+
   /**
     Simulation time. On create is 0.
   */
@@ -80,6 +83,7 @@ class simulation {
 
   bool simulation_running;
   std::thread running_thread;
+  std::thread handlers_thread;
   std::mutex running_mutex;
 
  public:
@@ -105,6 +109,8 @@ class simulation {
 
   void add_task(uint64_t tm, std::function<void()> task);
 
+  void add_handlers_task(std::function<void()> task);
+
   /** Returns current simulation time */
   uint64_t get_time();
 
@@ -115,6 +121,8 @@ class simulation {
     Process all events from simulation_time to the given time.
   */
   uint32_t process(uint64_t time);
+
+  void process_handlers();
 
   // NOTE: This should be called only from simulation and simulated_connection. Should not be public but it is for now.
   void add_connection(std::shared_ptr<connection> connection_);
