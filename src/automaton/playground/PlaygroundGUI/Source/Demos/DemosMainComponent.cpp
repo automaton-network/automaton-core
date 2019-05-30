@@ -32,7 +32,9 @@ DemosMainComponent::DemosMainComponent() {
   tabbedComponent->addTab(TRANS("Network"), Colour(0xff404040), new DemoBlank(), true);
   tabbedComponent->setCurrentTabIndex(0);
 
-  setSize(800, 600);
+  LookAndFeel::getDefaultLookAndFeel().setDefaultSansSerifTypefaceName("Play");
+
+  setSize(1024, 768);
 }
 
 DemosMainComponent::~DemosMainComponent() {

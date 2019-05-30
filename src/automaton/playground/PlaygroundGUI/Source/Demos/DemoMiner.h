@@ -4,6 +4,7 @@
 
 class DemoMiner:
   public Component,
+  public Button::Listener,
   private Timer {
  public:
   //==============================================================================
@@ -15,7 +16,59 @@ class DemoMiner:
 
   void update();
 
+  // Button::Listener overrides.
+  void buttonClicked(Button* btn) override;
+
  private:
+  OwnedArray<Component> components;
+
+  void addComponent(Component* c) {
+    components.add(c);
+    addAndMakeVisible(c);
+  }
+
+  TextButton* TB(String text, int x, int y, int w, int h) {
+    TextButton* tb = new TextButton(text);
+    tb->addListener(this);
+    addComponent(tb);
+    tb->setBounds(x, y, w, h);
+
+    tb->setColour(TextButton::textColourOffId,  Colours::black);
+    tb->setColour(TextButton::textColourOnId,   Colours::black);
+    tb->setColour(TextButton::buttonColourId,   Colours::white);
+    tb->setColour(TextButton::buttonOnColourId, Colours::cyan.brighter());
+
+    return tb;
+  }
+
+  int GTB(int gid, int def, StringArray texts, int x, int y, int w, int h) {
+    int firstButtonIndex = components.size();
+    for (unsigned int i = 0; i < texts.size(); i++) {
+      String text = texts[i];
+      TextButton* tb = TB(text, x, y, w, h);
+      tb->setClickingTogglesState(true);
+      tb->setRadioGroupId(gid);
+      if (i == def) {
+        tb->setToggleState(true, dontSendNotification);
+      }
+
+      tb->setConnectedEdges(
+          ((i == 0) ? 0 : Button::ConnectedOnLeft) |
+          ((i == (texts.size() - 1)) ? 0 : Button::ConnectedOnRight));
+
+      x += w;
+    }
+  }
+
+  Label* LBL(String text, int x, int y, int w, int h) {
+    Label* lbl = new Label("", text);
+    addComponent(lbl);
+    lbl->setBounds(x, y, w, h);
+    lbl->setColour(Label::textColourId, Colours::white);
+    lbl->setJustificationType(Justification::centred);
+    return lbl;
+  }
+
   struct slot {
     Colour bg;
     Colour fg;
@@ -25,11 +78,14 @@ class DemoMiner:
   };
 
   const uint64 supply_cap = 1UL << 40;
-  const uint32 m = 256;
-  const uint32 n = 256;
-  const uint64 reward_per_period = 20000;
-  const double periods_per_day = 1.0;
-  const uint32 iters = 1;
+  uint32 m = 32;
+  uint32 n = 32;
+  uint32 sz = 8;
+  uint32 gap = 1;
+
+  uint64 reward_per_period = 1280000;
+  double periods_per_day = 1.0;
+  uint32 iters = 1;
 
   slot slots[256][256];
   uint64 total_balance = 0;
@@ -40,11 +96,11 @@ class DemoMiner:
 
   unsigned int t;
 
-  uint32 sz = 1;
-  uint32 gap = 0;
   uint32 mining_power = 10;
 
   void timerCallback() override;
+
+  static int mp[];
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(DemoMiner)
 };
