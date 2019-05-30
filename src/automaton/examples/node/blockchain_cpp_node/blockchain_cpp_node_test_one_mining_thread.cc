@@ -4,7 +4,6 @@
 
 #include "automaton/core/io/io.h"
 #include "automaton/core/network/simulated_connection.h"
-#include "automaton/core/network/tcp_implementation.h"
 #include "automaton/core/node/node_updater.h"
 #include "automaton/core/testnet/testnet.h"
 #include "automaton/examples/node/blockchain_cpp_node/blockchain_cpp_node.h"
@@ -79,7 +78,6 @@ int main() {
   }
   std::shared_ptr<automaton::core::network::simulation> sim = automaton::core::network::simulation::get_simulator();
   sim->simulation_start(SIMULATION_SLEEP_TIME_MS);
-  // automaton::core::network::tcp_init();
 
   testnet::create_testnet("blockchain", "testnet", "doesntmatter", testnet::network_protocol_type::simulation, NODES,
       create_connections_vector(NODES, PEERS));
@@ -88,22 +86,21 @@ int main() {
   node_updater_tests updater(WORKER_SLEEP_TIME_MS, std::set<std::string>(ids.begin(), ids.end()));
   updater.start();
 
-  // bool stop_logger = false;
-  // std::thread logger([&]() {
-  //   while (!stop_logger) {
-  //     std::this_thread::sleep_for(std::chrono::milliseconds(LOGGER_SLEEP_TIME_MS));
-  //     for (auto n : node::list_nodes()) {
-  //       node::get_node(n)->dump_logs("logs/blockchain/" + n + ".html");
-  //     }
-  //   }
-  // });
+  bool stop_logger = false;
+  std::thread logger([&]() {
+    while (!stop_logger) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(LOGGER_SLEEP_TIME_MS));
+      for (auto n : node::list_nodes()) {
+        node::get_node(n)->dump_logs("logs/blockchain/" + n + ".html");
+      }
+    }
+  });
   std::this_thread::sleep_for(std::chrono::milliseconds(SIMULATION_TIME));
 
   updater.stop();
-  // stop_logger = true;
-  // logger.join();
+  stop_logger = true;
+  logger.join();
 
-  // automaton::core::network::tcp_release();
   sim->simulation_stop();
 
   std::unordered_map<std::string, uint32_t> counter;
