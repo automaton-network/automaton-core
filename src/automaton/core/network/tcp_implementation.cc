@@ -15,6 +15,7 @@ namespace automaton {
 namespace core {
 namespace network {
 
+// TODO(kari): Remove comments or change logging level.
 // TODO(kari): proper exit, clear resources..
 // TODO(kari): improve init function and handle the new thread
 // TODO(kari): Add "if ! tcp_initialized" where necessary
@@ -172,9 +173,6 @@ void tcp_connection::async_send(const std::string& msg, uint32_t message_id) {
         }
        // if (bytes_transferred < message.size())
       } else {
-        // LOG(DBUG)
-        //     << "SUCCESSFULLY SENT MESSAGE WITH "
-        //     << message->size() << " BYTES TO " << id << " msg_id " << message_id;
         c_handler->on_message_sent(cid, message_id, status::ok());
       }
       delete message;

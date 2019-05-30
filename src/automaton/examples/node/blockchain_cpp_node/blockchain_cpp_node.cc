@@ -87,7 +87,7 @@ void blockchain_cpp_node::s_on_blob_received(uint32_t id, const std::string& blo
     b.nonce = m->get_blob(4);
     on_block(id, b);
   } else {
-    LOG(INFO) << "Received message " << msg_type << " which is not supported!";
+    LOG(ERROR) << "Received message " << msg_type << " which is not supported!";
   }
   delete m;
 }

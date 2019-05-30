@@ -18,6 +18,7 @@ namespace automaton {
 namespace core {
 namespace network {
 
+// TODO(kari): Remove comments or change logging level.
 // TODO(kari): Make thread safe.
 
 connection_params::connection_params():min_lag(0), max_lag(0), bandwidth(0) {}
@@ -120,13 +121,13 @@ void simulation::handle_disconnect(uint32_t dest) {
   std::shared_ptr<simulated_connection> destination =
       std::dynamic_pointer_cast<simulated_connection>(get_connection(dest));
   if (!destination) {  // state == disconnected should never happen
-    LOG(INFO) << "Event disconnect but remote peer has already disconnected or does not exist";
+    LOG(WARNING) << "Event disconnect but remote peer has already disconnected or does not exist";
     return;
   } else if (destination->get_state() == connection::state::connecting) {
-    LOG(INFO) << "Event disconnect but peer is not connected yet! This situation is not handled right now!";
+    LOG(WARNING) << "Event disconnect but peer is not connected yet! This situation is not handled right now!";
     return;
   }
-  LOG(INFO) << "Other peer closed connection in: " << destination->get_address();
+  LOG(WARNING) << "Other peer closed connection in: " << destination->get_address();
   destination->set_state(connection::state::disconnected);
   std::weak_ptr<connection::connection_handler> c_handler = destination->get_handler();
   auto c_id = destination->get_id();

@@ -32,6 +32,8 @@ using std::ofstream;
 using std::string;
 using std::vector;
 
+// TODO(kari): Remove comments or change logging level.
+
 namespace automaton {
 namespace core {
 namespace node {
@@ -206,8 +208,6 @@ void node::log(const string& logger, const string& msg) {
 }
 
 void node::dump_logs(const string& html_file) {
-  // auto self = shared_from_this();
-  // add_task([self, html_file](){
   ofstream f;
   f.open(html_file, ios_base::trunc);
   if (!f.is_open()) {
@@ -332,7 +332,7 @@ void node::send_message(peer_id p_id, const core::data::msg& msg, uint32_t msg_i
     msg_blob.insert(0, 1, static_cast<char>(wire_id));
     send_blob(p_id, msg_blob, msg_id);
   } else {
-    LOG(DBUG) << "Could not serialize message!";
+    LOG(ERROR) << "Could not serialize message!";
   }
 }
 
@@ -379,8 +379,8 @@ bool node::connect(peer_id p_id) {
 // VLOG(9) << "LOCK " << this << " " << (acceptor_ ? acceptor_->get_address() : "N/A") << " peer " << p_id;
   lock_guard<mutex> lock(peers_mutex);
   if (connected_peers.find(p_id) != connected_peers.end()) {
-    LOG(DBUG) << "Peer " << p_id << " is already connected!";
-    // VLOG(9) << "UNLOCK " << this << " " << (acceptor_ ? acceptor_->get_address() : "N/A") << " peer " << p_id;
+    LOG(WARNING) << "Peer " << p_id << " is already connected!";
+    VLOG(9) << "UNLOCK " << this << " " << (acceptor_ ? acceptor_->get_address() : "N/A") << " peer " << p_id;
     return false;
   }
   auto it = known_peers.find(p_id);
@@ -488,7 +488,7 @@ peer_id node::add_peer(const string& address) {
     LOG(ERROR) << e.what();
   }
   if (new_connection == nullptr) {
-    LOG(DBUG) << "No new connection";
+    LOG(WARNING) << "No new connection";
   } else {
     info.connection = new_connection;
   }
@@ -551,9 +551,9 @@ bool node::address_parser(const string& s, string* protocol, string* address) {
     *address = match[2];
     return true;
   } else {
-    LOG(DBUG) << "match size: " << match.size();
+    LOG(ERROR) << "match size: " << match.size();
     for (uint32_t i = 0; i < match.size(); i++) {
-      LOG(DBUG) << "match " << i << " -> " << match[i];
+      LOG(ERROR) << "match " << i << " -> " << match[i];
     }
     *protocol = "";
     *address = "";
