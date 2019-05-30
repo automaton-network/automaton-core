@@ -68,28 +68,6 @@ cc_library(
   linkstatic=True,
 )
 
-
-cc_library(
-  name = "rpc_server",
-  srcs = [
-    "rpc_server.h",
-    "rpc_server.cc",
-  ],
-  deps = [
-    "@localboost//:asio",
-    "//automaton/core/io",
-  ],
-  linkopts = select({
-    "//conditions:linux": ["-lpthread",],
-    "//conditions:default": [],
-  }),
-  linkstatic=True,
-  defines = select({
-      "//conditions:windows": ["BOOST_ALL_NO_LIB"],
-      "//conditions:default": [],
-  }),
-)
-
 cc_library(
   name = "http_server",
   srcs = [

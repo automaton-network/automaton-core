@@ -91,7 +91,7 @@ protobuf_schema::protobuf_schema(const std::string& proto_def) {
   file_descriptor_proto.reset(new FileDescriptorProto());
   std::istringstream stream(proto_def);
   IstreamInputStream is(&stream);
-  VLOG(9) << "Tokenizing .proto file";
+  // VLOG(9) << "Tokenizing .proto file";
   Tokenizer tok(&is, &io_error_collector_);
   if (io_error_collector_.get_number_errors() > 0) {
     std::stringstream msg;
@@ -101,7 +101,7 @@ protobuf_schema::protobuf_schema(const std::string& proto_def) {
   }
   Parser parser;
   parser.RecordErrorsTo(&io_error_collector_);
-  VLOG(9) << "Parsing tokenized proto";
+  // VLOG(9) << "Parsing tokenized proto";
   parser.Parse(&tok, file_descriptor_proto.get());
   if (io_error_collector_.get_number_errors() > 0) {
     std::stringstream msg;
@@ -109,7 +109,7 @@ protobuf_schema::protobuf_schema(const std::string& proto_def) {
     LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
     throw std::runtime_error(msg.str());
   }
-  VLOG(9) << "Parsing complete";
+  // VLOG(9) << "Parsing complete";
 }
 
 protobuf_schema::~protobuf_schema() {}

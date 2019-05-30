@@ -26,14 +26,14 @@ inline static std::string hashstr(const std::string& hash) {
   return hex.substr(hex.size() - 8);
 }
 
-static const bool LOG_ENABLED = false;
+static const bool LOG_ENABLED = true;
 
 static const std::string GENESIS_HASH = hash("automaton");  // NOLINT
 
 static const uint32_t DIFFICULTY_LEADING_ZEROS = 1;
 static const char* DIFFICULTY_PREFIX = "00FFFF";
 
-static const uint32_t MINE_ATTEMPTS = 7;
+static const uint32_t MINE_ATTEMPTS = 10000;
 
 block::block(const std::string& miner, const std::string& prev_hash, uint64_t height, const std::string& nonce):
     miner(miner), prev_hash(prev_hash), height(height), nonce(nonce) {}
@@ -87,7 +87,7 @@ void blockchain_cpp_node::s_on_blob_received(uint32_t id, const std::string& blo
     b.nonce = m->get_blob(4);
     on_block(id, b);
   } else {
-    LOG(INFO) << "Received message " << msg_type << " which is not supported!";
+    LOG(ERROR) << "Received message " << msg_type << " which is not supported!";
   }
   delete m;
 }
@@ -125,6 +125,8 @@ void blockchain_cpp_node::s_update(uint64_t time) {
     if (LOG_ENABLED) {
       log_block("miner", b, "MINED");
     }
+    // std::cout << nodeid << " mined block " << bin2hex(b.block_hash()) << " height: " << b.height << std::endl;
+    LOG(INFO) << nodeid << " mined block " << bin2hex(b.block_hash()) << " height: " << b.height;
     on_block(0, b);
   }
 }
@@ -352,6 +354,7 @@ std::string blockchain_cpp_node::get_current_hash() const {
 }
 
 void blockchain_cpp_node::send_block(uint32_t p_id, const std::string& hash) {
+  // LOG(INFO) << nodeid << " sending block";
   if (LOG_ENABLED) {
     log(get_peer_name(p_id), "SEND | " + bin2hex(hash));
   }

@@ -157,3 +157,24 @@ automaton_test(storage blobstore_test)
 automaton_test(storage persistent_blobstore_test)
 # automaton_test(storage persistent_storage_test)
 automaton_test(storage persistent_vector_test)
+
+add_library(
+  blockchain_cpp_node
+  automaton/examples/node/blockchain_cpp_node/blockchain_cpp_node.cc
+)
+
+target_link_libraries(
+  blockchain_cpp_node
+  automaton-core
+)
+
+add_executable(
+  demo_100_nodes
+  automaton/examples/node/blockchain_cpp_node/blockchain_cpp_node_test_one_mining_thread.cc
+)
+
+target_link_libraries(
+  demo_100_nodes
+  blockchain_cpp_node
+  automaton-core
+)

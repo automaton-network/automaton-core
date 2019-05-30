@@ -251,7 +251,7 @@ void protobuf_factory::import_schema(schema* schema, const string& name, const s
   LOG(INFO) << "Importing schema " << name << " with package " << package;
   std::string json;
   schema->to_json(&json);
-  VLOG(9) << json;
+  // VLOG(9) << json;
   auto pb_schema = dynamic_cast<protobuf_schema*>(schema);
   import_from_file_proto(pb_schema->get_file_descriptor_proto(), name, package);
 }

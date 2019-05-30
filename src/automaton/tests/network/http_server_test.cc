@@ -48,7 +48,7 @@ class client_handler:public connection::connection_handler {
 
 std::shared_ptr<char> buffer_c = std::shared_ptr<char>(new char[256], std::default_delete<char[]>());
 
-std::shared_ptr<client_handler> handler_c;
+std::shared_ptr<client_handler> handler_c = std::make_shared<client_handler>();
 
 void client() {
   connection_c = connection::create("tcp", 1, SERVER_ADDRESS, std::move(handler_c));

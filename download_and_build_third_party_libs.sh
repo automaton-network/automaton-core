@@ -328,7 +328,7 @@ if [ ! -f g3log/build/libg3logger.a ]; then
 
   cd g3log
   mkdir -p build && cd build
-  [ ! -f CMakeCache.txt ] && cmake .. -DCHANGE_G3LOG_DEBUG_TO_DBUG=ON -DG3_SHARED_LIB=OFF -DCMAKE_BUILD_TYPE=Release
+  [ ! -f CMakeCache.txt ] && cmake .. -DCHANGE_G3LOG_DEBUG_TO_DBUG=ON -DG3_SHARED_LIB=OFF -DCMAKE_BUILD_TYPE=Release -DUSE_DYNAMIC_LOGGING_LEVELS=ON
   make -j$CPUCOUNT
   cd ../..
 else

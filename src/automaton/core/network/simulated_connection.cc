@@ -18,6 +18,7 @@ namespace automaton {
 namespace core {
 namespace network {
 
+// TODO(kari): Remove comments or change logging level.
 // TODO(kari): Make thread safe.
 
 connection_params::connection_params():min_lag(0), max_lag(0), bandwidth(0) {}
@@ -44,12 +45,13 @@ simulation::~simulation() {
 }
 
 void simulation::simulation_start(uint64_t millisec_step) {
-  if (millisec_step == 0) {
-    return;
+  if (millisec_step < 1) {
+    millisec_step = 1;
   }
   running_mutex.lock();
   simulation_running = true;
   running_mutex.unlock();
+
   running_thread = std::thread([this, millisec_step](){
     uint64_t current = 0;
     while (true) {
@@ -65,6 +67,19 @@ void simulation::simulation_start(uint64_t millisec_step) {
       current += millisec_step;
     }
   });
+
+  handlers_thread = std::thread([this](){
+    while (true) {
+      running_mutex.lock();
+      if (simulation_running == false) {
+          running_mutex.unlock();
+          break;
+      } else {
+        running_mutex.unlock();
+      }
+      process_handlers();
+    }
+  });
 }
 
 void simulation::simulation_stop() {
@@ -72,11 +87,21 @@ void simulation::simulation_stop() {
   simulation_running = false;
   running_mutex.unlock();
   running_thread.join();
+  handlers_thread.join();
 }
 
 void simulation::add_task(uint64_t tm, std::function<void()> task) {
   std::lock_guard<std::mutex> lock(tasks_mutex);
+  std::lock_guard<std::mutex> time_lock(time_mutex);
+  if (tm <= simulation_time) {
+    tm = simulation_time + 1;
+  }
   tasks[tm].push_back(task);
+}
+
+void simulation::add_handlers_task(std::function<void()> task) {
+  std::lock_guard<std::mutex> lock(handlers_tasks_mutex);
+  handlers_tasks.push(task);
 }
 
 std::shared_ptr<simulation> simulation::get_simulator() {
@@ -96,17 +121,17 @@ void simulation::handle_disconnect(uint32_t dest) {
   std::shared_ptr<simulated_connection> destination =
       std::dynamic_pointer_cast<simulated_connection>(get_connection(dest));
   if (!destination) {  // state == disconnected should never happen
-    LOG(INFO) << "Event disconnect but remote peer has already disconnected or does not exist";
+    LOG(WARNING) << "Event disconnect but remote peer has already disconnected or does not exist";
     return;
   } else if (destination->get_state() == connection::state::connecting) {
-    LOG(INFO) << "Event disconnect but peer is not connected yet! This situation is not handled right now!";
+    LOG(WARNING) << "Event disconnect but peer is not connected yet! This situation is not handled right now!";
     return;
   }
-  LOG(INFO) << "Other peer closed connection in: " << destination->get_address();
+  LOG(WARNING) << "Other peer closed connection in: " << destination->get_address();
   destination->set_state(connection::state::disconnected);
   std::weak_ptr<connection::connection_handler> c_handler = destination->get_handler();
   auto c_id = destination->get_id();
-  add_task(get_time() + 1, [c_handler, c_id]() {
+  add_handlers_task([c_handler, c_id]() {
     std::shared_ptr<connection::connection_handler> handler = c_handler.lock();
     if (handler != nullptr) {
       handler->on_disconnected(c_id);
@@ -141,12 +166,15 @@ void simulation::handle_request(uint32_t src, uint32_t dest) {
   if (!acceptor_ || acceptor_->get_state() != acceptor::state::accepting) {
     LOG(ERROR) << "No such peer: " << dest;
     std::weak_ptr<connection::connection_handler> c_handler = source->get_handler();
+    std::shared_ptr<simulation> sim = simulation::get_simulator();
     auto c_id = source->get_id();
-    add_task(time_of_handling, [c_handler, c_id]() {
-      std::shared_ptr<connection::connection_handler> handler = c_handler.lock();
-      if (handler != nullptr) {
-        handler->on_connection_error(c_id, status::internal("No route to host"));
-      }
+    add_task(time_of_handling, [c_handler, c_id, sim]() {
+      sim->add_handlers_task([c_handler, c_id]() {
+        std::shared_ptr<connection::connection_handler> handler = c_handler.lock();
+        if (handler != nullptr) {
+          handler->on_connection_error(c_id, status::internal("No route to host"));
+        }
+      });
     });
   }
   std::string source_address = source->get_address();
@@ -171,13 +199,13 @@ void simulation::handle_request(uint32_t src, uint32_t dest) {
       new_connection->set_time_stamp(time_of_handling);
       std::weak_ptr<acceptor::acceptor_handler> a_handler = acceptor_->get_handler();
       auto a_id = acceptor_->get_id();
-      add_task(get_time() + 1, [a_handler, a_id, new_connection, source_address]() {
+      add_handlers_task([a_handler, a_id, new_connection, source_address]() {
         std::shared_ptr<acceptor::acceptor_handler> handler = a_handler.lock();
         if (handler != nullptr) {
           handler->on_connected(a_id, new_connection, source_address);
         }
       });
-      add_task(get_time() + 1, [new_connection, cid](){
+      add_handlers_task([new_connection, cid](){
         new_connection->get_handler()->on_connected(cid);
       });
       add_task(get_time() + 1, [new_connection](){
@@ -186,13 +214,15 @@ void simulation::handle_request(uint32_t src, uint32_t dest) {
       add_task(get_time() + 1, [new_connection](){
         new_connection->handle_send();
       });
-      add_task(time_of_handling, std::bind(&simulation::handle_accept, this, src));
+      std::shared_ptr<simulation> sim = get_simulator();
+      add_task(time_of_handling, std::bind(&simulation::handle_accept, sim, src));
     } else {
       LOG(ERROR) << "Error while initializing connection";
     }
   } else {
     // LOG(DBUG) << "refused";
-    add_task(time_of_handling, std::bind(&simulation::handle_refuse, this, src));
+    std::shared_ptr<simulation> sim = get_simulator();
+    add_task(time_of_handling, std::bind(&simulation::handle_refuse, sim, src));
   }
 }
 
@@ -200,6 +230,7 @@ void simulation::handle_message(uint32_t src, uint32_t dest, const std::string& 
   // LOG(DBUG) << "message 0";
   std::shared_ptr<simulated_connection> destination =
       std::dynamic_pointer_cast<simulated_connection>(get_connection(dest));
+  std::shared_ptr<simulation> sim = get_simulator();
   std::shared_ptr<simulated_connection> source = std::dynamic_pointer_cast<simulated_connection>(get_connection(src));
   if (!destination || destination->get_state() != connection::state::connected) {
     LOG(ERROR) << "ERROR in handling send! Peer has disconnected or does not exist!";
@@ -207,7 +238,7 @@ void simulation::handle_message(uint32_t src, uint32_t dest, const std::string& 
       uint32_t t = get_time();
       uint32_t ts = source->get_time_stamp();
       uint64_t time_of_handling = (t > ts ? t : ts) + 1 + source->get_lag();
-      add_task(time_of_handling, std::bind(&simulation::handle_ack, this, src, status::internal("Broken pipe")));
+      add_task(time_of_handling, std::bind(&simulation::handle_ack, sim, src, status::internal("Broken pipe")));
     }
     return;
   }
@@ -230,7 +261,8 @@ void simulation::handle_message(uint32_t src, uint32_t dest, const std::string& 
     uint32_t ts = destination->get_time_stamp();
     uint64_t time_of_handling = (t > ts ? t : ts) + 1 + destination->get_lag();
     destination->set_time_stamp(time_of_handling);
-    add_task(time_of_handling, std::bind(&simulation::handle_ack, this, src, status::ok()));
+    std::shared_ptr<simulation> sim = get_simulator();
+    add_task(time_of_handling, std::bind(&simulation::handle_ack, sim, src, status::ok()));
   } else if (source && source->get_state() == connection::state::connected) {
     add_task(get_time() + 1, std::bind(&simulated_connection::handle_send, source));
   }
@@ -247,7 +279,7 @@ void simulation::handle_accept(uint32_t dest) {
     return;
   }
   destination->set_state(connection::state::connected);
-  add_task(get_time() + 1, [destination](){
+  add_handlers_task([destination](){
     destination->get_handler()->on_connected(destination->get_id());
   });
   add_task(get_time() + 1, [destination](){
@@ -272,7 +304,7 @@ void simulation::handle_refuse(uint32_t dest) {
     destination->cancel_operations();
     destination->clear_queues();
   });
-  add_task(get_time() + 1, [destination](){
+  add_handlers_task([destination](){
     destination->get_handler()->on_connection_error(destination->get_id(), status::internal("Connection refused!"));
   });
   // LOG(DBUG) << "refuse 1";
@@ -288,10 +320,10 @@ void simulation::handle_ack(uint32_t dest, const status& s) {
     if (destination->sending.size()) {
       uint32_t rid = destination->sending.front().id;
       destination->sending.pop();
-      add_task(get_time() + 1, [destination, rid, s](){
+      add_handlers_task([destination, rid, s](){
         destination->get_handler()->on_message_sent(destination->get_id(), rid, s);
       });
-      add_task(simulation::get_time() + 1, [destination]() {
+      add_task(get_time() + 1, [destination]() {
         destination->handle_send();
       });
     }
@@ -328,6 +360,31 @@ uint32_t simulation::process(uint64_t time_) {
   }
   tasks_mutex.unlock();
   return events_processed;
+}
+
+void simulation::process_handlers() {
+  handlers_tasks_mutex.lock();
+  while (handlers_tasks.size() > 0) {
+    running_mutex.lock();
+    if (simulation_running == false) {
+        running_mutex.unlock();
+        break;
+    } else {
+      running_mutex.unlock();
+    }
+    auto t = handlers_tasks.front();
+    handlers_tasks.pop();
+    handlers_tasks_mutex.unlock();
+    try {
+      t();
+    } catch (const std::exception& e) {
+      LOG(ERROR) << e.what();
+    } catch (...) {
+      LOG(ERROR) << "Error occured";
+    }
+    handlers_tasks_mutex.lock();
+  }
+  handlers_tasks_mutex.unlock();
 }
 
 uint64_t simulation::get_time() {
@@ -471,7 +528,6 @@ void simulated_connection::handle_send() {
     // LOG(DBUG) << id << " </handle_send 1 >";
     return;
   }
-  std::shared_ptr<simulation> sim = simulation::get_simulator();
   outgoing_packet& packet = sending.front();
   sending_q_mutex.unlock();
   std::string message = "";
@@ -485,6 +541,7 @@ void simulated_connection::handle_send() {
       message = packet.message.substr(packet.bytes_send, parameters.bandwidth);
   }
   packet.bytes_send += message.size();
+  std::shared_ptr<simulation> sim = simulation::get_simulator();
   uint32_t t = sim->get_time();
   uint32_t ts = get_time_stamp();
   uint64_t time_of_handling = (t > ts ? t : ts) + 1 + get_lag();
@@ -499,7 +556,6 @@ void simulated_connection::handle_read() {
   if (get_state() != connection::state::connected) {
     return;
   }
-  std::shared_ptr<simulation> sim = simulation::get_simulator();
   reading_q_mutex.lock();
   recv_buf_mutex.lock();
   if (receive_buffer.size() && reading.size()) {
@@ -523,8 +579,9 @@ void simulated_connection::handle_read() {
       incoming_packet packet = std::move(reading.front());
       reading.pop();
       auto self = shared_from_this();
-      sim->add_task(sim->get_time() + 1, [sim, self, packet]() {
-        sim->add_task(sim->get_time() + 1, std::bind(&simulated_connection::handle_read, self));
+      std::shared_ptr<simulation> sim = simulation::get_simulator();
+      sim->add_task(sim->get_time() + 1, std::bind(&simulated_connection::handle_read, self));
+      sim->add_handlers_task([self, packet]() {
         self->handler->on_message_received(self->id, packet.buffer, packet.bytes_read, packet.id);
       });
     }
@@ -542,7 +599,6 @@ void simulated_connection::async_read(std::shared_ptr<char> buffer, uint32_t buf
     read event is created).
   */
   // TODO(kari): If disconnected, return
-  std::shared_ptr<simulation> sim = simulation::get_simulator();
   if (num_bytes > buffer_size) {
     LOG(ERROR) << id << " ERROR: Buffer size " << buffer_size << " is smaller than needed (" <<
         num_bytes << ")! Reading aborted!";
@@ -559,10 +615,9 @@ void simulated_connection::async_read(std::shared_ptr<char> buffer, uint32_t buf
   reading_q_mutex.unlock();
   recv_buf_mutex.lock();
   if (receive_buffer.size()) {
+    std::shared_ptr<simulation> sim = simulation::get_simulator();
     sim->add_task(sim->get_time() + 1, std::bind(&simulated_connection::handle_read, shared_from_this()));
   }
-  reading_q_mutex.lock();
-  reading_q_mutex.unlock();
   recv_buf_mutex.unlock();
   // LOG(DBUG) << id  << " </async_read>";
 }
@@ -619,7 +674,8 @@ void simulated_connection::connect() {
   uint32_t ts = get_time_stamp();
   uint64_t time_of_handling = (t > ts ? t : ts) + 1 + get_lag();
   set_time_stamp(time_of_handling);
-  // LOG(DBUG) << id << " </connect>";
+  // LOG(DEBUG) << id << " </connect>";
+
   sim->add_task(time_of_handling, std::bind(&simulation::handle_request, sim, local_connection_id, remote_address));
 }
 
@@ -643,7 +699,7 @@ void simulated_connection::disconnect() {
     });
     std::weak_ptr<connection::connection_handler> c_handler = handler;
     auto c_id = id;
-    sim->add_task(sim->get_time() + 1, [c_handler, c_id]() {
+    sim->add_handlers_task([c_handler, c_id]() {
       std::shared_ptr<connection::connection_handler> handler = c_handler.lock();
       if (handler != nullptr) {
         handler->on_disconnected(c_id);
@@ -685,21 +741,21 @@ void simulated_connection::clear_queues() {
 
 void simulated_connection::cancel_operations() {
   LOG(DBUG) << id << " Canceling operations";
-  std::shared_ptr<simulation> sim = simulation::get_simulator();
   std::lock_guard<std::mutex> sending_lock(sending_q_mutex);
   std::lock_guard<std::mutex> reading_lock(reading_q_mutex);
   std::shared_ptr<connection::connection_handler> c_handler = handler;
   connection_id c_id = id;
+  std::shared_ptr<simulation> sim = simulation::get_simulator();
   while (!sending.empty()) {
     auto m_id = sending.front().id;
-    sim->add_task(sim->get_time() + 1, [c_handler, c_id, m_id]() {
+    sim->add_handlers_task([c_handler, c_id, m_id]() {
       c_handler->on_message_sent(c_id, m_id, status::aborted("Operation cancelled!"));
     });
     sending.pop();
   }
   uint32_t n = reading.size();
   while (n--) {
-    sim->add_task(sim->get_time() + 1, [c_handler, c_id]() {
+    sim->add_handlers_task([c_handler, c_id]() {
       c_handler->on_connection_error(c_id, status::aborted("Operation read cancelled!"));
     });
   }

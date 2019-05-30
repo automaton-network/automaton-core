@@ -123,6 +123,7 @@ int main() {
   std::thread t(func);
   for (uint32_t i = 1; i <= 6000; i+=100) {
     sim->process(i);
+    sim->process_handlers();
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
   t.join();
