@@ -163,6 +163,11 @@ add_library(
   automaton/examples/node/blockchain_cpp_node/blockchain_cpp_node.cc
 )
 
+target_link_libraries(
+  blockchain_cpp_node
+  automaton-core
+)
+
 add_executable(
   demo_100_nodes
   automaton/examples/node/blockchain_cpp_node/blockchain_cpp_node_test_one_mining_thread.cc
