@@ -1,4 +1,4 @@
-#/bin/bash
+#!/bin/bash
 CPUCOUNT=$(grep -c "^processor" /proc/cpuinfo)
 
 cd src

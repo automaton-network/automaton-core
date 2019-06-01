@@ -8,6 +8,9 @@
 # Mac OS
 .DS_Store
 
+# Ignore secret files
+*.secret
+
 # Ignore intermediate files.
 src/logs/*
 *.log
@@ -31,6 +34,9 @@ src/logs/*
 # Visual Studio
 .vs
 .vscode
+
+# NodeJS
+node_modules/
 
 # Locally built third_party libraries
 src/local_third_party

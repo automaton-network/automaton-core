@@ -68,9 +68,11 @@ int main(int argc, char* argv[]) {
       std::string pub_key_x(reinterpret_cast<char*>(pub_key_serialized+1), 32);
       std::string pub_key_y(reinterpret_cast<char*>(pub_key_serialized+33), 32);
       std::cout << "koh.claimSlot('0x" << bin2hex(pub_key_x) << "', '0x" << bin2hex(pub_key_y) << "', '0x"
-                << bin2hex(std::string(reinterpret_cast<char*>(address+12), 20)) << "', '0x"
-                << bin2hex(rsv.substr(0, 32)) << "', '0x" << bin2hex(rsv.substr(32, 32)) << "', '0x"
-                << bin2hex(rsv.substr(64, 1)) << "')"<< std::endl;
+                << bin2hex(std::string(reinterpret_cast<char*>(address+12), 20))
+                << "', '0x" << bin2hex(rsv.substr(64, 1))
+                << "', '0x" << bin2hex(rsv.substr(0, 32))
+                << "', '0x" << bin2hex(rsv.substr(32, 32))
+                << "')" << std::endl;
     }
   }
 
