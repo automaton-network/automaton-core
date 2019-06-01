@@ -178,3 +178,13 @@ target_link_libraries(
   blockchain_cpp_node
   automaton-core
 )
+
+add_executable(
+  koh-miner
+  automaton/tools/miner/miner_main.cc
+  automaton/tools/miner/miner.cc
+)
+target_link_libraries(
+  koh-miner
+  automaton-core
+)

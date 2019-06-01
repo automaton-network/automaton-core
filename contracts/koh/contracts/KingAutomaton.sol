@@ -1,20 +1,20 @@
 pragma solidity >=0.4.22 <0.6.0;
 
-// truffle console
-// KingAutomaton.deployed().then(inst => {koh = inst})
-// koh.claimSlot('0x439ADC46A4FE473092BA43D3C596D8F6F192C411A3DFB8D9CBCABE36120CFABE', '0xD1EE124FCF6F153F5C02AF4C2261D791A28B380970734159518165FD38FA81EA', '0x0000000000000000000000000000000000000000', '0x1C', '0x61E3FA4EE6ED88A865C890630E50067AF03348CA403B10AB71A75F46B42F9C68', '0x0FE180B4FF6659FE220DA4C91949B7F64B8EE0E954B0AF3C1E6CB95591B3D408')
-
 contract KingAutomaton {
-  // *** DATA ***
+  uint constant minDifficulty = 0xffff000000000000000000000000000000000000000000000000000000000000;
 
-  // Holds the difficulty for each validator slot.
-  mapping(uint32 => uint) slots;
+  struct ValidatorSlot {
 
-  // Holds the Ethereum reward address for each validator slot.
-  mapping(uint32 => address) rewards;
+    address owner;
 
-  // The last time the slot was claimed
-  mapping(uint32 => uint) prev_claimed_time;
+    // Holds the difficulty for each validator slot.
+    uint difficulty;
+
+    // The last time the slot was claimed
+    uint last_claim_time;
+  }
+
+  ValidatorSlot[] slots;
 
   // Total time held by a validator
   mapping(address => uint) total_time_held;
@@ -25,15 +25,20 @@ contract KingAutomaton {
   // Total slots claimed.
   uint claimed;
 
-
-  // *** GETTERS ***
-
-  function getSlot(uint32 slot) public view returns(uint) {
-    return slots[slot];
+  function getSlotsNumber() public view returns(uint) {
+    return slots.length;
   }
 
-  function getRewardAddress(uint32 slot) public view returns(address) {
-    return rewards[slot];
+  function getSlotOwner(uint32 slot) public view returns(address) {
+    return slots[slot].owner;
+  }
+
+  function getSlotDifficulty(uint32 slot) public view returns(uint) {
+    return slots[slot].difficulty;
+  }
+
+  function getSlotLastClaimTime(uint32 slot) public view returns(uint) {
+    return slots[slot].last_claim_time;
   }
 
   function getMask() public view returns(uint) {
@@ -48,8 +53,20 @@ contract KingAutomaton {
       return total_time_held[rewardAddress];
   }
 
-  constructor() public {
-    mask = uint(keccak256(abi.encodePacked(now, msg.sender)));
+  constructor(uint numSlots, bool preventPremine) public {
+    if (preventPremine) {
+      mask = uint(keccak256(abi.encodePacked(now, msg.sender)));
+    }
+    slots.length = numSlots;
+  }
+
+  // Returns the Ethereum address corresponding to the input public key.
+  function getAddressFromPubKey(
+      bytes32 pubkeyX,
+      bytes32 pubkeyY
+    ) public pure returns (uint) {
+    uint pkhash = uint(keccak256(abi.encodePacked(pubkeyX, pubkeyY)));
+    return pkhash & 0x00FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
   }
 
   // Verifies that signature of a message matches the given public key.
@@ -60,19 +77,10 @@ contract KingAutomaton {
       uint8 v,
       bytes32 r,
       bytes32 s
-    ) public pure returns (bool) {
+    ) public payable returns (bool) {
     uint addr = getAddressFromPubKey(pubkeyX, pubkeyY);
     address addr_r = ecrecover(hash, v, r, s);
     return addr == uint(addr_r);
-  }
-
-  // Returns the Ethereum address corresponding to the input public key.
-  function getAddressFromPubKey(
-      bytes32 pubkeyX,
-      bytes32 pubkeyY
-    ) public pure returns (uint) {
-    uint pkhash = uint(keccak256(abi.encodePacked(pubkeyX, pubkeyY)));
-    return pkhash & 0x00FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
   }
 
   /** Claims slot based on a signature.
@@ -92,10 +100,10 @@ contract KingAutomaton {
     bytes32 s
   ) public {
     uint key = uint(pubKeyX) ^ mask;
-    uint32 slot = uint32(uint256(key) & 0x00FFFF);
+    uint32 slot = uint32(uint256(key) % slots.length);
 
     // Check if the key can take over the slot and become the new king.
-    if (key <= slots[slot]) {
+    if (key <= minDifficulty || key <= slots[slot].difficulty) {
       return;
     }
 
@@ -105,14 +113,15 @@ contract KingAutomaton {
     }
 
     claimed++;
-    slots[slot] = key;
+    slots[slot].difficulty = key;
 
-    if(prev_claimed_time[slot] != 0) {
-        total_time_held[rewardAddress] += now - prev_claimed_time[slot];
+    // Reward kicked out validator
+    if(slots[slot].last_claim_time != 0) {
+      total_time_held[rewardAddress] += now - slots[slot].last_claim_time;
     }
-    // Record the time when the slot was acquired
-    prev_claimed_time[slot] = now;
 
-    rewards[slot] = rewardAddress;
+    // Record the time when the slot was acquired
+    slots[slot].last_claim_time = now;
+    slots[slot].owner = rewardAddress;
   }
 }
