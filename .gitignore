@@ -8,6 +8,9 @@
 # Mac OS
 .DS_Store
 
+# Ignore videos
+gource.*
+
 # Ignore secret files
 *.secret
 
