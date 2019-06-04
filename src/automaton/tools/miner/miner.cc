@@ -60,7 +60,7 @@ bool mine_key(unsigned char* mask, unsigned char* difficulty, unsigned char* pri
   return found;
 }
 
-std::string sign(unsigned char* priv_key, unsigned char* msg_hash) {
+std::string sign(const unsigned char* priv_key, const unsigned char* msg_hash) {
   secp256k1_context* context = secp256k1_context_create(SECP256K1_CONTEXT_SIGN | SECP256K1_CONTEXT_VERIFY);
   secp256k1_ecdsa_recoverable_signature signature;
   char signatureArr[65];
