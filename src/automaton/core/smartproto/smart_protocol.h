@@ -29,6 +29,8 @@ class smart_protocol {
 
   static bool load(const std::string& id, const std::string& path);
 
+  ~smart_protocol();
+
   std::shared_ptr<data::factory> get_factory();
   std::unordered_map<std::string, std::string> get_msgs_definitions();
   std::vector<data::schema*> get_schemas();

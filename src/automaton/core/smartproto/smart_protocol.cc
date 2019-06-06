@@ -25,6 +25,12 @@ smart_protocol::smart_protocol() {
   factory = std::shared_ptr<data::factory>(new protobuf_factory());
 }
 
+smart_protocol::~smart_protocol() {
+  for (schema* s : schemas) {
+    delete s;
+  }
+}
+
 std::shared_ptr<smart_protocol> smart_protocol::get_protocol(const std::string& proto_id) {
   auto it = protocols.find(proto_id);
   if (it == protocols.end()) {

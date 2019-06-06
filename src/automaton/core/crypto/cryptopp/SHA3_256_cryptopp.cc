@@ -14,6 +14,10 @@ SHA3_256_cryptopp::SHA3_256_cryptopp() {
   hash = new CryptoPP::SHA3_256;
 }
 
+SHA3_256_cryptopp::~SHA3_256_cryptopp() {
+  delete hash;
+}
+
 void SHA3_256_cryptopp::calculate_digest(const uint8_t * input,
                                       const size_t length,
                                       uint8_t * digest) {

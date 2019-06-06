@@ -203,8 +203,9 @@ void node::log(const string& logger, const string& msg) {
   auto now = std::chrono::system_clock::now();
   auto current_time = std::chrono::duration_cast<std::chrono::milliseconds>(
      now.time_since_epoch()).count();
-  logs[logger].push_back(
-    "[" + io::get_date_string(now) + "." + io::zero_padded(current_time % 1000, 3) + "] " + msg);
+  std::stringstream ss;
+  ss << "[" << io::get_date_string(now) << "." << io::zero_padded(current_time % 1000, 3) << "] " << msg;
+  logs[logger].push_back(ss.str());
 }
 
 void node::dump_logs(const string& html_file) {
