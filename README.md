@@ -1,6 +1,4 @@
-<img align="right" title="Automaton Logo" width="231" height="39" src="media/automaton-logo-black-on-white-8x8.svg">
-
-# Automaton
+# <img align="right" title="Automaton Logo" width="231" height="39" src="media/automaton-logo-black-on-white-8x8.svg">
 
 ## Build Status
 
