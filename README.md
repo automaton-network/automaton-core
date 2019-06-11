@@ -1,4 +1,4 @@
-<img align="right" title="Automaton Logo" width="128" height="128" src="media/automaton-logo-black-on-white-8x8.svg">
+<img align="right" title="Automaton Logo" width="231" height="39" src="media/automaton-logo-black-on-white-8x8.svg">
 
 # Automaton
 
