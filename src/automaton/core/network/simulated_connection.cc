@@ -38,7 +38,7 @@ simulation::simulation():simulation_time(0), simulation_running(false) {
       std::shared_ptr<connection::connection_handler> connections_handler) {
     return std::shared_ptr<acceptor>(new simulated_acceptor(id, address, handler, connections_handler));
   });
-  std::srand(816405263);
+  std::srand(time(NULL));
 }
 
 simulation::~simulation() {
@@ -186,10 +186,11 @@ void simulation::handle_request(uint32_t src, uint32_t dest) {
     auto bandwidth = acceptor_->parameters.bandwidth < source->parameters.bandwidth ?
         acceptor_->parameters.bandwidth : source->parameters.bandwidth;
     // Remote address of the other connection is 0 which means connect to that address is not possible.
-    std::string new_addr = std::to_string(params.min_lag) + ":" + std::to_string(params.max_lag) + ":" +
-        std::to_string(bandwidth) + ":0";
-    std::shared_ptr<simulated_connection> new_connection(
-        new simulated_connection(cid, new_addr, acceptor_->accepted_connections_handler));
+    std::stringstream ss;
+    ss << params.min_lag << ":" << params.max_lag << ":" << bandwidth << ":0";
+    std::string new_addr = ss.str();
+    std::shared_ptr<simulated_connection> new_connection =
+        std::make_shared<simulated_connection>(cid, new_addr, acceptor_->accepted_connections_handler);
     if (new_connection->init()) {
       add_connection(new_connection);
       source->parameters.bandwidth = new_connection->parameters.bandwidth = bandwidth;
@@ -480,7 +481,6 @@ simulated_connection::~simulated_connection() {
 bool simulated_connection::init() {
   connection_state = connection::state::disconnected;
   if (!parse_address(original_address, &parameters, &remote_address)) {
-    std::stringstream msg;
     LOG(ERROR) << "ERROR: Connection creation failed! Could not resolve address and parameters in: "
         << original_address;
     return false;
@@ -564,7 +564,7 @@ void simulated_connection::handle_read() {
     uint32_t max_to_read = read_some ? packet.buffer_size : packet.expect_to_read;
     while (receive_buffer.size() && packet.bytes_read < max_to_read) {
       uint32_t left_to_read = max_to_read - packet.bytes_read;
-      std::string message = receive_buffer.front();
+      std::string& message = receive_buffer.front();
       if (left_to_read >= message.size()) {
         std::memcpy(packet.buffer.get() + packet.bytes_read, message.data(), message.size());
         packet.bytes_read += message.size();

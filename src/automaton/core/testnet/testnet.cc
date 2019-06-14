@@ -75,15 +75,18 @@ void testnet::connect(std::unordered_map<uint32_t, std::vector<uint32_t> > peers
   }
 
   for (auto it = peers_list.begin(); it != peers_list.end(); it++) {
-    std::string nid = id + std::to_string(it->first);
-    std::shared_ptr<automaton::core::node::node> n = automaton::core::node::node::get_node(nid);
+    std::stringstream nid;
+    nid << id << it->first;
+    std::shared_ptr<automaton::core::node::node> n = automaton::core::node::node::get_node(nid.str());
     if (n == nullptr) {
-      LOG(ERROR) << "No such node: " << nid;
+      LOG(ERROR) << "No such node: " << nid.str();
       continue;
     }
-    std::vector<uint32_t> peers = it->second;
+    std::vector<uint32_t>& peers = it->second;
     for (uint32_t i = 0; i < peers.size(); ++i) {
-      uint32_t pid = n->add_peer(address + std::to_string(port + peers[i]));
+      std::stringstream ss;
+      ss << address << (port + peers[i]);
+      uint32_t pid = n->add_peer(ss.str());
       n->connect(pid);
     }
   }
@@ -97,7 +100,7 @@ std::vector<std::string> testnet::list_nodes() {
 
 testnet::testnet(const std::string& node_type, const std::string& id, const std::string& smart_protocol_id,
     network_protocol_type ntype, uint32_t number_nodes): node_type(node_type), network_id(id),
-    protocol_id(smart_protocol_id), network_type(ntype), number_nodes(number_nodes) {}
+    protocol_id(smart_protocol_id), network_type(ntype), number_nodes(number_nodes), node_ids_list(number_nodes, "") {}
 
 bool testnet::init() {
   std::string address = "";
@@ -115,7 +118,7 @@ bool testnet::init() {
     if (!res) {
       return false;
     }
-    node_ids_list.push_back(node_id);
+    node_ids_list[i] = node_id;
   }
   return true;
 }

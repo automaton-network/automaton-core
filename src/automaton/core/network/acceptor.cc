@@ -14,11 +14,10 @@ std::shared_ptr<acceptor> acceptor::create(const std::string& type, acceptor_id 
     std::shared_ptr<acceptor::acceptor_handler> handler,
     std::shared_ptr<connection::connection_handler> connections_handler) {
   auto it = acceptor_factory.find(type);
-  if (it == acceptor_factory.end()) {
-    return NULL;
-  } else {
+  if (it != acceptor_factory.end()) {
     return it -> second(id, address, handler, connections_handler);
   }
+  return nullptr;
 }
 void acceptor::register_acceptor_type(
     const std::string& type, factory_function func) {

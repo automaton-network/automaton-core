@@ -39,7 +39,7 @@ std::unordered_map<uint32_t, std::vector<uint32_t> > create_connections_vector(u
     for (uint32_t j = 0; j < p; ++j) {
       peers.push_back((i + j) % n + 1);
     }
-    result[i] = peers;
+    result[i] = std::move(peers);
   }
   return result;
 }

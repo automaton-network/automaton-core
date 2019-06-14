@@ -38,7 +38,7 @@ namespace automaton {
 namespace core {
 namespace node {
 
-static const uint32_t MAX_MESSAGE_SIZE = 1 * 1024;  // Maximum size of message in bytes
+static const uint32_t MAX_MESSAGE_SIZE = 256;  // Maximum size of message in bytes
 static const uint32_t HEADER_SIZE = 3;
 static const uint32_t WAITING_HEADER = 1;
 static const uint32_t WAITING_MESSAGE = 2;
@@ -480,8 +480,8 @@ peer_id node::add_peer(const string& address) {
       LOG(ERROR) << "Address was not parsed! " << address;
     } else {
       std::shared_ptr<node> self = shared_from_this();
-      new_connection = std::shared_ptr<connection>(connection::create(protocol, info.id, addr, self));
-      if (new_connection && !new_connection->init()) {
+      new_connection = std::move(connection::create(protocol, info.id, addr, self));
+      if (new_connection != nullptr && !new_connection->init()) {
         LOG(ERROR) << "Connection initialization failed! Connection was not created!";
       }
     }
@@ -606,7 +606,7 @@ void node::on_message_received(peer_id c, std::shared_ptr<char> buffer, uint32_t
     }
     break;
     case WAITING_MESSAGE: {
-      string blob = string(buffer.get(), bytes_read);
+      string blob(buffer.get(), bytes_read);
       // VLOG(9) << "LOCK " << this << " " << (acceptor_ ? acceptor_->get_address() : "N/A");
       peers_mutex.lock();
       auto it = known_peers.find(c);
