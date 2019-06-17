@@ -26,7 +26,7 @@ inline static std::string hashstr(const std::string& hash) {
   return hex.substr(hex.size() - 8);
 }
 
-static const bool LOG_ENABLED = true;
+static const bool LOG_ENABLED = false;
 
 static const std::string GENESIS_HASH = hash("automaton");  // NOLINT
 
