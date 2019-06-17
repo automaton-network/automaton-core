@@ -91,7 +91,9 @@ void node::remove_node(const string& id) {
     node->acceptor_->stop_accepting();
     node->acceptor_ = nullptr;
     for (auto peer = node->known_peers.begin(); peer != node->known_peers.end(); ++peer) {
-      peer->second.connection->disconnect();
+      if (peer->second.connection != nullptr) {
+        peer->second.connection->disconnect();
+      }
     }
     node->known_peers.clear();
     nodes.erase(it);
@@ -134,31 +136,20 @@ node::node(const string& id,
     , time_to_update(0)
     , acceptor_(nullptr) {
   // LOG(DBUG) << "Node constructor called";
-  std::shared_ptr<automaton::core::smartproto::smart_protocol> proto =
-      automaton::core::smartproto::smart_protocol::get_protocol(proto_id);
+  proto = automaton::core::smartproto::smart_protocol::get_protocol(proto_id);
   if (!proto) {
     throw std::invalid_argument("No such protocol: " + proto_id);
   }
   update_time_slice = proto->get_update_time_slice();
-
-  auto factory = proto->get_factory();
-  std::vector<std::string> wire_msgs = proto->get_wire_msgs();
-  for (uint32_t wire_id = 0; wire_id < wire_msgs.size(); ++wire_id) {
-    string wire_msg = wire_msgs[wire_id];
-    auto factory_id = factory->get_schema_id(wire_msg);
-    factory_to_wire[factory_id] = wire_id;
-    wire_to_factory[wire_id] = factory_id;
-  }
 }
 
 node::~node() {}
 
 std::unique_ptr<msg> node::get_wire_msg(const std::string& blob) {
   auto wire_id = blob[0];
-  CHECK_GT(wire_to_factory.count(wire_id), 0);
-  auto msg_id = wire_to_factory[wire_id];
-  static std::shared_ptr<data::factory> factory =
-      automaton::core::smartproto::smart_protocol::get_protocol(protoid)->get_factory();
+  auto msg_id = proto->get_factory_from_wire(wire_id);
+  CHECK_GT(msg_id, -1);
+  static std::shared_ptr<data::factory> factory = proto->get_factory();
   std::unique_ptr<msg> m = factory->new_message_by_id(msg_id);
   m->deserialize_message(blob.substr(1));
   return m;
@@ -325,9 +316,8 @@ uint64_t node::get_time_to_update() {
 
 void node::send_message(peer_id p_id, const core::data::msg& msg, uint32_t msg_id) {
   auto msg_schema_id = msg.get_schema_id();
-  CHECK_GT(factory_to_wire.count(msg_schema_id), 0)
-      << "Message " << msg.get_message_type() << " not part of the protocol";
-  auto wire_id = factory_to_wire[msg_schema_id];
+  auto wire_id = proto->get_wire_from_factory(msg_schema_id);
+  CHECK_GT(wire_id, -1) << "Message " << msg.get_message_type() << " not part of the protocol";
   string msg_blob;
   if (msg.serialize_message(&msg_blob)) {
     msg_blob.insert(0, 1, static_cast<char>(wire_id));

@@ -87,6 +87,13 @@ bool smart_protocol::load(const std::string& id, const std::string& path) {
       }
       proto->files.insert(std::make_pair(it.key(), std::move(extracted_files)));
     }
+
+    for (uint32_t wire_id = 0; wire_id < proto->wire_msgs.size(); ++wire_id) {
+      std::string& wire_msg = proto->wire_msgs[wire_id];
+      auto factory_id = proto->factory->get_schema_id(wire_msg);
+      proto->factory_to_wire[factory_id] = wire_id;
+      proto->wire_to_factory[wire_id] = factory_id;
+    }
   }
   protocols[id] = proto;
   return true;
@@ -138,6 +145,22 @@ std::string smart_protocol::get_configuration_file() {
 
 uint32_t smart_protocol::get_update_time_slice() {
   return update_time_slice;
+}
+
+int32_t smart_protocol::get_wire_from_factory(int32_t msg_schema_id) {
+  auto it = factory_to_wire.find(msg_schema_id);
+  if (it != factory_to_wire.end()) {
+    return it->second;
+  }
+  return -1;
+}
+
+int32_t smart_protocol::get_factory_from_wire(int32_t wire_id) {
+  auto it = wire_to_factory.find(wire_id);
+  if (it != wire_to_factory.end()) {
+    return it->second;
+  }
+  return -1;
 }
 
 }  // namespace smartproto

@@ -39,7 +39,7 @@ void testnet::destroy_testnet(const std::string& id) {
   }
 }
 
-std::shared_ptr<testnet> testnet::get_testnet(std::string id) {
+std::shared_ptr<testnet> testnet::get_testnet(const std::string& id) {
   auto it = testnets.find(id);
   if (it != testnets.end()) {
     return it->second;
@@ -63,7 +63,7 @@ testnet::~testnet() {
   }
 }
 
-void testnet::connect(std::unordered_map<uint32_t, std::vector<uint32_t> > peers_list) {
+void testnet::connect(const std::unordered_map<uint32_t, std::vector<uint32_t> >& peers_list) const {
   std::string id = network_id + "_";
   std::string address = "";
   uint32_t port = 0;
@@ -82,7 +82,7 @@ void testnet::connect(std::unordered_map<uint32_t, std::vector<uint32_t> > peers
       LOG(ERROR) << "No such node: " << nid.str();
       continue;
     }
-    std::vector<uint32_t>& peers = it->second;
+    const std::vector<uint32_t>& peers = it->second;
     for (uint32_t i = 0; i < peers.size(); ++i) {
       std::stringstream ss;
       ss << address << (port + peers[i]);

@@ -40,6 +40,9 @@ class smart_protocol {
   std::string get_configuration_file();
   uint32_t get_update_time_slice();
 
+  int32_t get_wire_from_factory(int32_t);
+  int32_t get_factory_from_wire(int32_t);
+
  private:
   smart_protocol();
   static std::unordered_map<std::string, std::shared_ptr<smart_protocol>> protocols;
@@ -54,6 +57,9 @@ class smart_protocol {
   std::vector<std::string> wire_msgs;
   std::vector<cmd> commands;
   std::string config_json;
+
+  std::unordered_map<int32_t, int32_t> wire_to_factory;
+  std::unordered_map<int32_t, int32_t> factory_to_wire;
 };
 
 }  // namespace smartproto
