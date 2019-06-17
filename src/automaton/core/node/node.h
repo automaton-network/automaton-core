@@ -106,10 +106,6 @@ class node: public network::connection::connection_handler,
 
   std::mutex script_mutex;
 
-  // Protocol schema
-  std::unordered_map<uint32_t, uint32_t> wire_to_factory;
-  std::unordered_map<uint32_t, uint32_t> factory_to_wire;
-
  private:
   static std::map<std::string, factory_function> node_factory;
   static std::unordered_map<std::string, std::shared_ptr<node> > nodes;
@@ -136,6 +132,8 @@ class node: public network::connection::connection_handler,
 
   std::mutex tasks_mutex;
   std::deque<std::function<std::string()>> tasks;
+
+  std::shared_ptr<automaton::core::smartproto::smart_protocol> proto;
 
   // Inherited handlers' functions
 

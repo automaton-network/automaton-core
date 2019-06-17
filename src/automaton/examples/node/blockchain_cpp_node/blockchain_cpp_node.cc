@@ -26,7 +26,7 @@ inline static std::string hashstr(const std::string& hash) {
   return hex.substr(hex.size() - 8);
 }
 
-static const bool LOG_ENABLED = true;
+static const bool LOG_ENABLED = false;
 
 static const std::string GENESIS_HASH = hash("automaton");  // NOLINT
 
@@ -249,7 +249,9 @@ void blockchain_cpp_node::on_block(uint32_t p_id, const block& b) {
   block_validity validity = validate_block(b);
   std::string bhash = hash(b.data());
   if (LOG_ENABLED) {
-    log(get_peer_name(p_id), "RECV | " + bin2hex(bhash) + " | " + validity_to_str(validity) + " | " + b.to_string());
+    std::stringstream ss;
+    ss << "RECV | " << bin2hex(bhash) << " | " << validity_to_str(validity) << " | " << b.to_string();
+    log(get_peer_name(p_id), ss.str());
   }
   if (validity == VALID) {
     // Block is valid, store it

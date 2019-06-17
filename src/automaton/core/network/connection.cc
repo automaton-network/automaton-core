@@ -10,11 +10,10 @@ connection::connection(connection_id id_, std::shared_ptr<connection::connection
 std::shared_ptr<connection> connection::create(const std::string& type, connection_id id, const std::string& address,
     std::shared_ptr<connection::connection_handler> handler) {
   auto it = connection_factory.find(type);
-  if (it == connection_factory.end()) {
-    return nullptr;
-  } else {
+  if (it != connection_factory.end()) {
     return it->second(id, address, handler);
   }
+  return nullptr;
 }
 
 connection_id connection::get_id() {

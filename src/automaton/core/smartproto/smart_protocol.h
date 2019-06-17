@@ -29,6 +29,8 @@ class smart_protocol {
 
   static bool load(const std::string& id, const std::string& path);
 
+  ~smart_protocol();
+
   std::shared_ptr<data::factory> get_factory();
   std::unordered_map<std::string, std::string> get_msgs_definitions();
   std::vector<data::schema*> get_schemas();
@@ -37,6 +39,9 @@ class smart_protocol {
   std::vector<std::string> get_commands();
   std::string get_configuration_file();
   uint32_t get_update_time_slice();
+
+  int32_t get_wire_from_factory(int32_t);
+  int32_t get_factory_from_wire(int32_t);
 
  private:
   smart_protocol();
@@ -52,6 +57,9 @@ class smart_protocol {
   std::vector<std::string> wire_msgs;
   std::vector<cmd> commands;
   std::string config_json;
+
+  std::unordered_map<int32_t, int32_t> wire_to_factory;
+  std::unordered_map<int32_t, int32_t> factory_to_wire;
 };
 
 }  // namespace smartproto

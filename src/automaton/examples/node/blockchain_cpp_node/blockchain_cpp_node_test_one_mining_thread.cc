@@ -14,9 +14,9 @@ using automaton::core::node::node_updater_tests;
 using automaton::core::smartproto::smart_protocol;
 using automaton::core::testnet::testnet;
 
-const uint32_t WORKER_SLEEP_TIME_MS = 3000;
-const uint32_t NODES = 10000;
-const uint32_t PEERS = 15;
+const uint32_t WORKER_SLEEP_TIME_MS = 1000;
+const uint32_t NODES = 100000;
+const uint32_t PEERS = 2;
 const uint32_t SIMULATION_SLEEP_TIME_MS = 30;
 const uint32_t LOGGER_SLEEP_TIME_MS = 100;
 const uint32_t SIMULATION_TIME = 120000;  // from updater.start() to .stop(), doesn't include time to connect
@@ -39,7 +39,7 @@ std::unordered_map<uint32_t, std::vector<uint32_t> > create_connections_vector(u
     for (uint32_t j = 0; j < p; ++j) {
       peers.push_back((i + j) % n + 1);
     }
-    result[i] = peers;
+    result[i] = std::move(peers);
   }
   return result;
 }
@@ -76,17 +76,18 @@ int main() {
   if (smart_protocol::load("blockchain", "automaton/examples/smartproto/blockchain/") == false) {
     std::cout << "Blockchain protocol was NOT loaded!!!" << std::endl;
   }
+
   std::shared_ptr<automaton::core::network::simulation> sim = automaton::core::network::simulation::get_simulator();
   sim->simulation_start(SIMULATION_SLEEP_TIME_MS);
 
   testnet::create_testnet("blockchain", "testnet", "doesntmatter", testnet::network_protocol_type::simulation, NODES,
-      create_connections_vector(NODES, PEERS));
+      create_rnd_connections_vector(NODES, PEERS));
 
   std::vector<std::string> ids = testnet::get_testnet("testnet")->list_nodes();
   node_updater_tests updater(WORKER_SLEEP_TIME_MS, std::set<std::string>(ids.begin(), ids.end()));
   updater.start();
 
-  bool stop_logger = false;
+  bool stop_logger = true;
   std::thread logger([&]() {
     while (!stop_logger) {
       std::this_thread::sleep_for(std::chrono::milliseconds(LOGGER_SLEEP_TIME_MS));
@@ -117,6 +118,7 @@ int main() {
     blocks_sz[node->get_blocks_size()]++;
     if (blocks_sz[node->get_blocks_size()] == 1) {
       std::cout << "check " << n << std::endl;
+      node::get_node(n)->dump_logs("logs/blockchain/" + n + ".html");
     }
   }
   std::cout << "=============================================" << std::endl;
@@ -127,9 +129,6 @@ int main() {
 
   for (auto it = blocks_sz.begin(); it != blocks_sz.end(); ++it) {
     std::cout << it->first << " -> " << it->second << " nodes" << std::endl;
-  }
-  for (auto n : node::list_nodes()) {
-    node::get_node(n)->dump_logs("logs/blockchain/" + n + ".html");
   }
   testnet::destroy_testnet("testnet");
   return 0;

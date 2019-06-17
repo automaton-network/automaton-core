@@ -15,6 +15,7 @@ class SHA3_256_cryptopp : public hash_transformation {
   CryptoPP::SHA3_256* hash;
  public:
   SHA3_256_cryptopp();
+  ~SHA3_256_cryptopp();
 
   void calculate_digest(const uint8_t* input,
                         const size_t length,

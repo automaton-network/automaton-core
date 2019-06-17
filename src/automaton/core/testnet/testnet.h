@@ -26,11 +26,11 @@ class testnet {
 
   static void destroy_testnet(const std::string& id);
 
-  static std::shared_ptr<testnet> get_testnet(std::string id);
+  static std::shared_ptr<testnet> get_testnet(const std::string& id);
 
   static std::vector<std::string> list_testnets();
 
-  void connect(std::unordered_map<uint32_t, std::vector<uint32_t> > peers_list);
+  void connect(const std::unordered_map<uint32_t, std::vector<uint32_t> >& peers_list) const;
 
   std::vector<std::string> list_nodes();
 
