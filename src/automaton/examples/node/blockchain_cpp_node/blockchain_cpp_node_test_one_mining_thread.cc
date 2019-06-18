@@ -21,49 +21,6 @@ const uint32_t SIMULATION_SLEEP_TIME_MS = 30;
 const uint32_t LOGGER_SLEEP_TIME_MS = 100;
 const uint32_t SIMULATION_TIME = 120000;  // from updater.start() to .stop(), doesn't include time to connect
 
-/*
-returns connection graph
-n -> number of nodes
-p -> number of peers
-* connects node i with the next p nodes
-*/
-std::unordered_map<uint32_t, std::vector<uint32_t> > create_connections_vector(uint32_t n, uint32_t p) {
-  std::unordered_map<uint32_t, std::vector<uint32_t> > result;
-  if (p >= ((n + 1) / 2)) {
-    std::cout << "'p' is too big! Setting 'p' to max valid number of peers for 'n' = " << n << " : " <<
-        ((n + 1) / 2 - 1) << std::endl;
-    return result;
-  }
-  for (uint32_t i = 1; i <= n; ++i) {
-    std::vector<uint32_t> peers;
-    for (uint32_t j = 0; j < p; ++j) {
-      peers.push_back((i + j) % n + 1);
-    }
-    result[i] = std::move(peers);
-  }
-  return result;
-}
-
-std::unordered_map<uint32_t, std::vector<uint32_t> > create_rnd_connections_vector(uint32_t n, uint32_t p) {
-  std::unordered_map<uint32_t, std::vector<uint32_t> > result;
-  uint32_t k;
-  if (p >= ((n + 1) / 2)) {
-    std::cout << "'p' is too big! Setting 'p' to max valid number of peers for 'n' = " << n << " : " <<
-        ((n + 1) / 2 - 1) << std::endl;
-    return result;
-  }
-  for (uint32_t i = 1; i <= n; ++i) {
-    std::set<uint32_t> peers;
-    while (peers.size() < p) {
-      k = std::rand() % NODES + 1;
-      if (k == i) {continue;}
-      peers.insert(k);
-    }
-    result[i] = std::vector<uint32_t>(peers.begin(), peers.end());
-  }
-  return result;
-}
-
 int main() {
   std::unique_ptr<g3::LogWorker> logworker {g3::LogWorker::createLogWorker()};
   auto l_handler = logworker->addDefaultLogger("demo", "./");
@@ -81,7 +38,7 @@ int main() {
   sim->simulation_start(SIMULATION_SLEEP_TIME_MS);
 
   testnet::create_testnet("blockchain", "testnet", "doesntmatter", testnet::network_protocol_type::simulation, NODES,
-      create_rnd_connections_vector(NODES, PEERS));
+      automaton::core::testnet::create_rnd_connections_vector(NODES, PEERS));
 
   std::vector<std::string> ids = testnet::get_testnet("testnet")->list_nodes();
   node_updater_tests updater(WORKER_SLEEP_TIME_MS, std::set<std::string>(ids.begin(), ids.end()));
