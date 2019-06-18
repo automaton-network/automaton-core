@@ -99,6 +99,7 @@ void test_persistent_blobstore_create_mapped_file() {
   // }
 }
 
+/*
 void testnet_test_all() {
   node::register_node_type("lua", [](const std::string& id, const std::string& proto_id)->std::shared_ptr<node> {
     return std::shared_ptr<node>(new lua_node(id, proto_id));
@@ -183,6 +184,7 @@ void testnet_test_all() {
 
   sim->simulation_stop();
 }
+*/
 
 void test_data_protobufs() {
   const char* TEST_MSG = "TestMsg5";

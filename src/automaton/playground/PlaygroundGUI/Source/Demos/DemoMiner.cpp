@@ -1,12 +1,26 @@
 #include "DemoMiner.h"
 
-unsigned int leading_bits(unsigned int x) {
+unsigned int leading_bits_char(char x) {
   unsigned int c = 0;
-  while (x & (1 << 31)) {
+  while (x & 0x80) {
     c++;
     x <<= 1;
   }
   return c;
+}
+
+using automaton::core::io::bin2hex;
+
+unsigned int leading_bits(const std::string& s) {
+  unsigned int result = 0;
+  for (unsigned int i = 0; i < s.size(); i++) {
+    unsigned int lb = leading_bits_char(s[i]);
+    result += lb;
+    if (lb != 8) {
+      break;
+    }
+  }
+  return result;
 }
 
 Colour HSV(double h, double s, double v) {
@@ -68,14 +82,14 @@ Colour HSV(double h, double s, double v) {
 
 //==============================================================================
 DemoMiner::DemoMiner() {
-  LBL("Simulation Speed (days/sec)", 25, 45, 240, 20);
+  LBL("Mining Power Multiplier", 25, 45, 240, 20);
   StringArray btxtSpeed;
   btxtSpeed.add(TRANS("1x"));
-  btxtSpeed.add(TRANS("2x"));
-  btxtSpeed.add(TRANS("5x"));
-  btxtSpeed.add(TRANS("10x"));
-  btxtSpeed.add(TRANS("50x"));
-  btxtSpeed.add(TRANS("100x"));
+  btxtSpeed.add(TRANS("16x"));
+  btxtSpeed.add(TRANS("256x"));
+  btxtSpeed.add(TRANS("4Kx"));
+  btxtSpeed.add(TRANS("64Kx"));
+  btxtSpeed.add(TRANS("1Mx"));
   GTB(100, 0, btxtSpeed, 25, 70, 40, 20);
 
   LBL("Number of Bootstrap Validator Slots", 25, 105, 240, 20);
@@ -144,19 +158,34 @@ void DemoMiner::buttonClicked(Button* btn) {
     reward_per_period = 20000;
   }
   if (txt == "1x") {
-    iters = 1;
+    mask1 = 0x00;
+    mask2 = 0x00;
+    mask3 = 0x00;
   }
-  if (txt == "2x") {
-    iters = 2;
+  if (txt == "16x") {
+    mask1 = 0xF0;
+    mask2 = 0x00;
+    mask3 = 0x00;
   }
-  if (txt == "5x") {
-    iters = 5;
+  if (txt == "256x") {
+    mask1 = 0xFF;
+    mask2 = 0x00;
+    mask3 = 0x00;
   }
-  if (txt == "10x") {
-    iters = 10;
+  if (txt == "4Kx") {
+    mask1 = 0xFF;
+    mask2 = 0xF0;
+    mask3 = 0x00;
   }
-  if (txt == "100x") {
-    iters = 100;
+  if (txt == "64Kx") {
+    mask1 = 0xFF;
+    mask2 = 0xFF;
+    mask3 = 0x00;
+  }
+  if (txt == "1Mx") {
+    mask1 = 0xFF;
+    mask2 = 0xFF;
+    mask3 = 0xF0;
   }
   if (txt == "1MKps") {
     mining_power = 1;
@@ -186,15 +215,18 @@ void DemoMiner::buttonClicked(Button* btn) {
     total_balance = 0;
     total_supply = 0;
 
+    max_leading_bits = 1;
+
     for (int x = 0; x < 256; x++) {
       for (int y = 0; y < 256; y++) {
-        slots[x][y].diff = 0;
+        slots[x][y].diff = std::string(32, 0);
+        slots[x][y].bits = 0;
         slots[x][y].owner = 0;
         slots[x][y].tm = 0;
       }
     }
 
-    startTimer(1000);
+    startTimer(500);
   }
 }
 
@@ -224,30 +256,32 @@ void DemoMiner::paint(Graphics& g) {
   g.setColour(Colours::white);
   g.drawRect(19 - k2, 249 - k2, m * k + k2 + 2, n * k + k2 + 2);
 
-  int lb_hist[32] = {0};
+  unsigned int lb_hist[256] = {0};
 
-  min_leading_bits = 32;
+  min_leading_bits = 257;
   for (int x = 0; x < m; x++) {
     for (int y = 0; y < n; y++) {
-      auto lb = leading_bits(slots[x][y].diff);
-      lb_hist[lb]++;
-      if (leading_bits(slots[x][y].diff) < min_leading_bits) {
-        min_leading_bits = lb;
+      lb_hist[slots[x][y].bits]++;
+      if (slots[x][y].bits < min_leading_bits) {
+        min_leading_bits = slots[x][y].bits;
       }
     }
   }
 
   int xx = 350;
   int yy = 260;
-  for (int i = 32; i > 0; i--) {
+  for (int i = 255; i >= 0; i--) {
     if (lb_hist[i] == 0) {
       continue;
     }
+    double lb = 1.0 * (i - min_leading_bits + 1) / (max_leading_bits - min_leading_bits + 1);
+    g.setColour(HSV(200, 1.0 - lb, 0.5 + 0.5 * lb));
+    // g.setColour(Colour::fromHSV(1.0 * (i - min_leading_bits) / (max_leading_bits - min_leading_bits), 1.0f, 1.0f, 1.0f));  // NOLINT
     for (int j = 0; j < i; j++) {
-      g.setColour(Colour::fromHSV(i / 31.0f, 1.0f, 1.0f, 1.0f));
       g.fillRect(xx + 8 * j, yy + 2, 7, 7);
     }
     g.drawText(sepitoa(lb_hist[i]), xx - 60, yy, 50, 12, Justification::centredRight);
+    g.drawText(sepitoa(i), xx + 8 * (i+1), yy, 50, 12, Justification::centredLeft);
     g.setColour(Colours::white);
     g.fillRect(xx, yy + 5, lb_hist[i] / m, 1);
     yy += 12;
@@ -256,11 +290,10 @@ void DemoMiner::paint(Graphics& g) {
   for (int x = 0; x < m; x++) {
     for (int y = 0; y < n; y++) {
       int i = y * 256 + x;
-      if (slots[x][y].diff == 0) {
+      if (slots[x][y].bits == 0) {
         slots[x][y].bg = Colours::black;
       }
-      double lb =
-        1.0 * (leading_bits(slots[x][y].diff) - min_leading_bits + 1) / (max_leading_bits - min_leading_bits + 1);
+      double lb = 1.0 * (slots[x][y].bits - min_leading_bits + 1) / (max_leading_bits - min_leading_bits + 1);
       slots[x][y].bg = HSV(200, 1.0 - lb, 0.5 + 0.5 * lb);
       g.setColour(slots[x][y].bg);
       g.fillRect(20 + x * k, 250 + y * k, k - k2, k - k2);
@@ -276,6 +309,8 @@ void DemoMiner::paint(Graphics& g) {
 
   g.setColour(Colours::white);
   g.drawMultiLineText(
+      " Max Leading Bits: " + String(max_leading_bits) + "\n" +
+      " Min Leading Bits: " + String(min_leading_bits) + "\n" +
       " coeff: " + String(coeff) + "\n" +
       " days: " + String(t / periods_per_day) + "\n" +
       " Slots owned: " + String(slots_owned) + "\n" +
@@ -293,39 +328,52 @@ void DemoMiner::paint(Graphics& g) {
 void DemoMiner::resized() {
 }
 
+std::string get_rand() {
+  static uint8_t b1[32];
+  static uint8_t b2[32];
+  automaton::core::crypto::cryptopp::SHA256_cryptopp hasher;
+  hasher.calculate_digest(b1, 32, b2);
+  memcpy(b1, b2, 32);
+  return std::string(reinterpret_cast<char *>(b1), 32);
+}
+
 void DemoMiner::update() {
-  for (int zz = 0; zz < iters; zz++) {
-    t++;
-    double coeff = (1.0 - pow(total_supply, 2.0) / pow(supply_cap, 2.0));
+  t++;
+  double coeff = (1.0 - pow(total_supply, 2.0) / pow(supply_cap, 2.0));
 
-    unsigned int mask = 0x80000000;
-    unsigned int total_power = (t <= 1371) ? mp[t] : mp[1371];
-    total_power += mining_power;
-    unsigned int opt = 0;
-    while (total_power > (0x10000 << opt)) {
-      opt++;
-      mask |= mask >> 1;
+  unsigned int mask = 0x80000000;
+  unsigned int total_power = (t <= 1371) ? mp[t] : mp[1371];
+  total_power += mining_power;
+  unsigned int opt = 0;
+  while (total_power > (0x10000 << opt)) {
+    opt++;
+    mask |= mask >> 1;
+  }
+
+  for (int i = 0; i < (total_power >> opt); i++) {
+    std::string r = get_rand();
+    r[0] = 0xFF;
+    r[1] |= mask1;
+    r[2] |= mask2;
+    r[3] |= mask3;
+    unsigned int x = r[30] % m;
+    unsigned int y = r[31] % n;
+    // unsigned int r = rand_r(&my_seed) | mask;
+    if (r > slots[x][y].diff) {
+      unsigned int reward = coeff * (t - slots[x][y].tm) * reward_per_period;
+      if (slots[x][y].tm != 0) {
+        total_supply += reward;
+      }
+      if (slots[x][y].owner == 1) {
+        total_balance += reward / 2;
+      }
+      slots[x][y].diff = r;
+      slots[x][y].bits = leading_bits(r);
+      slots[x][y].owner = (rand_r(&my_seed) % total_power <= mining_power) ? 1 : 0;
+      slots[x][y].tm = t;
     }
-
-    for (int i = 0; i < (total_power >> opt); i++) {
-      unsigned int x = rand_r(&my_seed) % m;
-      unsigned int y = rand_r(&my_seed) % n;
-      unsigned int r = rand_r(&my_seed) | mask;
-      if (r > slots[x][y].diff) {
-        unsigned int reward = coeff * (t - slots[x][y].tm) * reward_per_period;
-        if (slots[x][y].tm != 0) {
-          total_supply += reward;
-        }
-        if (slots[x][y].owner == 1) {
-          total_balance += reward / 2;
-        }
-        slots[x][y].diff = r;
-        slots[x][y].owner = (rand_r(&my_seed) % total_power <= mining_power) ? 1 : 0;
-        slots[x][y].tm = t;
-      }
-      if (leading_bits(r) > max_leading_bits) {
-        max_leading_bits = leading_bits(r);
-      }
+    if (leading_bits(r) > max_leading_bits) {
+      max_leading_bits = leading_bits(r);
     }
   }
 }

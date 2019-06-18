@@ -2,20 +2,6 @@
 
 #include "../../JuceLibraryCode/JuceHeader.h"
 
-class EmbeddedFonts {
- private:
-  Font play;
-  Font playBold;
-
- public:
-  EmbeddedFonts() {
-    play = Font(Typeface::createSystemTypefaceFor(BinaryData::PlayRegular_ttf, BinaryData::PlayRegular_ttfSize));
-    playBold = Font(Typeface::createSystemTypefaceFor(BinaryData::PlayBold_ttf, BinaryData::PlayBold_ttfSize));
-  }
-
-  Font& getPlay() { return play; }
-  Font& getPlayBold() { return playBold; }
-};
 
 
 class DemosMainComponent:
@@ -23,8 +9,6 @@ class DemosMainComponent:
   public ApplicationCommandTarget,
   public MenuBarModel {
  public:
-  EmbeddedFonts fonts;
-
   enum CommandIDs {
   };
 
