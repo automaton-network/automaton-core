@@ -16,6 +16,7 @@ class RIPEMD160_cryptopp : public hash_transformation {
   CryptoPP::RIPEMD160* hash;
  public:
   RIPEMD160_cryptopp();
+  ~RIPEMD160_cryptopp();
 
   void calculate_digest(const uint8_t* input,
                         const size_t length,

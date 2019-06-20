@@ -16,6 +16,7 @@ class Keccak_256_cryptopp : public hash_transformation {
   CryptoPP::Keccak_256 * hash;
  public:
   Keccak_256_cryptopp();
+  ~Keccak_256_cryptopp();
 
   void calculate_digest(const uint8_t* input,
     const size_t length,

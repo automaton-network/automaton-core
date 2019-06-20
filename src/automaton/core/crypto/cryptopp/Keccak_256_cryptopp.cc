@@ -14,6 +14,10 @@ Keccak_256_cryptopp::Keccak_256_cryptopp() {
   hash = new CryptoPP::Keccak_256;
 }
 
+Keccak_256_cryptopp::~Keccak_256_cryptopp() {
+  delete hash;
+}
+
 void Keccak_256_cryptopp::calculate_digest(const uint8_t * input,
                                            const size_t length,
                                            uint8_t * digest) {
