@@ -105,6 +105,7 @@ class DemoMiner:
 
   unsigned int max_leading_bits = 1;
   unsigned int min_leading_bits = 0;
+  unsigned int initial_difficulty_bits = 16;
 
   unsigned int t;
 

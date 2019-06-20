@@ -329,9 +329,9 @@ void DemoMiner::resized() {
 }
 
 std::string get_rand() {
-  static uint8_t b1[32];
-  static uint8_t b2[32];
-  automaton::core::crypto::cryptopp::SHA256_cryptopp hasher;
+  static uint8_t b1[32] = {0};
+  static uint8_t b2[32] = {0};
+  static automaton::core::crypto::cryptopp::SHA256_cryptopp hasher;
   hasher.calculate_digest(b1, 32, b2);
   memcpy(b1, b2, 32);
   return std::string(reinterpret_cast<char *>(b1), 32);
@@ -352,14 +352,14 @@ void DemoMiner::update() {
 
   for (int i = 0; i < (total_power >> opt); i++) {
     std::string r = get_rand();
-    r[0] = 0xFF;
-    r[1] |= mask1;
-    r[2] |= mask2;
-    r[3] |= mask3;
+    r[0] |= mask1;
+    r[1] |= mask2;
+    r[2] |= mask3;
     unsigned int x = r[30] % m;
     unsigned int y = r[31] % n;
     // unsigned int r = rand_r(&my_seed) | mask;
-    if (r > slots[x][y].diff) {
+    auto lb = leading_bits(r);
+    if ((lb >= initial_difficulty_bits) && (r > slots[x][y].diff)) {
       unsigned int reward = coeff * (t - slots[x][y].tm) * reward_per_period;
       if (slots[x][y].tm != 0) {
         total_supply += reward;
@@ -368,7 +368,7 @@ void DemoMiner::update() {
         total_balance += reward / 2;
       }
       slots[x][y].diff = r;
-      slots[x][y].bits = leading_bits(r);
+      slots[x][y].bits = lb;
       slots[x][y].owner = (rand_r(&my_seed) % total_power <= mining_power) ? 1 : 0;
       slots[x][y].tm = t;
     }
