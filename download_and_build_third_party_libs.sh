@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 PROTOBUF_VER="3.6.1.2"
 JUCE_VER="5.4.3"
 CRYPTOPP_VER="7_0_0"
@@ -253,7 +252,6 @@ if [ ! -f JUCE/extras/Projucer/Builds/LinuxMakefile/build/Projucer ]; then
 
     if $darwin; then
       # defaults write com.apple.dt.Xcode IDEBuildOperationMaxNumberOfConcurrentCompileTasks `sysctl -n hw.ncpu`
-      pwd
       xcodebuild \
         -configuration Release \
         GCC_PREPROCESSOR_DEFINITIONS='$GCC_PREPROCESSOR_DEFINITIONS JUCER_ENABLE_GPL_MODE=1' \
