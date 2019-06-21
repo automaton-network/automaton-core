@@ -103,13 +103,14 @@ class DemoMiner:
   uint64 total_balance = 0;
   uint64 total_supply = 0;
 
-  unsigned int max_leading_bits = 1;
+  unsigned int max_leading_bits = 4;
   unsigned int min_leading_bits = 0;
-  unsigned int initial_difficulty_bits = 16;
+  unsigned int initial_difficulty_bits = 4;
+  uint64 tx_count = 0;
 
   unsigned int t;
 
-  uint32 mining_power = 10;
+  uint32 mining_power = 0;
 
   void timerCallback() override;
 

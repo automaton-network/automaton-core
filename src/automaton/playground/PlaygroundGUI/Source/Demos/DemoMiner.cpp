@@ -101,14 +101,24 @@ DemoMiner::DemoMiner() {
   btxtSlotsNum.add(TRANS("64K"));
   GTB(101, 1, btxtSlotsNum, 25, 130, 48, 20);
 
-  LBL("Mining Power (Keys/sec)", 25, 165, 240, 20);
+  // LBL("Mining Power (Keys/sec)", 25, 165, 240, 20);
+  // StringArray btxtKps;
+  // btxtKps.add(TRANS("1MKps"));
+  // btxtKps.add(TRANS("10MKps"));
+  // btxtKps.add(TRANS("100MKps"));
+  // btxtKps.add(TRANS("1GKps"));
+  // btxtKps.add(TRANS("10GKps"));
+  // GTB(102, 2, btxtKps, 25, 190, 48, 20);
+
+  LBL("Dishonest Mining Power %", 25, 165, 240, 20);
   StringArray btxtKps;
-  btxtKps.add(TRANS("1MKps"));
-  btxtKps.add(TRANS("10MKps"));
-  btxtKps.add(TRANS("100MKps"));
-  btxtKps.add(TRANS("1GKps"));
-  btxtKps.add(TRANS("10GKps"));
-  GTB(102, 2, btxtKps, 25, 190, 48, 20);
+  btxtKps.add(TRANS("0%"));
+  btxtKps.add(TRANS("1%"));
+  btxtKps.add(TRANS("25%"));
+  btxtKps.add(TRANS("50%"));
+  btxtKps.add(TRANS("75%"));
+  btxtKps.add(TRANS("100%"));
+  GTB(102, 0, btxtKps, 25, 190, 40, 20);
 
   LBL("Validator Slots", 25, 225, 240, 20);
   LBL("Slots Difficulty Histogram", 325, 225, 240, 20);
@@ -147,7 +157,7 @@ void DemoMiner::buttonClicked(Button* btn) {
     m = 128;
     n = 128;
     sz = 2;
-    gap = 1;
+    gap = 0;
     reward_per_period = 80000;
   }
   if (txt == "64K") {
@@ -202,20 +212,39 @@ void DemoMiner::buttonClicked(Button* btn) {
   if (txt == "10GKps") {
     mining_power = 10000;
   }
+  if (txt == "0%") {
+    mining_power = 0;
+  }
+  if (txt == "1%") {
+    mining_power = 1;
+  }
+  if (txt == "25%") {
+    mining_power = 25;
+  }
+  if (txt == "50%") {
+    mining_power = 50;
+  }
+  if (txt == "75%") {
+    mining_power = 75;
+  }
+  if (txt == "100%") {
+    mining_power = 100;
+  }
   if (txt == "Pause") {
     stopTimer();
     btn->setButtonText("Resume");
   }
   if (txt == "Resume") {
-    startTimer(1000);
+    startTimer(300);
     btn->setButtonText("Pause");
   }
   if (txt == "Restart") {
     t = 0;
+    tx_count = 0;
     total_balance = 0;
     total_supply = 0;
 
-    max_leading_bits = 1;
+    max_leading_bits = initial_difficulty_bits;
 
     for (int x = 0; x < 256; x++) {
       for (int y = 0; y < 256; y++) {
@@ -226,10 +255,10 @@ void DemoMiner::buttonClicked(Button* btn) {
       }
     }
 
-    startTimer(500);
+    startTimer(300);
   }
+  repaint();
 }
-
 
 String sepitoa(uint64 n, bool lz = false) {
   if (n < 1000) {
@@ -275,7 +304,7 @@ void DemoMiner::paint(Graphics& g) {
       continue;
     }
     double lb = 1.0 * (i - min_leading_bits + 1) / (max_leading_bits - min_leading_bits + 1);
-    g.setColour(HSV(200, 1.0 - lb, 0.5 + 0.5 * lb));
+    g.setColour(HSV(200, 1.0 - lb, 0.5 + 0.4 * lb));
     // g.setColour(Colour::fromHSV(1.0 * (i - min_leading_bits) / (max_leading_bits - min_leading_bits), 1.0f, 1.0f, 1.0f));  // NOLINT
     for (int j = 0; j < i; j++) {
       g.fillRect(xx + 8 * j, yy + 2, 7, 7);
@@ -290,11 +319,11 @@ void DemoMiner::paint(Graphics& g) {
   for (int x = 0; x < m; x++) {
     for (int y = 0; y < n; y++) {
       int i = y * 256 + x;
+      double lb = 1.0 * (slots[x][y].bits - min_leading_bits) / (max_leading_bits - min_leading_bits);
+      slots[x][y].bg = HSV(slots[x][y].owner ? 30 : 200, 1.0 - lb, 0.5 + 0.4 * lb);
       if (slots[x][y].bits == 0) {
         slots[x][y].bg = Colours::black;
       }
-      double lb = 1.0 * (slots[x][y].bits - min_leading_bits + 1) / (max_leading_bits - min_leading_bits + 1);
-      slots[x][y].bg = HSV(200, 1.0 - lb, 0.5 + 0.5 * lb);
       g.setColour(slots[x][y].bg);
       g.fillRect(20 + x * k, 250 + y * k, k - k2, k - k2);
       if (slots[x][y].owner == 1) {
@@ -309,16 +338,24 @@ void DemoMiner::paint(Graphics& g) {
 
   g.setColour(Colours::white);
   g.drawMultiLineText(
-      " Max Leading Bits: " + String(max_leading_bits) + "\n" +
-      " Min Leading Bits: " + String(min_leading_bits) + "\n" +
+      " Transactions: " + sepitoa(tx_count) + "\n" +
       " coeff: " + String(coeff) + "\n" +
-      " days: " + String(t / periods_per_day) + "\n" +
       " Slots owned: " + String(slots_owned) + "\n" +
       " My Balance: " + sepitoa(total_balance) + " AUTO\n" +
       " Total Supply: " + sepitoa(total_supply) + " AUTO\n" +
       " Supply Cap: " + sepitoa(supply_cap) + " AUTO\n" +
       " Treasury: " + sepitoa(total_supply / 2) + " AUTO",
       300, 100, 500, Justification::left);
+
+  uint32 total_slots = m * n;
+  uint32 honest_slots = total_slots - slots_owned;
+
+  g.drawMultiLineText(
+      " Day " + String(t / periods_per_day) + "\n" +
+      " Honest slots: " + sepitoa(honest_slots) + "\n" +
+      " Dishonest slots: " + sepitoa(slots_owned) + "\n" +
+      " Honest: " + String(honest_slots * 100.0 / total_slots, 1) + "%\n",
+      20, 550, 500, Justification::left);
 
   g.setColour(Colours::white);
   g.setFont(32.0f);
@@ -360,6 +397,7 @@ void DemoMiner::update() {
     // unsigned int r = rand_r(&my_seed) | mask;
     auto lb = leading_bits(r);
     if ((lb >= initial_difficulty_bits) && (r > slots[x][y].diff)) {
+      tx_count++;
       unsigned int reward = coeff * (t - slots[x][y].tm) * reward_per_period;
       if (slots[x][y].tm != 0) {
         total_supply += reward;
@@ -369,7 +407,8 @@ void DemoMiner::update() {
       }
       slots[x][y].diff = r;
       slots[x][y].bits = lb;
-      slots[x][y].owner = (rand_r(&my_seed) % total_power <= mining_power) ? 1 : 0;
+      // slots[x][y].owner = (rand_r(&my_seed) % total_power <= mining_power) ? 1 : 0;
+      slots[x][y].owner = ((rand_r(&my_seed) % 10000) < (mining_power * 100)) ? 1 : 0;
       slots[x][y].tm = t;
     }
     if (leading_bits(r) > max_leading_bits) {
