@@ -7,10 +7,14 @@
 #include <sstream>
 #include <string>
 
+#include "automaton/core/io/io.h"
+
 #include "secp256k1/include/secp256k1_recovery.h"
 #include "secp256k1/include/secp256k1.h"
 #include "secp256k1/src/hash_impl.h"
 #include "secp256k1/src/hash.h"
+
+using automaton::core::io::bin2hex;
 
 // will need tests, so we need to make it library,
 // but we also need it to be executable printing the information
@@ -40,7 +44,10 @@ bool mine_key(unsigned char* mask, unsigned char* difficulty, unsigned char* pri
     for (int i = 0; i < 32; i++) {
       priv_key[i] = engine();
     }
-    secp256k1_ec_pubkey_create(context, pubkey, priv_key);
+    if (!secp256k1_ec_pubkey_create(context, pubkey, priv_key)) {
+      LOG(WARNING) << "Invalid priv_key " << bin2hex(std::string(reinterpret_cast<char*>(priv_key), 32));
+      continue;
+    }
 
     unsigned char pub_key_serialized[65];
     size_t outLen = 65;
