@@ -120,7 +120,7 @@ bool testnet::init() {
     if (!res) {
       return false;
     }
-    node_ids_list[i] = node_id;
+    node_ids_list[i-1] = node_id;
   }
   return true;
 }
