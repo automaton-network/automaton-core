@@ -21,7 +21,7 @@ inline static std::string hash(const std::string& data) {
   return std::string(reinterpret_cast<char*>(digest), 32);
 }
 
-inline static std::string hashstr(const std::string& hash) {
+std::string hashstr(const std::string& hash) {
   std::string hex = automaton::core::io::bin2hex(hash);
   return hex.substr(hex.size() - 8);
 }
@@ -117,15 +117,11 @@ void blockchain_cpp_node::s_on_error(uint32_t id, const std::string& message) {
 }
 
 void blockchain_cpp_node::s_update(uint64_t time) {
-  // if (std::rand() % 100 > 10) {
-  //   return;
-  // }
   block b = mine();
   if (b.height) {
     if (LOG_ENABLED) {
       log_block("miner", b, "MINED");
     }
-    // std::cout << nodeid << " mined block " << bin2hex(b.block_hash()) << " height: " << b.height << std::endl;
     LOG(INFO) << nodeid << " mined block " << bin2hex(b.block_hash()) << " height: " << b.height;
     on_block(0, b);
   }

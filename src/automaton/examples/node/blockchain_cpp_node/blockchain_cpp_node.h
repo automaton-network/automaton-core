@@ -42,6 +42,8 @@ inline std::string validity_to_str(block_validity bv) {
   return "";
 }
 
+std::string hashstr(const std::string& hash);
+
 class blockchain_cpp_node : public automaton::core::node::node {
  public:
   blockchain_cpp_node(const std::string& id, const std::string& proto_id);
