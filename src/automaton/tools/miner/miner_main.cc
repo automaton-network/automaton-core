@@ -22,7 +22,10 @@ void check_and_sign(const unsigned char* priv_key, const unsigned char* address)
 
   std::string rsv = sign(priv_key, address);
 
-  secp256k1_ec_pubkey_create(context, pubkey, priv_key);
+  if (!secp256k1_ec_pubkey_create(context, pubkey, priv_key)) {
+    LOG(WARNING) << "Invalid priv_key " << bin2hex(std::string(reinterpret_cast<const char*>(priv_key), 32));
+    return;
+  }
 
   unsigned char pub_key_serialized[65];
   size_t outLen = 65;

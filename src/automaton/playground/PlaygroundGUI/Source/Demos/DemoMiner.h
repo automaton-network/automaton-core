@@ -2,6 +2,10 @@
 
 #include "../../JuceLibraryCode/JuceHeader.h"
 
+#include "automaton/core/crypto/cryptopp/secure_random_cryptopp.h"
+#include "automaton/core/crypto/cryptopp/SHA256_cryptopp.h"
+#include "automaton/core/io/io.h"
+
 class DemoMiner:
   public Component,
   public Button::Listener,
@@ -72,10 +76,16 @@ class DemoMiner:
   struct slot {
     Colour bg;
     Colour fg;
-    uint64 diff;
+    std::string diff;
     int owner;
     int tm;
+    uint32_t bits;
+    slot()
+      : diff(32, 0)
+      , bits(0) {}
   };
+
+  automaton::core::crypto::cryptopp::secure_random_cryptopp secure_rand;
 
   const uint64 supply_cap = 1UL << 40;
   uint32 m = 32;
@@ -85,18 +95,22 @@ class DemoMiner:
 
   uint64 reward_per_period = 1280000;
   double periods_per_day = 1.0;
-  uint32 iters = 1;
+  uint32 mask1 = 0;
+  uint32 mask2 = 0;
+  uint32 mask3 = 0;
 
   slot slots[256][256];
   uint64 total_balance = 0;
   uint64 total_supply = 0;
 
-  unsigned int max_leading_bits = 1;
+  unsigned int max_leading_bits = 4;
   unsigned int min_leading_bits = 0;
+  unsigned int initial_difficulty_bits = 4;
+  uint64 tx_count = 0;
 
   unsigned int t;
 
-  uint32 mining_power = 10;
+  uint32 mining_power = 0;
 
   void timerCallback() override;
 

@@ -12,6 +12,23 @@
 // #include "MainComponent.h"
 #include "Demos/DemosMainComponent.h"
 
+
+class EmbeddedFonts {
+ private:
+  Font play;
+  Font playBold;
+
+ public:
+  EmbeddedFonts() {
+    play = Font(Typeface::createSystemTypefaceFor(BinaryData::PlayRegular_ttf, BinaryData::PlayRegular_ttfSize));
+    playBold = Font(Typeface::createSystemTypefaceFor(BinaryData::PlayBold_ttf, BinaryData::PlayBold_ttfSize));
+  }
+
+  const Font& getPlay() { return play; }
+  const Font& getPlayBold() { return playBold; }
+};
+
+
 //==============================================================================
 class PlaygroundGUIApplication: public JUCEApplication {
  public:
@@ -24,8 +41,11 @@ class PlaygroundGUIApplication: public JUCEApplication {
 
   //==============================================================================
   void initialise(const String& commandLine) override {
-    // This method is where you should put your application's initialisation code..
     mainWindow.reset(new MainWindow(getApplicationName()));
+
+    const Font& fontPlay = fonts.getPlay();
+    typefacePlay = LookAndFeel::getDefaultLookAndFeel().getTypefaceForFont(fontPlay);
+    LookAndFeel::getDefaultLookAndFeel().setDefaultSansSerifTypeface(typefacePlay);
   }
 
   void shutdown() override {
@@ -92,6 +112,8 @@ class PlaygroundGUIApplication: public JUCEApplication {
 
  private:
   std::unique_ptr<MainWindow> mainWindow;
+  EmbeddedFonts fonts;
+  Typeface::Ptr typefacePlay;
 };
 
 //==============================================================================

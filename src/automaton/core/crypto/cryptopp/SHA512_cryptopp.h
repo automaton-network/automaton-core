@@ -16,6 +16,7 @@ class SHA512_cryptopp : public hash_transformation {
   CryptoPP::SHA512* hash;
  public:
   SHA512_cryptopp();
+  ~SHA512_cryptopp();
 
   void calculate_digest(const uint8_t* input,
                         const size_t length,

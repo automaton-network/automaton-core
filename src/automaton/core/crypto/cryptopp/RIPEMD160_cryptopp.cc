@@ -14,6 +14,10 @@ RIPEMD160_cryptopp::RIPEMD160_cryptopp() {
   hash = new CryptoPP::RIPEMD160;
 }
 
+RIPEMD160_cryptopp::~RIPEMD160_cryptopp() {
+  delete hash;
+}
+
 void RIPEMD160_cryptopp::calculate_digest(const uint8_t * input,
                                           const size_t length,
                                           uint8_t * digest) {

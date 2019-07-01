@@ -14,6 +14,10 @@ SHA512_cryptopp::SHA512_cryptopp() {
   hash = new CryptoPP::SHA512;
 }
 
+SHA512_cryptopp::~SHA512_cryptopp() {
+  delete hash;
+}
+
 void SHA512_cryptopp::calculate_digest(const uint8_t * input,
                                       const size_t length,
                                       uint8_t * digest) {

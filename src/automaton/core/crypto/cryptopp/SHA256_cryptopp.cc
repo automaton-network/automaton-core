@@ -14,6 +14,10 @@ SHA256_cryptopp::SHA256_cryptopp() {
   hash = new CryptoPP::SHA256;
 }
 
+SHA256_cryptopp::~SHA256_cryptopp() {
+  delete hash;
+}
+
 void SHA256_cryptopp::calculate_digest(const uint8_t * input,
                                       const size_t length,
                                       uint8_t * digest) {

@@ -47,6 +47,6 @@ src/automaton/examples/smartproto/blockchain/inspect.lua
 
 # XCode
 build/
-Builds/
+# Builds/
 *.xccheckout
 *.xcuserstate
