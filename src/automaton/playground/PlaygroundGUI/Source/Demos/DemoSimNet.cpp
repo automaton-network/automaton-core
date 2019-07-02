@@ -61,8 +61,8 @@ void ButtonFeelAndLook::drawButtonBackground(Graphics& g, Button& btn, const Col
 const Rectangle<float> DemoSimNet::pie_chart(30, 200, 600, 600);
 
 DemoSimNet::DemoSimNet() {
-  hue = 0.1;
-  sat = 0.22;
+  init_thread = nullptr;
+  updater = nullptr;
 
   Rectangle<int> first_button_rect(start_button_pos_x, start_button_pos_y, button_width, button_height);
   Rectangle<int> second_button_rect(start_button_pos_x + button_width + button_space, start_button_pos_y, button_width,
@@ -97,7 +97,7 @@ DemoSimNet::DemoSimNet() {
       std::shared_ptr<automaton::core::node::node> {
       return std::shared_ptr<automaton::core::node::node>(new blockchain_cpp_node(id, proto_id));
     });
-  if (smart_protocol::load("blockchain", "/home/carrie/Desktop/automaton/src/automaton/examples/smartproto/blockchain/")
+  if (smart_protocol::load("blockchain", "../../../../examples/smartproto/blockchain/")
       == false) {
     LOG(ERROR) << "Blockchain protocol was NOT loaded!!!";
     throw std::runtime_error("Protocol was not loaded!");
@@ -108,6 +108,9 @@ DemoSimNet::DemoSimNet() {
 
 DemoSimNet::~DemoSimNet() {
   stop();
+  if (init_thread) {
+    init_thread->join();
+  }
 }
 
 void DemoSimNet::update() {
@@ -230,7 +233,6 @@ void DemoSimNet::simulation() {
     while (true) {
       if (sim_running) {
         sim->process_handlers();
-        std::this_thread::sleep_for(std::chrono::milliseconds(SIMULATION_SLEEP_TIME_MS));
       }
       if (!sim_created) {
         return;
@@ -240,9 +242,11 @@ void DemoSimNet::simulation() {
 }
 
 void DemoSimNet::start_btn_handle() {
+  if (start_button.getToggleState() == false) {
+    return;
+  }
   if (!sim_created) {
-    pause_button.setToggleState(true, NotificationType::dontSendNotification);
-    start_button.setButtonText("stop");
+    start_button.setToggleState(false, NotificationType::dontSendNotification);
     start();
   } else {
     pause_button.setToggleState(false, NotificationType::dontSendNotification);
@@ -253,6 +257,9 @@ void DemoSimNet::start_btn_handle() {
 }
 
 void DemoSimNet::pause_btn_handle() {
+  if (pause_button.getToggleState() == false) {
+    return;
+  }
   if (!sim_created) {
     return;
   }
@@ -269,14 +276,23 @@ void DemoSimNet::start() {
   if (sim_created) {
     return;
   }
+
+  hue = 0.1;
+  sat = 0.22;
+
   sim_created = true;
   sim_running = true;
   simulation();
-  testnet::create_testnet("blockchain", "testnet", "doesntmatter", testnet::network_protocol_type::simulation, NODES,
-      automaton::core::testnet::create_rnd_connections_vector(NODES, PEERS));
-  ids = testnet::get_testnet("testnet")->list_nodes();
-  updater = new node_updater_tests(WORKER_SLEEP_TIME_MS, std::set<std::string>(ids.begin(), ids.end()));
-  updater->start();
+  init_thread = new std::thread([&]() {
+    testnet::create_testnet("blockchain", "testnet", "doesntmatter", testnet::network_protocol_type::simulation, NODES,
+        automaton::core::testnet::create_rnd_connections_vector(NODES, PEERS));
+    ids = testnet::get_testnet("testnet")->list_nodes();
+    updater = new node_updater_tests(WORKER_SLEEP_TIME_MS, std::set<std::string>(ids.begin(), ids.end()));
+    updater->start();
+    pause_button.setToggleState(true, NotificationType::dontSendNotification);
+    start_button.setToggleState(true, NotificationType::dontSendNotification);
+    start_button.setButtonText("stop");
+  });
 }
 
 void DemoSimNet::pause() {
@@ -293,8 +309,10 @@ void DemoSimNet::stop() {
   if (!sim_created) {
     return;
   }
-  updater->stop();
-  delete updater;
+  if (updater) {
+    updater->stop();
+    delete updater;
+  }
   ids.clear();
   sim_running = false;
   sim_created = false;

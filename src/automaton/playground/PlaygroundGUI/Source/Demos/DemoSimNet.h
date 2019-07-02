@@ -62,6 +62,7 @@ class DemoSimNet: public AnimatedAppComponent {
   bool sim_running = false;
   uint64_t current_time;
   std::vector<std::thread> sim_threads;
+  std::thread* init_thread;
 
   std::unordered_map<std::string, Colour> clrs;
   std::unordered_map<std::string, uint32_t> counter;
