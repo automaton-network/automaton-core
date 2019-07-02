@@ -366,13 +366,6 @@ uint32_t simulation::process(uint64_t time_) {
 void simulation::process_handlers() {
   handlers_tasks_mutex.lock();
   while (handlers_tasks.size() > 0) {
-    running_mutex.lock();
-    if (simulation_running == false) {
-        running_mutex.unlock();
-        break;
-    } else {
-      running_mutex.unlock();
-    }
     auto t = handlers_tasks.front();
     handlers_tasks.pop();
     handlers_tasks_mutex.unlock();

@@ -41,7 +41,7 @@ ifeq ($(CONFIG),Debug)
 
   JUCE_CFLAGS += $(JUCE_CPPFLAGS) $(TARGET_ARCH) -g -ggdb -O0 -I ../../../../.. -I ../../../../../local_third_party/boost -I ../../../../../local_third_party/cryptopp -I ../../../../../local_third_party/g3log/src -I ../../../../../local_third_party/g3log/build/include -I ../../../../../local_third_party/lua -I ../../../../../local_third_party/protobuf/src -I ../../../../../local_third_party/sol2/single/sol $(CFLAGS)
   JUCE_CXXFLAGS += $(JUCE_CFLAGS) -std=c++14 $(CXXFLAGS)
-  JUCE_LDFLAGS += $(TARGET_ARCH) -L$(JUCE_BINDIR) -L$(JUCE_LIBDIR) $(shell pkg-config --libs freetype2 x11 xext xinerama libcurl) ../../../../../build/libautomaton-core.a ../../../../../local_third_party/g3log/build/libg3logger.a ../../../../../local_third_party/protobuf/src/.libs/libprotobuf.a ../../../../../local_third_party/protobuf/src/.libs/libprotobuf-lite.a ../../../../../local_third_party/cryptopp/libcryptopp.a ../../../../../local_third_party/lua/liblua.a ../../../../../local_third_party/boost/stage/lib/libboost_system.a ../../../../../local_third_party/boost/stage/lib/libboost_filesystem.a ../../../../../local_third_party/boost/stage/lib/libboost_iostreams.a -ldl -lpthread -lrt $(LDFLAGS)
+  JUCE_LDFLAGS += $(TARGET_ARCH) -L$(JUCE_BINDIR) -L$(JUCE_LIBDIR) $(shell pkg-config --libs freetype2 x11 xext xinerama libcurl) ../../../../../build/libautomaton-core.a ../../../../../local_third_party/g3log/build/libg3logger.a ../../../../../local_third_party/protobuf/src/.libs/libprotobuf.a ../../../../../local_third_party/protobuf/src/.libs/libprotobuf-lite.a ../../../../../local_third_party/cryptopp/libcryptopp.a ../../../../../local_third_party/lua/liblua.a ../../../../../local_third_party/boost/stage/lib/libboost_system.a ../../../../../local_third_party/boost/stage/lib/libboost_filesystem.a ../../../../../local_third_party/boost/stage/lib/libboost_iostreams.a ../../../../../build/libblockchain_cpp_node.a -ldl -lpthread -lrt $(LDFLAGS)
 
   CLEANCMD = rm -rf $(JUCE_OUTDIR)/$(TARGET) $(JUCE_OBJDIR)
 endif
@@ -62,12 +62,13 @@ ifeq ($(CONFIG),Release)
 
   JUCE_CFLAGS += $(JUCE_CPPFLAGS) $(TARGET_ARCH) -O3 -I ../../../../.. -I ../../../../../local_third_party/boost -I ../../../../../local_third_party/cryptopp -I ../../../../../local_third_party/g3log/src -I ../../../../../local_third_party/g3log/build/include -I ../../../../../local_third_party/lua -I ../../../../../local_third_party/protobuf/src -I ../../../../../local_third_party/sol2/single/sol $(CFLAGS)
   JUCE_CXXFLAGS += $(JUCE_CFLAGS) -std=c++14 $(CXXFLAGS)
-  JUCE_LDFLAGS += $(TARGET_ARCH) -L$(JUCE_BINDIR) -L$(JUCE_LIBDIR) $(shell pkg-config --libs freetype2 x11 xext xinerama libcurl) -fvisibility=hidden ../../../../../build/libautomaton-core.a ../../../../../local_third_party/g3log/build/libg3logger.a ../../../../../local_third_party/protobuf/src/.libs/libprotobuf.a ../../../../../local_third_party/protobuf/src/.libs/libprotobuf-lite.a ../../../../../local_third_party/cryptopp/libcryptopp.a ../../../../../local_third_party/lua/liblua.a ../../../../../local_third_party/boost/stage/lib/libboost_system.a ../../../../../local_third_party/boost/stage/lib/libboost_filesystem.a ../../../../../local_third_party/boost/stage/lib/libboost_iostreams.a -ldl -lpthread -lrt $(LDFLAGS)
+  JUCE_LDFLAGS += $(TARGET_ARCH) -L$(JUCE_BINDIR) -L$(JUCE_LIBDIR) $(shell pkg-config --libs freetype2 x11 xext xinerama libcurl) -fvisibility=hidden ../../../../../build/libautomaton-core.a ../../../../../local_third_party/g3log/build/libg3logger.a ../../../../../local_third_party/protobuf/src/.libs/libprotobuf.a ../../../../../local_third_party/protobuf/src/.libs/libprotobuf-lite.a ../../../../../local_third_party/cryptopp/libcryptopp.a ../../../../../local_third_party/lua/liblua.a ../../../../../local_third_party/boost/stage/lib/libboost_system.a ../../../../../local_third_party/boost/stage/lib/libboost_filesystem.a ../../../../../local_third_party/boost/stage/lib/libboost_iostreams.a ../../../../../build/libblockchain_cpp_node.a -ldl -lpthread -lrt $(LDFLAGS)
 
   CLEANCMD = rm -rf $(JUCE_OUTDIR)/$(TARGET) $(JUCE_OBJDIR)
 endif
 
 OBJECTS_APP := \
+  $(JUCE_OBJDIR)/DemoSimNet_f027b031.o \
   $(JUCE_OBJDIR)/DemosMainComponent_abc8e8dc.o \
   $(JUCE_OBJDIR)/DemoMiner_b95613be.o \
   $(JUCE_OBJDIR)/MainComponent_a6ffb4a5.o \
@@ -92,6 +93,11 @@ $(JUCE_OUTDIR)/$(JUCE_TARGET_APP) : $(OBJECTS_APP) $(RESOURCES)
 	-$(V_AT)mkdir -p $(JUCE_LIBDIR)
 	-$(V_AT)mkdir -p $(JUCE_OUTDIR)
 	$(V_AT)$(CXX) -o $(JUCE_OUTDIR)/$(JUCE_TARGET_APP) $(OBJECTS_APP) $(JUCE_LDFLAGS) $(JUCE_LDFLAGS_APP) $(RESOURCES) $(TARGET_ARCH)
+
+$(JUCE_OBJDIR)/DemoSimNet_f027b031.o: ../../Source/Demos/DemoSimNet.cpp
+	-$(V_AT)mkdir -p $(JUCE_OBJDIR)
+	@echo "Compiling DemoSimNet.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
 $(JUCE_OBJDIR)/DemosMainComponent_abc8e8dc.o: ../../Source/Demos/DemosMainComponent.cpp
 	-$(V_AT)mkdir -p $(JUCE_OBJDIR)

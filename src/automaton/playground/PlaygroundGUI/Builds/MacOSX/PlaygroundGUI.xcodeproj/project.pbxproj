@@ -41,6 +41,10 @@
 			isa = PBXBuildFile;
 			fileRef = 05DA0D453EDBFC5819828842;
 		};
+		72A5DC1947B05EC06287675C = {
+			isa = PBXBuildFile;
+			fileRef = 86E313C97F6DB40B327704DB;
+		};
 		82B3EBE62FF38456224895EE = {
 			isa = PBXBuildFile;
 			fileRef = 5C7617C7C652F8CC0E959D1E;
@@ -218,6 +222,13 @@
 			path = System/Library/Frameworks/Carbon.framework;
 			sourceTree = SDKROOT;
 		};
+		86E313C97F6DB40B327704DB = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.cpp.cpp;
+			name = DemoSimNet.cpp;
+			path = ../../Source/Demos/DemoSimNet.cpp;
+			sourceTree = "SOURCE_ROOT";
+		};
 		8BA574E3329AE818352E2694 = {
 			isa = PBXFileReference;
 			lastKnownFileType = sourcecode.cpp.objcpp;
@@ -288,6 +299,13 @@
 			path = "../../../../../local_third_party/JUCE/modules/juce_gui_basics";
 			sourceTree = "SOURCE_ROOT";
 		};
+		D752613D5D9683073A9F79DD = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.c.h;
+			name = DemoSimNet.h;
+			path = ../../Source/Demos/DemoSimNet.h;
+			sourceTree = "SOURCE_ROOT";
+		};
 		E5B0838487DE7547C1C1E1A4 = {
 			isa = PBXFileReference;
 			lastKnownFileType = wrapper.framework;
@@ -342,6 +360,8 @@
 		D42076CCB651D5CCB42A7F0D = {
 			isa = PBXGroup;
 			children = (
+				86E313C97F6DB40B327704DB,
+				D752613D5D9683073A9F79DD,
 				5C7617C7C652F8CC0E959D1E,
 				AE69AE1C64B6D9C79B3C501E,
 				F87EDB042F4AD000D575BE55,
@@ -660,6 +680,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				72A5DC1947B05EC06287675C,
 				82B3EBE62FF38456224895EE,
 				EED2358D21B09846AA8B17BD,
 				9A3C098021D839B8BA421107,

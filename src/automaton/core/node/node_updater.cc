@@ -30,6 +30,9 @@ void node_updater::start() {
 }
 
 void node_updater::stop() {
+  if (!running) {
+    return;
+  }
   running = false;
   for (uint32_t i = 0; i < workers_number; ++i) {
     worker_threads[i].join();

@@ -50,6 +50,11 @@ class testnet {
   bool init();
 };
 
+// Helper functions
+
+std::unordered_map<uint32_t, std::vector<uint32_t> > create_connections_vector(uint32_t n, uint32_t p);
+std::unordered_map<uint32_t, std::vector<uint32_t> > create_rnd_connections_vector(uint32_t n, uint32_t p);
+
 }  // namespace testnet
 }  // namespace core
 }  // namespace automaton

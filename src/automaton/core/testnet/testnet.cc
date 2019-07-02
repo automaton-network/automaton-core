@@ -1,5 +1,7 @@
 #include "automaton/core/testnet/testnet.h"
 
+#include <set>
+
 #include "automaton/core/io/io.h"
 #include "automaton/core/node/node.h"
 
@@ -118,9 +120,54 @@ bool testnet::init() {
     if (!res) {
       return false;
     }
-    node_ids_list[i] = node_id;
+    node_ids_list[i-1] = node_id;
   }
   return true;
+}
+
+// Helprer functions
+
+/*
+returns connection graph
+n -> number of nodes
+p -> number of peers
+* connects node i with the next p nodes
+*/
+std::unordered_map<uint32_t, std::vector<uint32_t> > create_connections_vector(uint32_t n, uint32_t p) {
+  std::unordered_map<uint32_t, std::vector<uint32_t> > result;
+  if (p >= ((n + 1) / 2)) {
+    LOG(ERROR) << "'p' is too big! Setting 'p' to max valid number of peers for 'n' = " << n << " : " <<
+        ((n + 1) / 2 - 1);
+    return result;
+  }
+  for (uint32_t i = 1; i <= n; ++i) {
+    std::vector<uint32_t> peers;
+    for (uint32_t j = 0; j < p; ++j) {
+      peers.push_back((i + j) % n + 1);
+    }
+    result[i] = std::move(peers);
+  }
+  return result;
+}
+
+std::unordered_map<uint32_t, std::vector<uint32_t> > create_rnd_connections_vector(uint32_t n, uint32_t p) {
+  std::unordered_map<uint32_t, std::vector<uint32_t> > result;
+  uint32_t k;
+  if (p >= ((n + 1) / 2)) {
+    LOG(ERROR) << "'p' is too big! Setting 'p' to max valid number of peers for 'n' = " << n << " : " <<
+        ((n + 1) / 2 - 1);
+    return result;
+  }
+  for (uint32_t i = 1; i <= n; ++i) {
+    std::set<uint32_t> peers;
+    while (peers.size() < p) {
+      k = std::rand() % n + 1;
+      if (k == i) {continue;}
+      peers.insert(k);
+    }
+    result[i] = std::vector<uint32_t>(peers.begin(), peers.end());
+  }
+  return result;
 }
 
 }  // namespace testnet

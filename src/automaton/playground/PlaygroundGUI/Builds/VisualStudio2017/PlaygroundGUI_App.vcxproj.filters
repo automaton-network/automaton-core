@@ -223,6 +223,9 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\Source\Demos\DemoSimNet.cpp">
+      <Filter>PlaygroundGUI\Source\Demos</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Source\Demos\DemosMainComponent.cpp">
       <Filter>PlaygroundGUI\Source\Demos</Filter>
     </ClCompile>
@@ -1518,6 +1521,9 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\Source\Demos\DemoSimNet.h">
+      <Filter>PlaygroundGUI\Source\Demos</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Source\Demos\DemosMainComponent.h">
       <Filter>PlaygroundGUI\Source\Demos</Filter>
     </ClInclude>
