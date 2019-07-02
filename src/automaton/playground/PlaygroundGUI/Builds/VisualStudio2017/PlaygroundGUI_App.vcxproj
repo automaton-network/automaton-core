@@ -138,6 +138,7 @@
     <Lib/>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\Source\Demos\DemoSimNet.cpp"/>
     <ClCompile Include="..\..\Source\Demos\DemosMainComponent.cpp"/>
     <ClCompile Include="..\..\Source\Demos\DemoMiner.cpp"/>
     <ClCompile Include="..\..\Source\MainComponent.cpp"/>
@@ -1330,6 +1331,7 @@
     <ClCompile Include="..\..\JuceLibraryCode\include_juce_gui_extra.cpp"/>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\Source\Demos\DemoSimNet.h"/>
     <ClInclude Include="..\..\Source\Demos\DemosMainComponent.h"/>
     <ClInclude Include="..\..\Source\Demos\DemoMiner.h"/>
     <ClInclude Include="..\..\Source\MainComponent.h"/>

@@ -301,8 +301,8 @@ void DemoSimNet::pause() {
 }
 
 void DemoSimNet::resume() {
-  updater->start();
   sim_running = true;
+  updater->start();
 }
 
 void DemoSimNet::stop() {

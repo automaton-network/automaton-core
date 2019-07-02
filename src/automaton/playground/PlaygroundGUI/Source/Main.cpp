@@ -43,9 +43,9 @@ class PlaygroundGUIApplication: public JUCEApplication {
   void initialise(const String& commandLine) override {
     mainWindow.reset(new MainWindow(getApplicationName()));
 
-    const Font& fontPlay = fonts.getPlay();
-    typefacePlay = LookAndFeel::getDefaultLookAndFeel().getTypefaceForFont(fontPlay);
-    LookAndFeel::getDefaultLookAndFeel().setDefaultSansSerifTypeface(typefacePlay);
+    // const Font& fontPlay = fonts.getPlay();
+    // typefacePlay = LookAndFeel::getDefaultLookAndFeel().getTypefaceForFont(fontPlay);
+    // LookAndFeel::getDefaultLookAndFeel().setDefaultSansSerifTypeface(typefacePlay);
   }
 
   void shutdown() override {
