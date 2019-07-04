@@ -38,6 +38,10 @@ src/logs/*
 .vs
 .vscode
 
+# Eclipse
+.cproject
+.project
+
 # NodeJS
 node_modules/
 
