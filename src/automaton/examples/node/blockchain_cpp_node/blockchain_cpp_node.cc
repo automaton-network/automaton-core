@@ -28,6 +28,8 @@ std::string hashstr(const std::string& hash) {
 
 static const bool LOG_ENABLED = false;
 
+// TODO(kari): Create genesis block to make this true: get_block(GENESIS_HASH).block_hash() == GENESIS_HASH
+// or add hash field in block
 static const std::string GENESIS_HASH = hash("automaton");  // NOLINT
 
 static const uint32_t DIFFICULTY_LEADING_ZEROS = 1;
