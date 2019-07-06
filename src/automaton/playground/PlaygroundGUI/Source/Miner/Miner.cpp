@@ -474,8 +474,7 @@ void Miner::update() {
       "Total keys generated: " + String(total_keys_generated) + "\n" +
       "Mining power: " + String(delta_keys * 1000 / delta) + " keys/s\n" +
       "Claimed slots: " + String(slots_claimed) + "\n" +
-      "Active miners: " + String(miners.size())
-    );
+      "Active miners: " + String(miners.size()));
   }
   last_time = cur_time;
   last_keys_generated = total_keys_generated;
