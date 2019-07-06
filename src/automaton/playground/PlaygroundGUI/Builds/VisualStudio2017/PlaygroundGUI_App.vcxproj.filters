@@ -8,6 +8,9 @@
     <Filter Include="PlaygroundGUI\Source\Demos">
       <UniqueIdentifier>{C68BD2ED-9DD1-85D0-53AF-108FA6FA75E8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="PlaygroundGUI\Source\Miner">
+      <UniqueIdentifier>{A622B05B-83E0-B199-2F1F-CEEB4850EDB9}</UniqueIdentifier>
+    </Filter>
     <Filter Include="PlaygroundGUI\Source">
       <UniqueIdentifier>{80520A59-0ECE-F87A-E4EE-9B7B97051A3A}</UniqueIdentifier>
     </Filter>
@@ -231,6 +234,9 @@
     </ClCompile>
     <ClCompile Include="..\..\Source\Demos\DemoMiner.cpp">
       <Filter>PlaygroundGUI\Source\Demos</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Miner\Miner.cpp">
+      <Filter>PlaygroundGUI\Source\Miner</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Source\MainComponent.cpp">
       <Filter>PlaygroundGUI\Source</Filter>
@@ -1529,6 +1535,9 @@
     </ClInclude>
     <ClInclude Include="..\..\Source\Demos\DemoMiner.h">
       <Filter>PlaygroundGUI\Source\Demos</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Source\Miner\Miner.h">
+      <Filter>PlaygroundGUI\Source\Miner</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Source\MainComponent.h">
       <Filter>PlaygroundGUI\Source</Filter>

@@ -53,6 +53,10 @@
 			isa = PBXBuildFile;
 			fileRef = F87EDB042F4AD000D575BE55;
 		};
+		6C764B7D3E1A849226C54B02 = {
+			isa = PBXBuildFile;
+			fileRef = BEF8E95313BF13AE8C0A6AC7;
+		};
 		9A3C098021D839B8BA421107 = {
 			isa = PBXBuildFile;
 			fileRef = D2896F2FBEFBC7DB297DCD12;
@@ -143,6 +147,13 @@
 			lastKnownFileType = sourcecode.cpp.objcpp;
 			name = "include_juce_graphics.mm";
 			path = "../../JuceLibraryCode/include_juce_graphics.mm";
+			sourceTree = "SOURCE_ROOT";
+		};
+		3604DF6B545750B665E78AE0 = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.c.h;
+			name = Miner.h;
+			path = ../../Source/Miner/Miner.h;
 			sourceTree = "SOURCE_ROOT";
 		};
 		426447579678A29AC4896E2B = {
@@ -255,6 +266,13 @@
 			lastKnownFileType = sourcecode.c.h;
 			name = DemosMainComponent.h;
 			path = ../../Source/Demos/DemosMainComponent.h;
+			sourceTree = "SOURCE_ROOT";
+		};
+		BEF8E95313BF13AE8C0A6AC7 = {
+			isa = PBXFileReference;
+			lastKnownFileType = sourcecode.cpp.cpp;
+			name = Miner.cpp;
+			path = ../../Source/Miner/Miner.cpp;
 			sourceTree = "SOURCE_ROOT";
 		};
 		BF76861FE9E4BB401C4F6D68 = {
@@ -370,10 +388,20 @@
 			name = Demos;
 			sourceTree = "<group>";
 		};
+		32CC0634FEFEA14E371BC412 = {
+			isa = PBXGroup;
+			children = (
+				BEF8E95313BF13AE8C0A6AC7,
+				3604DF6B545750B665E78AE0,
+			);
+			name = Miner;
+			sourceTree = "<group>";
+		};
 		883895BF3FD94AEF68720830 = {
 			isa = PBXGroup;
 			children = (
 				D42076CCB651D5CCB42A7F0D,
+				32CC0634FEFEA14E371BC412,
 				F37DC7F8EC888D82E793ED31,
 				D2896F2FBEFBC7DB297DCD12,
 				960F41F1CCAE949D7CDBFC7B,
@@ -500,8 +528,8 @@
 				INFOPLIST_PREPROCESS = NO;
 				INSTALL_PATH = "$(HOME)/Applications";
 				MACOSX_DEPLOYMENT_TARGET = 10.11;
-				OTHER_CPLUSPLUSFLAGS = "-I ../../../../.. -I ../../../../../local_third_party/boost -I ../../../../../local_third_party/cryptopp -I ../../../../../local_third_party/g3log/src -I ../../../../../local_third_party/g3log/build/include -I ../../../../../local_third_party/lua -I ../../../../../local_third_party/protobuf/src -I ../../../../../local_third_party/sol2/single/sol";
-				OTHER_LDFLAGS = "../../../../../build/libautomaton-core.a ../../../../../local_third_party/g3log/build/libg3logger.a ../../../../../local_third_party/protobuf/src/.libs/libprotobuf.a ../../../../../local_third_party/protobuf/src/.libs/libprotobuf-lite.a ../../../../../local_third_party/cryptopp/libcryptopp.a ../../../../../local_third_party/lua/liblua.a ../../../../../local_third_party/boost/stage/lib/libboost_system.a ../../../../../local_third_party/boost/stage/lib/libboost_filesystem.a ../../../../../local_third_party/boost/stage/lib/libboost_iostreams.a";
+				OTHER_CPLUSPLUSFLAGS = "-I ../../../../.. -I ../../../../../local_third_party/bitcoin/src -I ../../../../../local_third_party/boost -I ../../../../../local_third_party/cryptopp -I ../../../../../local_third_party/g3log/src -I ../../../../../local_third_party/g3log/build/include -I ../../../../../local_third_party/lua -I ../../../../../local_third_party/protobuf/src -I ../../../../../local_third_party/sol2/single/sol";
+				OTHER_LDFLAGS = "../../../../../build/libautomaton-core.a ../../../../../build/libblockchain_cpp_node.a ../../../../../build/libkoh-miner.a ../../../../../local_third_party/g3log/build/libg3logger.a ../../../../../local_third_party/protobuf/src/.libs/libprotobuf.a ../../../../../local_third_party/protobuf/src/.libs/libprotobuf-lite.a ../../../../../local_third_party/cryptopp/libcryptopp.a ../../../../../local_third_party/lua/liblua.a ../../../../../local_third_party/boost/stage/lib/libboost_system.a ../../../../../local_third_party/boost/stage/lib/libboost_filesystem.a ../../../../../local_third_party/boost/stage/lib/libboost_iostreams.a";
 				PRODUCT_BUNDLE_IDENTIFIER = com.Liberatix.PlaygroundGUI;
 				PRODUCT_NAME = "PlaygroundGUI";
 				USE_HEADERMAP = NO;
@@ -546,8 +574,8 @@
 				INSTALL_PATH = "$(HOME)/Applications";
 				LLVM_LTO = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.11;
-				OTHER_CPLUSPLUSFLAGS = "-I ../../../../.. -I ../../../../../local_third_party/boost -I ../../../../../local_third_party/cryptopp -I ../../../../../local_third_party/g3log/src -I ../../../../../local_third_party/g3log/build/include -I ../../../../../local_third_party/lua -I ../../../../../local_third_party/protobuf/src -I ../../../../../local_third_party/sol2/single/sol";
-				OTHER_LDFLAGS = "../../../../../build/libautomaton-core.a ../../../../../local_third_party/g3log/build/libg3logger.a ../../../../../local_third_party/protobuf/src/.libs/libprotobuf.a ../../../../../local_third_party/protobuf/src/.libs/libprotobuf-lite.a ../../../../../local_third_party/cryptopp/libcryptopp.a ../../../../../local_third_party/lua/liblua.a ../../../../../local_third_party/boost/stage/lib/libboost_system.a ../../../../../local_third_party/boost/stage/lib/libboost_filesystem.a ../../../../../local_third_party/boost/stage/lib/libboost_iostreams.a";
+				OTHER_CPLUSPLUSFLAGS = "-I ../../../../.. -I ../../../../../local_third_party/bitcoin/src -I ../../../../../local_third_party/boost -I ../../../../../local_third_party/cryptopp -I ../../../../../local_third_party/g3log/src -I ../../../../../local_third_party/g3log/build/include -I ../../../../../local_third_party/lua -I ../../../../../local_third_party/protobuf/src -I ../../../../../local_third_party/sol2/single/sol";
+				OTHER_LDFLAGS = "../../../../../build/libautomaton-core.a ../../../../../build/libblockchain_cpp_node.a ../../../../../build/libkoh-miner.a ../../../../../local_third_party/g3log/build/libg3logger.a ../../../../../local_third_party/protobuf/src/.libs/libprotobuf.a ../../../../../local_third_party/protobuf/src/.libs/libprotobuf-lite.a ../../../../../local_third_party/cryptopp/libcryptopp.a ../../../../../local_third_party/lua/liblua.a ../../../../../local_third_party/boost/stage/lib/libboost_system.a ../../../../../local_third_party/boost/stage/lib/libboost_filesystem.a ../../../../../local_third_party/boost/stage/lib/libboost_iostreams.a";
 				PRODUCT_BUNDLE_IDENTIFIER = com.Liberatix.PlaygroundGUI;
 				PRODUCT_NAME = "PlaygroundGUI";
 				USE_HEADERMAP = NO;
@@ -683,6 +711,7 @@
 				72A5DC1947B05EC06287675C,
 				82B3EBE62FF38456224895EE,
 				EED2358D21B09846AA8B17BD,
+				6C764B7D3E1A849226C54B02,
 				9A3C098021D839B8BA421107,
 				0721950C61ADA44331EC5DB3,
 				EF0B0FEE0E3E3DF8F720110A,
