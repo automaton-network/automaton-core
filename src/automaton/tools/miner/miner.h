@@ -28,7 +28,8 @@ namespace miner {
 // IN:  mask:    the mask that to apply to the public key before comparing it to difficulty
 //      difficulty:   the public key should be greater than the difficulty after applying the mask.
 // OUT: pr_key:   mined private key
-bool mine_key(unsigned char* mask, unsigned char* difficulty,  unsigned char* pr_key);
+// @returns total number of keys generated
+unsigned int mine_key(unsigned char* mask, unsigned char* difficulty,  unsigned char* pr_key);
 
 std::string sign(const unsigned char* priv_key, const unsigned char* msg_hash);
 

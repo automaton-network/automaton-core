@@ -33,7 +33,7 @@ DemosMainComponent::DemosMainComponent() {
   tabbedComponent->addTab(TRANS("Protocols"), Colour(0xff404040), new DemoBlank(), true);
   tabbedComponent->addTab(TRANS("DApps"), Colour(0xff404040), new DemoBlank(), true);
   tabbedComponent->addTab(TRANS("Network"), Colour(0xff404040), new DemoBlank(), true);
-  tabbedComponent->addTab(TRANS("Network Simulation"), Colour(0xff404040), new DemoSimNet(), true);
+  // tabbedComponent->addTab(TRANS("Network Simulation"), Colour(0xff404040), new DemoSimNet(), true);
   tabbedComponent->setCurrentTabIndex(0);
 
   setSize(1024, 768);

@@ -38,7 +38,7 @@ class Miner:
     }
   };
   void initSlots();
-  void processMinedKey(std::string _pk);
+  void processMinedKey(std::string _pk, unsigned int keys_generated);
   size_t getSlotsNumber() { return slots.size(); }
   slot& getSlot(int _slot) { return slots[_slot]; }
 
@@ -48,6 +48,10 @@ class Miner:
  private:
   // Mining
   int totalSlots = 1024;
+  unsigned int total_keys_generated = 0;
+  unsigned int last_keys_generated = 0;
+  unsigned int slots_claimed = 0;
+  int64 last_time = 0;
   OwnedArray<Thread> miners;
   std::vector<slot> slots;
   std::string minerAddress;
@@ -58,6 +62,7 @@ class Miner:
   Button* btnContract;
   TextEditor* txtContract;
   TextEditor* txtMinerAddress;
+  TextEditor* txtMinerInfo;
 
   void addComponent(Component* c) {
     components.add(c);

@@ -51,9 +51,9 @@ class MinerThread: public Thread {
     difficulty[1] = 0x00;
 
     while (!threadShouldExit()) {
-      mine_key(mask, difficulty, pk);
+      unsigned int keys_generated = mine_key(mask, difficulty, pk);
       if (owner) {
-        owner->processMinedKey(std::string(reinterpret_cast<const char*>(pk), 32));
+        owner->processMinedKey(std::string(reinterpret_cast<const char*>(pk), 32), keys_generated);
       }
       // wait(20);
     }
@@ -73,15 +73,16 @@ void Miner::stopMining() {
   miners.clear(true);
 }
 
-void Miner::processMinedKey(std::string _pk) {
+void Miner::processMinedKey(std::string _pk, unsigned int keys_generated) {
+  total_keys_generated += keys_generated;
   std::string x = get_pub_key_x(reinterpret_cast<const unsigned char *>(_pk.c_str()));
   uint32 slot = *reinterpret_cast<uint32*>(&x[28]) % totalSlots;
   if (x > slots[slot].difficulty) {
+    slots_claimed++;
     slots[slot].owner = minerAddress;
     slots[slot].difficulty = x;
   }
   // std::cout << bin2hex(x) << " " << slot << std::endl;
-  repaint();
 }
 
 class TableDemoComponent: public Component, TableListBoxModel {
@@ -349,6 +350,7 @@ static String sepitoa(uint64 n, bool lz = false) {
 //==============================================================================
 Miner::Miner() {
   initSlots();
+  startTimer(1000);
 
   int y = 50;
 
@@ -382,11 +384,14 @@ Miner::Miner() {
   y += 50;
   TB("Add Miner", 120, y, 80, 24);
   TB("Stop Miners", 220, y, 80, 24);
+  txtMinerInfo = TXT("MINFO", 320, y, 400, 80);
+  txtMinerInfo->setText("Not running.");
+  txtMinerInfo->setReadOnly(true);
 
-  y += 50;
+  y += 100;
   LBL("Validator Slots: ", 20, y, 100, 24);
   auto tbl = new TableDemoComponent(this);
-  tbl->setBounds(120, y, 600, 500);
+  tbl->setBounds(120, y, 600, 300);
   addComponent(tbl);
 
   /*
@@ -461,9 +466,24 @@ void Miner::resized() {
 }
 
 void Miner::update() {
+  auto cur_time = Time::getCurrentTime().toMilliseconds();
+  auto delta = cur_time - last_time;
+  auto delta_keys = total_keys_generated - last_keys_generated;
+  if (total_keys_generated > 0) {
+    txtMinerInfo->setText(
+      "Total keys generated: " + String(total_keys_generated) + "\n" +
+      "Mining power: " + String(delta_keys * 1000 / delta) + " keys/s\n" +
+      "Claimed slots: " + String(slots_claimed) + "\n" +
+      "Active miners: " + String(miners.size()));
+  }
+  last_time = cur_time;
+  last_keys_generated = total_keys_generated;
 }
 
 void Miner::timerCallback() {
   update();
   repaint();
+  for (auto c : components) {
+    c->repaint();
+  }
 }

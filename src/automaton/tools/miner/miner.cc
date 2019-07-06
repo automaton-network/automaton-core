@@ -33,12 +33,14 @@ std::string str_tohex(std::string s) {
   return ss.str();
 }
 
-bool mine_key(unsigned char* mask, unsigned char* difficulty, unsigned char* priv_key) {
+unsigned int mine_key(unsigned char* mask, unsigned char* difficulty, unsigned char* priv_key) {
   secp256k1_context* context = secp256k1_context_create(SECP256K1_CONTEXT_SIGN | SECP256K1_CONTEXT_VERIFY);
   secp256k1_pubkey* pubkey = new secp256k1_pubkey();
   std::string pub_key_after_mask(32, '0');
   std::random_device engine;
   bool found = false;
+
+  unsigned int keys_generated = 0;
 
   while (!found) {
     for (int i = 0; i < 32; i++) {
@@ -48,6 +50,7 @@ bool mine_key(unsigned char* mask, unsigned char* difficulty, unsigned char* pri
       LOG(WARNING) << "Invalid priv_key " << bin2hex(std::string(reinterpret_cast<char*>(priv_key), 32));
       continue;
     }
+    keys_generated++;
 
     unsigned char pub_key_serialized[65];
     size_t outLen = 65;
@@ -64,7 +67,7 @@ bool mine_key(unsigned char* mask, unsigned char* difficulty, unsigned char* pri
       break;
     }
   }
-  return found;
+  return keys_generated;
 }
 
 std::string sign(const unsigned char* priv_key, const unsigned char* msg_hash) {

@@ -54,3 +54,4 @@ build/
 # Builds/
 *.xccheckout
 *.xcuserstate
+*.plist
