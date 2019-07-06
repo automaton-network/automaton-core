@@ -141,6 +141,7 @@
     <ClCompile Include="..\..\Source\Demos\DemoSimNet.cpp"/>
     <ClCompile Include="..\..\Source\Demos\DemosMainComponent.cpp"/>
     <ClCompile Include="..\..\Source\Demos\DemoMiner.cpp"/>
+    <ClCompile Include="..\..\Source\Miner\Miner.cpp"/>
     <ClCompile Include="..\..\Source\MainComponent.cpp"/>
     <ClCompile Include="..\..\Source\Main.cpp"/>
     <ClCompile Include="..\..\..\..\..\local_third_party\JUCE\modules\juce_core\containers\juce_AbstractFifo.cpp">
@@ -1334,6 +1335,7 @@
     <ClInclude Include="..\..\Source\Demos\DemoSimNet.h"/>
     <ClInclude Include="..\..\Source\Demos\DemosMainComponent.h"/>
     <ClInclude Include="..\..\Source\Demos\DemoMiner.h"/>
+    <ClInclude Include="..\..\Source\Miner\Miner.h"/>
     <ClInclude Include="..\..\Source\MainComponent.h"/>
     <ClInclude Include="..\..\..\..\..\local_third_party\JUCE\modules\juce_core\containers\juce_AbstractFifo.h"/>
     <ClInclude Include="..\..\..\..\..\local_third_party\JUCE\modules\juce_core\containers\juce_Array.h"/>

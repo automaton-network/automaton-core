@@ -179,12 +179,23 @@ target_link_libraries(
   automaton-core
 )
 
-add_executable(
+add_library(
   koh-miner
-  automaton/tools/miner/miner_main.cc
   automaton/tools/miner/miner.cc
 )
+
 target_link_libraries(
   koh-miner
   automaton-core
+)
+
+add_executable(
+  koh-miner-bin
+  automaton/tools/miner/miner_main.cc
+)
+
+target_link_libraries(
+  koh-miner-bin
+  automaton-core
+  koh-miner
 )
