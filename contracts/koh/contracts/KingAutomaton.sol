@@ -200,7 +200,7 @@ contract KingAutomaton {
 
     // Kick out prior king if any and reward them.
     uint last_time = slots[slot].last_claim_time;
-    if (last_time != 0 && last_time > now) {
+    if (last_time != 0 && last_time < now) {
       uint value = (now - last_time) * rewardPerSlotPerSecond;
       mint(address(treasuryAddress), value);
       mint(slots[slot].owner, value);
