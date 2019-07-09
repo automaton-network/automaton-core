@@ -538,14 +538,26 @@ void Miner::createSignature() {
 
   std::string pub_key = gen_pub_key((unsigned char*)priv_key.c_str());
   std::string sig =
-      sign(reinterpret_cast<const unsigned char*>(priv_key.c_str()), minerAddress);
+      sign(reinterpret_cast<const unsigned char*>(priv_key.c_str()),
+           reinterpret_cast<const unsigned char*>(slot.owner.c_str()));
+
+  std::stringstream ss;
+  ss
+      << "koh.claimSlot('0x" << bin2hex(pub_key.substr(0, 32))
+      << "', '0x" << bin2hex(pub_key.substr(32, 32))
+      << "', '0x" << bin2hex(sig.substr(64, 1))
+      << "', '0x" << bin2hex(sig.substr(0, 32))
+      << "', '0x" << bin2hex(sig.substr(32, 32))
+      << "')" << std::endl;
+
   txtClaim->setText(
     "Signature: \n"
     "PubKeyX = 0x" + bin2hex(pub_key.substr(0, 32)) + " \n"
     "PubKeyY = 0x" + bin2hex(pub_key.substr(32, 32)) + " \n"
     "R = 0x" + bin2hex(sig.substr(0, 32)) + " \n"
     "S = 0x" + bin2hex(sig.substr(32, 32)) + " \n"
-    "V = 0x" + bin2hex(sig.substr(64, 1)) + " \n");
+    "V = 0x" + bin2hex(sig.substr(64, 1)) + " \n"
+    + ss.str());
 }
 
 void Miner::timerCallback() {
