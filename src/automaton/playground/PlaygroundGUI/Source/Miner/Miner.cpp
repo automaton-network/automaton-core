@@ -80,9 +80,13 @@ void Miner::processMinedKey(std::string _pk, int keys_generated) {
     return;
   }
   std::string x = get_pub_key_x(reinterpret_cast<const unsigned char *>(_pk.c_str()));
-  uint32 slot = *reinterpret_cast<uint32*>(&x[28]) % totalSlots;
+  CryptoPP::Integer bn_x((bin2hex(x) + "h").c_str());
+  uint32 slot = bn_x % totalSlots;
   for (int i = 0; i < 32; i++) {
     x[i] ^= mask[i];
+  }
+  if (x <= std::string(reinterpret_cast<char*>(difficulty), 32)) {
+    return;
   }
   if (x > slots[slot].difficulty) {
     slots_claimed++;
@@ -142,6 +146,10 @@ class TableSlots: public TableListBox, TableListBoxModel {
   // This is overloaded from TableListBoxModel, and must return the total number of rows in our table
   int getNumRows() override {
     return owner->getSlotsNumber();
+  }
+
+  void selectedRowsChanged(int) override {
+    owner->createSignature();
   }
 
   // This is overloaded from TableListBoxModel, and should fill in the background of the whole row
@@ -530,15 +538,14 @@ void Miner::createSignature() {
 
   std::string pub_key = gen_pub_key((unsigned char*)priv_key.c_str());
   std::string sig =
-      sign(reinterpret_cast<const unsigned char*>(priv_key.c_str()),
-           reinterpret_cast<const unsigned char*>(slot.owner.c_str()));
+      sign(reinterpret_cast<const unsigned char*>(priv_key.c_str()), minerAddress);
   txtClaim->setText(
-    "Signature:\n"
-    "PubKeyX = " + bin2hex(pub_key.substr(0, 32)) + "\n"
-    "PubKeyX = " + bin2hex(pub_key.substr(32, 32)) + "\n"
-    "R = 0x" + bin2hex(sig.substr(0, 32)) + "\n"
-    "S = 0x" + bin2hex(sig.substr(32, 32)) + "\n"
-    "V = 0x" + bin2hex(sig.substr(64, 1)) + "\n");
+    "Signature: \n"
+    "PubKeyX = 0x" + bin2hex(pub_key.substr(0, 32)) + " \n"
+    "PubKeyY = 0x" + bin2hex(pub_key.substr(32, 32)) + " \n"
+    "R = 0x" + bin2hex(sig.substr(0, 32)) + " \n"
+    "S = 0x" + bin2hex(sig.substr(32, 32)) + " \n"
+    "V = 0x" + bin2hex(sig.substr(64, 1)) + " \n");
 }
 
 void Miner::timerCallback() {
