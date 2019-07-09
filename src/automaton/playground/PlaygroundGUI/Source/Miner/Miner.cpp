@@ -8,6 +8,9 @@
 #include "automaton/core/io/io.h"
 
 using automaton::tools::miner::mine_key;
+using automaton::tools::miner::sign;
+using automaton::tools::miner::gen_pub_key;
+
 using automaton::core::io::bin2hex;
 using automaton::core::io::hex2bin;
 
@@ -45,10 +48,8 @@ class MinerThread: public Thread {
     unsigned char difficulty[32];
     unsigned char pk[32];
 
-    memset(mask, 0, 32);
-    memset(difficulty, 0, 32);
-    difficulty[0] = 0xff;
-    difficulty[1] = 0x00;
+    memcpy(mask, owner->getMask(), 32);
+    memcpy(difficulty, owner->getDifficulty(), 32);
 
     while (!threadShouldExit()) {
       unsigned int keys_generated = mine_key(mask, difficulty, pk);
@@ -73,31 +74,37 @@ void Miner::stopMining() {
   miners.clear(true);
 }
 
-void Miner::processMinedKey(std::string _pk, unsigned int keys_generated) {
-  total_keys_generated += keys_generated;
+void Miner::processMinedKey(std::string _pk, int keys_generated) {
+  total_keys_generated += abs(keys_generated);
+  if (keys_generated <= 0) {
+    return;
+  }
   std::string x = get_pub_key_x(reinterpret_cast<const unsigned char *>(_pk.c_str()));
   uint32 slot = *reinterpret_cast<uint32*>(&x[28]) % totalSlots;
+  for (int i = 0; i < 32; i++) {
+    x[i] ^= mask[i];
+  }
   if (x > slots[slot].difficulty) {
     slots_claimed++;
-    slots[slot].owner = minerAddress;
+    slots[slot].owner = std::string(reinterpret_cast<char*>(minerAddress), 32);
     slots[slot].difficulty = x;
+    slots[slot].private_key = _pk;
   }
-  // std::cout << bin2hex(x) << " " << slot << std::endl;
 }
 
-class TableDemoComponent: public Component, TableListBoxModel {
+class TableSlots: public TableListBox, TableListBoxModel {
  public:
   Miner* owner;
 
-  TableDemoComponent(Miner * _owner) : owner(_owner) {
+  TableSlots(Miner * _owner) : owner(_owner) {
     // Create our table component and add it to this component..
-    addAndMakeVisible(table);
-    table.setModel(this);
+    // addAndMakeVisible(table);
+    setModel(this);
 
     // give it a border
-    table.setColour(ListBox::outlineColourId, Colours::grey);
-    table.setOutlineThickness(1);
-    table.setRowHeight(16);
+    setColour(ListBox::outlineColourId, Colours::grey);
+    setOutlineThickness(1);
+    setRowHeight(16);
 
     struct column {
       String name;
@@ -106,15 +113,16 @@ class TableDemoComponent: public Component, TableListBoxModel {
     };
 
     column columns[] = {
-      {"Slot", 1, 50},
-      {"Difficulty", 2, 200},
-      {"Owner", 3, 100},
+      {"Slot", 1, 40},
+      {"Difficulty", 2, 100},
+      {"Owner", 3, 50},
+      {"Private Key", 4, 400},
       {"", 0, 0},
     };
 
     // Add some columns to the table header, based on the column list in our database..
     for (int i = 0; columns[i].ID != 0; i++) {
-      table.getHeader().addColumn(columns[i].name,
+      getHeader().addColumn(columns[i].name,
                                   columns[i].ID,
                                   columns[i].width,
                                   50, 400,
@@ -122,13 +130,13 @@ class TableDemoComponent: public Component, TableListBoxModel {
     }
 
     // we could now change some initial settings..
-    table.getHeader().setSortColumnId(1, true);  // sort forwards by the ID column
-    table.getHeader().setColumnVisible(7, false);  // hide the "length" column until the user shows it
+    getHeader().setSortColumnId(1, true);  // sort forwards by the ID column
+    getHeader().setColumnVisible(7, false);  // hide the "length" column until the user shows it
 
     // un-comment this line to have a go of stretch-to-fit mode
-    // table.getHeader().setStretchToFitActive(true);
+    // getHeader().setStretchToFitActive(true);
 
-    table.setMultipleSelectionEnabled(false);
+    setMultipleSelectionEnabled(false);
   }
 
   // This is overloaded from TableListBoxModel, and must return the total number of rows in our table
@@ -167,9 +175,13 @@ class TableDemoComponent: public Component, TableListBoxModel {
         text = bin2hex(owner->getSlot(rowNumber).difficulty);
         break;
       }
-      case 3:
+      case 3: {
         text = "0x" + bin2hex(owner->getSlot(rowNumber).owner);
         break;
+      }
+      case 4: {
+        text = bin2hex(owner->getSlot(rowNumber).private_key);
+      }
     }
     g.drawText(text, 2, 0, width - 4, height, Justification::centredLeft, true);
 
@@ -177,17 +189,11 @@ class TableDemoComponent: public Component, TableListBoxModel {
     g.fillRect(width - 1, 0, 1, height);
   }
 
-  //==============================================================================
-  void resized() override {
-    // position our table with a gap around its edge
-    table.setBoundsInset(BorderSize<int> (0));
-  }
-
  private:
-  TableListBox table;     // the table component itself
+  // TableListBox table;     // the table component itself
   Font font  { 12.0f };
 
-  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TableDemoComponent)
+  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TableSlots)
 };
 
 class ReadContractThread: public ThreadWithProgressWindow {
@@ -275,63 +281,6 @@ unsigned int leading_bits(const std::string& s) {
   return result;
 }
 
-static Colour HSV(double h, double s, double v) {
-  double hh, p, q, t, ff;
-  int64 i;
-  double r, g, b;
-
-  if (s <= 0.0) {
-    r = v;
-    g = v;
-    b = v;
-    return Colour(uint8(r*255), uint8(g*255), uint8(b*255));
-  }
-
-  hh = h;
-  if (hh >= 360.0) hh = 0.0;
-  hh /= 60.0;
-  i = static_cast<int64>(hh);
-  ff = hh - i;
-  p = v * (1.0 - s);
-  q = v * (1.0 - (s * ff));
-  t = v * (1.0 - (s * (1.0 - ff)));
-
-  switch (i) {
-  case 0:
-    r = v;
-    g = t;
-    b = p;
-    break;
-  case 1:
-    r = q;
-    g = v;
-    b = p;
-    break;
-  case 2:
-    r = p;
-    g = v;
-    b = t;
-    break;
-  case 3:
-    r = p;
-    g = q;
-    b = v;
-    break;
-  case 4:
-    r = t;
-    g = p;
-    b = v;
-    break;
-  case 5:
-  default:
-    r = v;
-    g = p;
-    b = q;
-    break;
-  }
-  return Colour(uint8(r * 255), uint8(g * 255), uint8(b * 255));
-}
-
 static String sepitoa(uint64 n, bool lz = false) {
   if (n < 1000) {
     if (!lz) {
@@ -349,11 +298,12 @@ static String sepitoa(uint64 n, bool lz = false) {
 
 //==============================================================================
 Miner::Miner() {
-  initSlots();
   startTimer(1000);
 
-  int y = 50;
+  int y = 0;
 
+/*
+  y += 50;
   LBL("RPC Server:", 20, y, 100, 24);
   txtRpcServer = TXT("RPC", 120, y, 500, 24);
   txtRpcServer->setText("HTTP://127.0.0.1:7545");
@@ -365,34 +315,59 @@ Miner::Miner() {
 
   y += 30;
   btnContract = TB("Read Contract", 120, y, 120, 24);
+*/
 
   y += 50;
+  LBL("Slots: ", 20, y, 100, 24);
+  txtSlotsNum = TXT("SLOTS", 120, y, 100, 24);
+  txtSlotsNum->setInputRestrictions(5, "0123456789");
+
+  y += 30;
   LBL("Mask: ", 20, y, 100, 24);
-  auto mask = TXT("MASK", 120, y, 600, 24);
-  mask->setText("N/A");
-  mask->setReadOnly(true);
-  mask->setInputRestrictions(64, "0123456789abcdefABCDEF");
+  txtMask = TXT("MASK", 120, y, 600, 24);
+  txtMask->setInputRestrictions(78, "0123456789");
+
+  y += 30;
+  LBL("Mask (Hex):", 20, y, 100, 24);
+  txtMaskHex = TXT("MASKHEX", 120, y, 600, 24);
+  txtMaskHex->setReadOnly(true);
+
+  y += 30;
+  LBL("Min Difficulty:", 20, y, 100, 24);
+  txtMinDifficulty = TXT("MINDIFF", 120, y, 25, 24);
+  txtMinDifficulty->setInputRestrictions(2, "0123456789");
+
+  txtMinDifficultyHex = TXT("MINDIFFHEX", 150, y, 500, 24);
+  txtMinDifficultyHex->setReadOnly(true);
 
   y += 30;
   LBL("Miner Address: ", 20, y, 100, 24);
   txtMinerAddress = TXT("ADDR", 120, y, 600, 24);
-  txtMinerAddress->setReadOnly(true);
-  txtMinerAddress->setText("0x137dA20bb584469D880c0361E9A3Dd58b674F512");
-  txtMinerAddress->setInputRestrictions(40, "0123456789abcdefABCDEFx");
-  minerAddress = hex2bin("137dA20bb584469D880c0361E9A3Dd58b674F512");
+  txtMinerAddress->setInputRestrictions(42, "0123456789abcdefABCDEFx");
 
   y += 50;
   TB("Add Miner", 120, y, 80, 24);
   TB("Stop Miners", 220, y, 80, 24);
+  TB("Claim", 120, y + 30, 80, 24);
   txtMinerInfo = TXT("MINFO", 320, y, 400, 80);
   txtMinerInfo->setText("Not running.");
   txtMinerInfo->setReadOnly(true);
 
   y += 100;
-  LBL("Validator Slots: ", 20, y, 100, 24);
-  auto tbl = new TableDemoComponent(this);
-  tbl->setBounds(120, y, 600, 300);
-  addComponent(tbl);
+  LBL("Validator Slots: ", 20, y, 300, 24);
+  LBL("Claim Slot Parameters:", 650, y, 300, 24);
+
+  y += 30;
+  tblSlots = new TableSlots(this);
+  tblSlots->setBounds(20, y, 600, 300);
+  addComponent(tblSlots);
+  txtClaim = TXT("CLAIM", 650, y, 600, 300);
+  txtClaim->setReadOnly(true);
+
+  setSlotsNumber(16);
+  setMask("53272589901149737477561849970166322707710816978043543010898806474236585144509");
+  setMinDifficulty(16);
+  setMinerAddress("0x137dA20bb584469D880c0361E9A3Dd58b674F512");
 
   /*
   CryptoPP::byte buf[1024] = {0};
@@ -420,10 +395,53 @@ Miner::Miner() {
 Miner::~Miner() {
 }
 
+void Miner::setMask(std::string _mask) {
+  CryptoPP::Integer m(_mask.c_str());
+  m.Encode(mask, 32);
+  txtMask->setText(_mask);
+  const unsigned int UPPER = (1 << 31);
+  // txtMaskHex->setText(CryptoPP::IntToString(m, UPPER | 16), false);
+  txtMaskHex->setText(bin2hex(std::string(reinterpret_cast<char*>(mask), 32)));
+}
+
+void Miner::setMinDifficulty(unsigned int _minDifficulty) {
+  minDifficulty = _minDifficulty;
+  txtMinDifficulty->setText(String(minDifficulty), false);
+  CryptoPP::Integer d(1);
+  d <<= minDifficulty;
+  d--;
+  d <<= (256 - minDifficulty);
+  d.Encode(difficulty, 32);
+  // const unsigned int UPPER = (1 << 31);
+  // txtMinDifficultyHex->setText(IntToString(d, UPPER | 16), false);
+  txtMinDifficultyHex->setText(bin2hex(std::string(reinterpret_cast<char*>(difficulty), 32)));
+}
+
+void Miner::setMinerAddress(std::string _address) {
+  if (_address.substr(0, 2) == "0x") {
+    _address = _address.substr(2);
+  }
+  _address += "h";
+  CryptoPP::Integer a(_address.c_str());
+
+  a.Encode(minerAddress, 32);
+  const unsigned int UPPER = (1 << 31);
+  txtMinerAddress->setText("0x" + IntToString(a, UPPER | 16), false);
+}
+
+void Miner::setSlotsNumber(int _slotsNum) {
+  _slotsNum = jmax(0, jmin(65536, _slotsNum));
+  totalSlots = _slotsNum;
+  txtSlotsNum->setText(String(totalSlots), false);
+  initSlots();
+  repaint();
+  tblSlots->updateContent();
+}
+
 void Miner::initSlots() {
-  unsigned char mask[32];
   unsigned char difficulty[32];
   unsigned char pk[32];
+  slots.clear();
 
   memset(mask, 0, 32);
   memset(difficulty, 0, 32);
@@ -441,6 +459,21 @@ void Miner::initSlots() {
   }
 }
 
+void Miner::textEditorTextChanged(TextEditor & txt) {
+  if (txtMask == &txt) {
+    setMask(txtMask->getText().toStdString());
+  }
+  if (txtMinDifficulty == &txt) {
+    auto minDiff = jmax(0, jmin(48, txtMinDifficulty->getText().getIntValue()));
+    setMinDifficulty(minDiff);
+  }
+  if (txtSlotsNum == &txt) {
+    setSlotsNumber(txtSlotsNum->getText().getIntValue());
+  }
+  if (txtMinerAddress == & txt) {
+    setMinerAddress(txtMinerAddress->getText().toStdString());
+  }
+}
 
 void Miner::buttonClicked(Button* btn) {
   auto txt = btn->getButtonText();
@@ -452,6 +485,9 @@ void Miner::buttonClicked(Button* btn) {
   }
   if (txt == "Stop Miners") {
     stopMining();
+  }
+  if (txt == "Claim") {
+    createSignature();
   }
   repaint();
 }
@@ -478,6 +514,31 @@ void Miner::update() {
   }
   last_time = cur_time;
   last_keys_generated = total_keys_generated;
+}
+
+void Miner::createSignature() {
+  txtClaim->setText("");
+  int s = tblSlots->getSelectedRow();
+  if (s < 0 || s >= slots.size()) {
+    return;
+  }
+  auto& slot = slots[s];
+  std::string priv_key = slot.private_key;
+  if (priv_key.size() != 32) {
+    return;
+  }
+
+  std::string pub_key = gen_pub_key((unsigned char*)priv_key.c_str());
+  std::string sig =
+      sign(reinterpret_cast<const unsigned char*>(priv_key.c_str()),
+           reinterpret_cast<const unsigned char*>(slot.owner.c_str()));
+  txtClaim->setText(
+    "Signature:\n"
+    "PubKeyX = " + bin2hex(pub_key.substr(0, 32)) + "\n"
+    "PubKeyX = " + bin2hex(pub_key.substr(32, 32)) + "\n"
+    "R = 0x" + bin2hex(sig.substr(0, 32)) + "\n"
+    "S = 0x" + bin2hex(sig.substr(32, 32)) + "\n"
+    "V = 0x" + bin2hex(sig.substr(64, 1)) + "\n");
 }
 
 void Miner::timerCallback() {

@@ -9,6 +9,7 @@
 class Miner:
   public Component,
   public Button::Listener,
+  public TextEditor::Listener,
   private Timer {
  public:
   //==============================================================================
@@ -23,10 +24,14 @@ class Miner:
   // Button::Listener overrides.
   void buttonClicked(Button* btn) override;
 
+  // TextEditor::Listener overrides.
+  void textEditorTextChanged(TextEditor &) override;
+
   // Mining
   struct slot {
     std::string difficulty;
     std::string owner;
+    std::string private_key;
 
     slot() {
       // Set min difficulty.
@@ -37,32 +42,53 @@ class Miner:
       difficulty = std::string(buf, 32);
     }
   };
+
   void initSlots();
-  void processMinedKey(std::string _pk, unsigned int keys_generated);
-  size_t getSlotsNumber() { return slots.size(); }
-  slot& getSlot(int _slot) { return slots[_slot]; }
+  void processMinedKey(std::string _pk, int keys_generated);
 
   void addMinerThread();
   void stopMining();
+  void createSignature();
+
+  size_t getSlotsNumber() { return slots.size(); }
+  slot& getSlot(int _slot) { return slots[_slot]; }
+  unsigned char * getMask() { return mask; }
+  unsigned char * getDifficulty() { return difficulty; }
+
+  void setMask(std::string _mask);
+  void setMinDifficulty(unsigned int _minDifficulty);
+  void setSlotsNumber(int _slotsNum);
+  void setMinerAddress(std::string _address);
 
  private:
   // Mining
   int totalSlots = 1024;
+  std::vector<slot> slots;
+
   unsigned int total_keys_generated = 0;
   unsigned int last_keys_generated = 0;
   unsigned int slots_claimed = 0;
   int64 last_time = 0;
   OwnedArray<Thread> miners;
-  std::vector<slot> slots;
-  std::string minerAddress;
+  unsigned char mask[32];
+  unsigned int minDifficulty;
+  unsigned char difficulty[32];
+  unsigned char minerAddress[32];
 
   // UI
   OwnedArray<Component> components;
   TextEditor* txtRpcServer;
   Button* btnContract;
   TextEditor* txtContract;
+  TextEditor* txtMask;
+  TextEditor* txtMaskHex;
   TextEditor* txtMinerAddress;
   TextEditor* txtMinerInfo;
+  TextEditor* txtMinDifficulty;
+  TextEditor* txtMinDifficultyHex;
+  TextEditor* txtSlotsNum;
+  TableListBox* tblSlots;
+  TextEditor* txtClaim;
 
   void addComponent(Component* c) {
     components.add(c);
@@ -112,6 +138,7 @@ class Miner:
 
   TextEditor* TXT(String name, int x, int y, int w, int h) {
     TextEditor* txt = new TextEditor(name);
+    txt->addListener(this);
     addComponent(txt);
     txt->setBounds(x, y, w, h);
     // txt->setColour(TextEditor::backgroundColourId, Colours::black);
