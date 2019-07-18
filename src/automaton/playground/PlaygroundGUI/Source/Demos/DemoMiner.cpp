@@ -1,6 +1,6 @@
 #include "DemoMiner.h"
 
-unsigned int leading_bits_char(char x) {
+static unsigned int leading_bits_char(char x) {
   unsigned int c = 0;
   while (x & 0x80) {
     c++;
@@ -11,7 +11,7 @@ unsigned int leading_bits_char(char x) {
 
 using automaton::core::io::bin2hex;
 
-unsigned int leading_bits(const std::string& s) {
+static unsigned int leading_bits(const std::string& s) {
   unsigned int result = 0;
   for (unsigned int i = 0; i < s.size(); i++) {
     unsigned int lb = leading_bits_char(s[i]);
@@ -23,7 +23,7 @@ unsigned int leading_bits(const std::string& s) {
   return result;
 }
 
-Colour HSV(double h, double s, double v) {
+static Colour HSV(double h, double s, double v) {
   double hh, p, q, t, ff;
   int64 i;
   double r, g, b;
@@ -260,7 +260,7 @@ void DemoMiner::buttonClicked(Button* btn) {
   repaint();
 }
 
-String sepitoa(uint64 n, bool lz = false) {
+static String sepitoa(uint64 n, bool lz = false) {
   if (n < 1000) {
     if (!lz) {
       return String(n);

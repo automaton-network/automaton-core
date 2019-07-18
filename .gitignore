@@ -38,6 +38,10 @@ src/logs/*
 .vs
 .vscode
 
+# Eclipse
+.cproject
+.project
+
 # NodeJS
 node_modules/
 
@@ -45,8 +49,28 @@ node_modules/
 src/local_third_party
 src/automaton/examples/smartproto/blockchain/inspect.lua
 
-# XCode
-build/
-# Builds/
+# Xcode
+
+## User settings
+xcuserdata/
+
+*.xcscmblueprint
 *.xccheckout
-*.xcuserstate
+build/
+DerivedData/
+*.moved-aside
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+!default.perspectivev3
+
+## Xcode Patch
+*.xcodeproj/*
+/*.gcno
+
+*.plist
+
+# JUCE
+
+Builds

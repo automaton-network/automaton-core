@@ -1,5 +1,6 @@
 #include "DemoMiner.h"
 #include "DemoSimNet.h"
+#include "../Miner/Miner.h"
 
 #include "DemosMainComponent.h"
 
@@ -26,12 +27,13 @@ DemosMainComponent::DemosMainComponent() {
   tabbedComponent.reset(new TabbedComponent(TabbedButtonBar::TabsAtTop));
   addAndMakeVisible(tabbedComponent.get());
   tabbedComponent->setTabBarDepth(37);
-  tabbedComponent->addTab(TRANS("Miner"), Colour(0xff404040), new DemoMiner(), true);
+  tabbedComponent->addTab(TRANS("Miner"), Colour(0xff404040), new Miner(), true);
+  tabbedComponent->addTab(TRANS("Demo Miner"), Colour(0xff404040), new DemoMiner(), true);
   tabbedComponent->addTab(TRANS("Treasury"), Colour(0xff404040), new DemoBlank(), true);
   tabbedComponent->addTab(TRANS("Protocols"), Colour(0xff404040), new DemoBlank(), true);
   tabbedComponent->addTab(TRANS("DApps"), Colour(0xff404040), new DemoBlank(), true);
   tabbedComponent->addTab(TRANS("Network"), Colour(0xff404040), new DemoBlank(), true);
-  tabbedComponent->addTab(TRANS("Network Simulation"), Colour(0xff404040), new DemoSimNet(), true);
+  // tabbedComponent->addTab(TRANS("Network Simulation"), Colour(0xff404040), new DemoSimNet(), true);
   tabbedComponent->setCurrentTabIndex(0);
 
   setSize(1024, 768);

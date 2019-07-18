@@ -73,7 +73,7 @@ class PlaygroundGUIApplication: public JUCEApplication {
   */
   class MainWindow    : public DocumentWindow {
    public:
-    LookAndFeel_V2 lnf;
+    LookAndFeel_V4 lnf;
 
     MainWindow(String name):
       DocumentWindow(name,
@@ -88,6 +88,7 @@ class PlaygroundGUIApplication: public JUCEApplication {
 
       setFullScreen(true);
       setResizable(true, true);
+      setResizeLimits(1200, 800, 10000, 10000);
 
       setVisible(true);
     }

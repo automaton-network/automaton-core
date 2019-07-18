@@ -198,14 +198,17 @@ contract KingAutomaton {
     // Make sure the signature is valid.
     require(verifySignature(pubKeyX, pubKeyY, bytes32(uint(msg.sender)), v, r, s), "Signature not valid");
 
+    // TODO(asen): Implement reward decaying over time.
+
     // Kick out prior king if any and reward them.
     uint last_time = slots[slot].last_claim_time;
-    if (last_time != 0 && last_time > now) {
+    if (last_time != 0) {
+      require (last_time < now, "mining same slot in same block or clock is wrong");
       uint value = (now - last_time) * rewardPerSlotPerSecond;
       mint(address(treasuryAddress), value);
       mint(slots[slot].owner, value);
     } else {
-      // Reward first time validators.
+      // Reward first time validators as if they held the slot for 1 hour.
       uint value = (3600) * rewardPerSlotPerSecond;
       mint(address(treasuryAddress), value);
       mint(msg.sender, value);
