@@ -188,3 +188,23 @@ target_link_libraries(
   koh-miner
   automaton-core
 )
+
+add_library(
+  eth_rpc
+  automaton/core/eth_rpc/eth_rpc.cc
+)
+
+target_link_libraries(
+  eth_rpc
+  automaton-core
+)
+
+add_executable(
+  eth_rpc_test
+  automaton/core/eth_rpc/test.cc
+)
+
+target_link_libraries(
+  eth_rpc_test
+  eth_rpc
+)
