@@ -25,7 +25,8 @@ class eth_contract: public automaton::core::network::connection::connection_hand
  public:
   static std::unordered_map<std::string, std::shared_ptr<eth_contract> > contracts;
 
-  static void register_contract(const std::string& server, const std::string& address, std::vector<std::string> signs);
+  static void register_contract(const std::string& server, const std::string& address,
+      std::unordered_map<std::string, std::string> signs);
   static std::shared_ptr<eth_contract> get_contract(const std::string&);
 
   ~eth_contract();
@@ -50,7 +51,8 @@ class eth_contract: public automaton::core::network::connection::connection_hand
   uint32_t buffer_size;
   std::shared_ptr<char> buffer;
 
-  eth_contract(const std::string& server, const std::string& address, std::vector<std::string> signatures);
+  eth_contract(const std::string& server, const std::string& address,
+      std::unordered_map<std::string, std::string> signatures);
 
   // void read_header();
   // void read_body();

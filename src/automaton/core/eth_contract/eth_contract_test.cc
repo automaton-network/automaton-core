@@ -29,9 +29,13 @@ int main() {
   automaton::core::network::tcp_init();
 
   eth_contract::register_contract(SERVER_IP, CONTRACT_ADDR, {
-    "getSlotsNumber()", "getSlotOwner(uint256)", "getSlotDifficulty(uint256)",
-    "getSlotLastClaimTime(uint256)", "getMask()", "getClaimed()",
-    "claimSlot(bytes32,bytes32,uint8,bytes32,bytes32)"
+    {"getSlotsNumber", "getSlotsNumber()"},
+    {"getSlotOwner", "getSlotOwner(uint256)"},
+    {"getSlotDifficulty", "getSlotDifficulty(uint256)"},
+    {"getSlotLastClaimTime", "getSlotLastClaimTime(uint256)"},
+    {"getMask", "getMask()"},
+    {"getClaimed", "getClaimed()"},
+    {"claimSlot", "claimSlot(bytes32,bytes32,uint8,bytes32,bytes32)"}
   });
 
   auto contract = eth_contract::get_contract(CONTRACT_ADDR);
@@ -40,12 +44,12 @@ int main() {
     return 0;
   }
 
-  contract->call(MY_ADDR, "getSlotsNumber()", "", callback_func);
-  contract->call(MY_ADDR, "getSlotOwner(uint256)", dec_to_32hex(2), callback_func);
-  contract->call(MY_ADDR, "getSlotDifficulty(uint256)", dec_to_32hex(2), callback_func);
-  contract->call(MY_ADDR, "getSlotLastClaimTime(uint256)", dec_to_32hex(2), callback_func);
-  contract->call(MY_ADDR, "getMask()", "", callback_func);
-  contract->call(MY_ADDR, "getClaimed()", "", callback_func);
+  contract->call(MY_ADDR, "getSlotsNumber", "", callback_func);
+  contract->call(MY_ADDR, "getSlotOwner", dec_to_32hex(2), callback_func);
+  contract->call(MY_ADDR, "getSlotDifficulty", dec_to_32hex(2), callback_func);
+  contract->call(MY_ADDR, "getSlotLastClaimTime", dec_to_32hex(2), callback_func);
+  contract->call(MY_ADDR, "getMask", "", callback_func);
+  contract->call(MY_ADDR, "getClaimed", "", callback_func);
 
   std::stringstream ss;
   ss << "FFFFA600B54D95B84FA8664DBCB5043886EE62DA5D89E59898B925AA43D7340A" <<
@@ -53,9 +57,9 @@ int main() {
       "0x364020867EDB23CE0B91120E8649D60E3C230E36580EBA9CBE74C05C5F2E3974" <<
       "0x06A0DB8D9DC51BDE1154AE1F31133E2571BD5101F012DE04DC64C61F946CAC1F";
 
-  contract->call(MY_ADDR, "claimSlot(bytes32,bytes32,uint8,bytes32,bytes32)", ss.str(), callback_func);
+  contract->call(MY_ADDR, "claimSlot", ss.str(), callback_func);
   std::this_thread::sleep_for(std::chrono::milliseconds(8000));
-  contract->call(MY_ADDR, "getClaimed()", "", callback_func);
+  contract->call(MY_ADDR, "getClaimed", "", callback_func);
 
   std::this_thread::sleep_for(std::chrono::milliseconds(3000));
 

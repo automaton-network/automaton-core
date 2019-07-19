@@ -38,7 +38,7 @@ std::string dec_to_32hex(uint32_t n) {
 std::unordered_map<std::string, std::shared_ptr<eth_contract> > eth_contract::contracts;
 
 void eth_contract::register_contract(const std::string& server, const std::string& address,
-    std::vector<std::string> signs) {
+    std::unordered_map<std::string, std::string> signs) {
   if (contracts.find(address) != contracts.end()) {
     LOG(INFO) << "Contract already registered!";
     return;
@@ -55,12 +55,10 @@ std::shared_ptr<eth_contract> eth_contract::get_contract(const std::string& addr
   return it->second;
 }
 
-eth_contract::eth_contract(const std::string& server, const std::string& address, std::vector<std::string> signs):
-    call_id(0),
-    server(server),
-    address(address) {
-  for (uint32_t i = 0; i < signs.size(); ++i) {
-    signatures[signs[i]] = "0x" + (bin2hex(hash(signs[i]))).substr(0, 8);
+eth_contract::eth_contract(const std::string& server, const std::string& address,
+    std::unordered_map<std::string, std::string> signs): call_id(0), server(server), address(address) {
+  for (auto it = signs.begin(); it != signs.end(); ++it) {
+    signatures[it->first] = "0x" + (bin2hex(hash(it->second))).substr(0, 8);
   }
   buffer_size = BUFFER_SIZE;
   buffer = std::shared_ptr<char>(new char[buffer_size], std::default_delete<char[]>());;
