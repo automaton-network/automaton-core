@@ -201,21 +201,21 @@ target_link_libraries(
 )
 
 add_library(
-  eth_rpc
-  automaton/core/eth_rpc/eth_rpc.cc
+  eth_contract
+  automaton/core/eth_contract/eth_contract.cc
 )
 
 target_link_libraries(
-  eth_rpc
+  eth_contract
   automaton-core
 )
 
 add_executable(
-  eth_rpc_test
-  automaton/core/eth_rpc/test.cc
+  eth_contract_test
+  automaton/core/eth_contract/eth_contract_test.cc
 )
 
 target_link_libraries(
-  eth_rpc_test
-  eth_rpc
+  eth_contract_test
+  eth_contract
 )

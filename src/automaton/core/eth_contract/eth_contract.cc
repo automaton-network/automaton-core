@@ -1,4 +1,4 @@
-#include "automaton/core/eth_rpc/eth_rpc.h"
+#include "automaton/core/eth_contract/eth_contract.h"
 
 #include <string>
 #include <utility>
@@ -15,10 +15,12 @@ using automaton::core::network::connection_id;
 static const char* CRLF = "\r\n";
 static const char* CRLF2 = "\r\n\r\n";
 static const uint32_t BUFFER_SIZE = 512;
+static const uint32_t WAITING_HEADER = 1;
+static const uint32_t WAITING_BODY = 2;
 
 namespace automaton {
 namespace core {
-namespace eth_rpc {
+namespace eth_contract {
 
 std::string hash(const std::string& data) {
   Keccak_256_cryptopp hasher;
@@ -33,18 +35,18 @@ std::string dec_to_32hex(uint32_t n) {
   return std::string(64-ss.str().size(), '0') + ss.str();
 }
 
-std::unordered_map<std::string, std::shared_ptr<ETHContract> > ETHContract::contracts;
+std::unordered_map<std::string, std::shared_ptr<eth_contract> > eth_contract::contracts;
 
-void ETHContract::register_contract(const std::string& server, const std::string& address,
+void eth_contract::register_contract(const std::string& server, const std::string& address,
     std::vector<std::string> signs) {
   if (contracts.find(address) != contracts.end()) {
     LOG(INFO) << "Contract already registered!";
     return;
   }
-  contracts[address] = std::shared_ptr<ETHContract>(new ETHContract(server, address, signs));
+  contracts[address] = std::shared_ptr<eth_contract>(new eth_contract(server, address, signs));
 }
 
-std::shared_ptr<ETHContract> ETHContract::get_contract(const std::string& address) {
+std::shared_ptr<eth_contract> eth_contract::get_contract(const std::string& address) {
   auto it = contracts.find(address);
   if (it == contracts.end()) {
     LOG(ERROR) << "No contract with address " << address;
@@ -53,23 +55,20 @@ std::shared_ptr<ETHContract> ETHContract::get_contract(const std::string& addres
   return it->second;
 }
 
-ETHContract::ETHContract(const std::string& server, const std::string& address, std::vector<std::string> signs):
+eth_contract::eth_contract(const std::string& server, const std::string& address, std::vector<std::string> signs):
     call_id(0),
     server(server),
     address(address) {
   for (uint32_t i = 0; i < signs.size(); ++i) {
     signatures[signs[i]] = "0x" + (bin2hex(hash(signs[i]))).substr(0, 8);
   }
-  // std::string header;
-  // std::stringstream body;
-  // std::stringstream chunk;
   buffer_size = BUFFER_SIZE;
   buffer = std::shared_ptr<char>(new char[buffer_size], std::default_delete<char[]>());;
 }
 
-ETHContract::~ETHContract() {}
+eth_contract::~eth_contract() {}
 
-void ETHContract::call(const std::string& from_address, const std::string& f,
+void eth_contract::call(const std::string& from_address, const std::string& f,
     const std::string& params,
     std::function<void(const automaton::core::common::status&, const std::string&)> callback) {
   auto it = signatures.find(f);
@@ -104,12 +103,12 @@ void ETHContract::call(const std::string& from_address, const std::string& f,
   }
 }
 
-// void ETHContract::handle_message(){}
+// void eth_contract::handle_message(){}
 
-void ETHContract::on_message_received(connection_id c, std::shared_ptr<char> buffer,
+void eth_contract::on_message_received(connection_id c, std::shared_ptr<char> buffer,
     uint32_t bytes_read, uint32_t mid) {
-  // read header and body and call async_read again
   std::string s(buffer.get(), bytes_read);
+
   auto it = callbacks.find(mid);
   if (it == callbacks.end()) {
     LOG(ERROR) << "No such callback function!";
@@ -122,19 +121,19 @@ void ETHContract::on_message_received(connection_id c, std::shared_ptr<char> buf
   // conn->async_read(buffer, buffer_size, 0, 0);
 }
 
-void ETHContract::on_message_sent(connection_id c, uint32_t mid, const automaton::core::common::status& s) {
+void eth_contract::on_message_sent(connection_id c, uint32_t mid, const automaton::core::common::status& s) {
   LOG(INFO) << "Message " << mid << " was sent. Status: " << s;
 }
 
-void ETHContract::on_connected(connection_id c) {
+void eth_contract::on_connected(connection_id c) {
   LOG(INFO) << "Connected";
 }
 
-void ETHContract::on_disconnected(connection_id c) {
+void eth_contract::on_disconnected(connection_id c) {
   LOG(INFO) << "Disconnected";
 }
 
-void ETHContract::on_connection_error(connection_id c, const automaton::core::common::status& s) {
+void eth_contract::on_connection_error(connection_id c, const automaton::core::common::status& s) {
   if (s.code == automaton::core::common::status::OK) {
     return;
   }
@@ -142,6 +141,6 @@ void ETHContract::on_connection_error(connection_id c, const automaton::core::co
   conn->disconnect();
 }
 
-}  // namespace eth_rpc
+}  // namespace eth_contract
 }  // namespace core
 }  // namespace automaton

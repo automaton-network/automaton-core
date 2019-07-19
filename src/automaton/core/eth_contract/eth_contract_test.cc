@@ -3,13 +3,13 @@
 #include <string>
 #include <utility>
 
-#include "automaton/core/eth_rpc/eth_rpc.h"
+#include "automaton/core/eth_contract/eth_contract.h"
 #include "automaton/core/io/io.h"
 #include "automaton/core/network/tcp_implementation.h"
 
 using automaton::core::network::connection;
 using automaton::core::network::connection_id;
-using automaton::core::eth_rpc::dec_to_32hex;
+using automaton::core::eth_contract::dec_to_32hex;
 
 const char* CONTRACT_ADDR = "0x22D9d6faB361FaA969D2EfDE420472633cBB7B11";
 const char* MY_ADDR = "0x603CB0d1c8ab86E72beb3c7DF564A36D7B85ecD2";
@@ -24,17 +24,17 @@ int main() {
   auto l_handler = logworker->addDefaultLogger("demo", "./");
   g3::initializeLogging(logworker.get());
 
-  using namespace automaton::core::eth_rpc;  // NOLINT
+  using namespace automaton::core::eth_contract;  // NOLINT
 
   automaton::core::network::tcp_init();
 
-  ETHContract::register_contract(SERVER_IP, CONTRACT_ADDR, {
+  eth_contract::register_contract(SERVER_IP, CONTRACT_ADDR, {
     "getSlotsNumber()", "getSlotOwner(uint256)", "getSlotDifficulty(uint256)",
     "getSlotLastClaimTime(uint256)", "getMask()", "getClaimed()",
     "claimSlot(bytes32,bytes32,uint8,bytes32,bytes32)"
   });
 
-  auto contract = ETHContract::get_contract(CONTRACT_ADDR);
+  auto contract = eth_contract::get_contract(CONTRACT_ADDR);
   if (contract == nullptr) {
     LOG(ERROR) << "Contract is NULL";
     return 0;
