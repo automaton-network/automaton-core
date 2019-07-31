@@ -199,3 +199,23 @@ target_link_libraries(
   automaton-core
   koh-miner
 )
+
+add_library(
+  eth_contract
+  automaton/core/eth_contract/eth_contract.cc
+)
+
+target_link_libraries(
+  eth_contract
+  automaton-core
+)
+
+add_executable(
+  eth_contract_test
+  automaton/core/eth_contract/eth_contract_test.cc
+)
+
+target_link_libraries(
+  eth_contract_test
+  eth_contract
+)
