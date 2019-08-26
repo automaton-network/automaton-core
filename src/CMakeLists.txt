@@ -93,6 +93,15 @@ target_link_libraries(
   ${LOCAL_THIRD_PARTY_LIBS}
 )
 
+# On Linux if using curl we need to add ssl & crypto.
+if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
+  target_link_libraries(
+    automaton-core
+    ssl
+    crypto
+  )
+endif()
+
 # On Mac OS X if using curl we need to also link to LDAP.
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
   target_link_libraries(
