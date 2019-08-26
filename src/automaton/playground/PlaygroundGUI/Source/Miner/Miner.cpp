@@ -310,6 +310,8 @@ Miner::Miner() {
 
   int y = 0;
 
+  LBL(String(__DATE__) + " " + String(__TIME__), 0, 0, 140, 20);
+
 /*
   y += 50;
   LBL("RPC Server:", 20, y, 100, 24);
