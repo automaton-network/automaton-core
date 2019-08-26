@@ -88,9 +88,18 @@ add_library(automaton-core STATIC ${CRYPTO_FILES})
 target_link_libraries(
   automaton-core
   Threads::Threads
+  z
   ${CMAKE_DL_LIBS}
   ${LOCAL_THIRD_PARTY_LIBS}
 )
+
+# On Mac OS X if using curl we need to also link to LDAP.
+if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
+  target_link_libraries(
+    automaton-core
+    LDAP
+  )
+endif()
 
 add_executable(automaton-core-cli automaton/core/core.cc)
 target_link_libraries(automaton-core-cli automaton-core)

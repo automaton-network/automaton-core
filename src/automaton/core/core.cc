@@ -24,6 +24,8 @@
 
 #include "automaton/core/io/io.h"  //  IO needs to be included after boost
 
+#include <curl/curl.h>
+
 using automaton::core::data::factory;
 using automaton::core::data::protobuf::protobuf_factory;
 using automaton::core::data::protobuf::protobuf_schema;
@@ -123,6 +125,9 @@ int main(int argc, char* argv[]) {
 
   default_node_updater* updater;
 {
+  // TODO(asen): Get rid of this, it is temporary to verify libcurl works across all platforms.
+  curl_global_init(CURL_GLOBAL_DEFAULT);
+
   automaton::core::io::init_logger();
   automaton::core::cli::cli cli;
   engine script(core_factory);
