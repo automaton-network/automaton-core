@@ -24,6 +24,7 @@ set(LOCAL_THIRD_PARTY_LIBS
   ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/boost/stage/lib/libboost_iostreams.a
   ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/boost/stage/lib/libboost_system.a
   ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/cryptopp/libcryptopp.a
+  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/curl/lib/.libs/libcurl.a
   ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/g3log/build/libg3logger.a
   ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/gmp/.libs/libgmp.a
   ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/lua/liblua.a
@@ -44,6 +45,7 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/boost
   ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/cryptopp
+  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/curl/include
   ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/ed25519/src
   ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/g3log/build/include
   ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/g3log/src
