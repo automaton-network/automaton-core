@@ -1,3 +1,4 @@
+#include <curl/curl.h>
 #include <future>
 #include <fstream>
 #include <iostream>
@@ -23,8 +24,6 @@
 #include "automaton/core/testnet/testnet.h"
 
 #include "automaton/core/io/io.h"  //  IO needs to be included after boost
-
-#include <curl/curl.h>
 
 using automaton::core::data::factory;
 using automaton::core::data::protobuf::protobuf_factory;
