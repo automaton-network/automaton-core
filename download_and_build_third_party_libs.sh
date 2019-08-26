@@ -6,6 +6,7 @@ CRYPTOPP_VER="7_0_0"
 LUA_VER="5.3.5"
 G3LOG_VER="1.3.2"
 GMPVER="6.1.2"
+CURL_VER="7.65.3"
 ED25519VER="7fa6712ef5d581a6981ec2b08ee623314cd1d1c4"
 
 darwin=false;
@@ -106,6 +107,11 @@ function get_archive() {
 # git_repo "https://github.com/nelhage/rules_boost.git" "com_github_nelhage_rules_boost" "fe787183c14f2a5c6e5e1e75a7c57d2e799d3d19"
 # git_repo "https://github.com/protocolbuffers/protobuf.git" "protobuf" "48cb18e5c419ddd23d9badcfe4e9df7bde1979b2"
 # git_repo "https://github.com/svaarala/duktape.git" "duktape" "d7fdb67f18561a50e06bafd196c6b423af9ad6fe"
+
+[ ! -d curl ] && \
+  get_archive "https://github.com/curl/curl/releases/download/curl-${CURL_VER//\./_}/curl-$CURL_VER.tar.gz" \
+  "curl-$CURL_VER.tar.gz" "4376ac72b95572fb6c4fbffefb97c7ea0dd083e1974c0e44cd7e49396f454839"
+[ -d curl-$CURL_VER ] && mv curl-$CURL_VER curl
 
 [ ! -d ed25519 ] && \
   get_archive "https://github.com/orlp/ed25519/archive/$ED25519VER.zip" \
@@ -269,7 +275,6 @@ else
 fi
 
 # Build crypto++
-
 if [ ! -f cryptopp/libcryptopp.a ]; then
   print_separator "=" 80
   echo "  BUILDING crypto++"
@@ -281,6 +286,21 @@ if [ ! -f cryptopp/libcryptopp.a ]; then
 else
   print_separator "=" 80
   echo "  crypto++ ALREADY BUILT"
+  print_separator "=" 80
+fi
+
+# Build curl
+if [ ! -f curl/lib/.libs/libcurl.a ]; then
+  print_separator "=" 80
+  echo "  BUILDING curl"
+  print_separator "=" 80
+
+  cd curl
+  ./configure --disable-shared && make -j$CPUCOUNT
+  cd ..
+else
+  print_separator "=" 80
+  echo "  curl ALREADY BUILT"
   print_separator "=" 80
 fi
 
