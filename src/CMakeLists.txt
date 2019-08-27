@@ -32,6 +32,7 @@ set(LOCAL_THIRD_PARTY_LIBS
   ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/protobuf/src/.libs/libprotobuf-lite.a
   ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/protobuf/src/.libs/libprotobuf.a
   ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/replxx/build/libreplxx.a
+  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/zlib/libz.a
 )
 
 set(GTEST_LIBS
@@ -43,6 +44,7 @@ set(GTEST_LIBS
 
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/bitcoin/src
   ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/boost
   ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/cryptopp
   ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/curl/include
@@ -52,12 +54,12 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/gmp
   ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/googletest/googlemock/include
   ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/googletest/googletest/include
-  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/json-3.1.2
+  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/json
   ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/lua
   ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/protobuf/src
   ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/replxx/include
   ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/sol2/single/sol
-  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/bitcoin/src
+  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/zlib
 )
 
 file(
@@ -88,7 +90,6 @@ add_library(automaton-core STATIC ${CRYPTO_FILES})
 target_link_libraries(
   automaton-core
   Threads::Threads
-  z
   ${CMAKE_DL_LIBS}
   ${LOCAL_THIRD_PARTY_LIBS}
 )

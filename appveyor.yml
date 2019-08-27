@@ -17,19 +17,21 @@ for:
       - image: Ubuntu1604
   cache:
   - src/build -> src/CMakeLists.txt
-  - src/local_third_party/JUCE -> download_and_build_third_party_libs.sh
-  - src/local_third_party/bitcoin -> download_and_build_third_party_libs.sh
-  - src/local_third_party/boost/boost -> download_and_build_third_party_libs.sh
-  - src/local_third_party/boost/stage -> download_and_build_third_party_libs.sh
-  - src/local_third_party/cryptopp -> download_and_build_third_party_libs.sh
-  - src/local_third_party/ed25519 -> download_and_build_third_party_libs.sh
-  - src/local_third_party/g3log -> download_and_build_third_party_libs.sh
-  - src/local_third_party/gmp -> download_and_build_third_party_libs.sh
-  - src/local_third_party/googletest -> download_and_build_third_party_libs.sh
-  - src/local_third_party/lua -> download_and_build_third_party_libs.sh
-  - src/local_third_party/LuaJIT -> download_and_build_third_party_libs.sh
-  - src/local_third_party/protobuf -> download_and_build_third_party_libs.sh
-  - src/local_third_party/replxx -> download_and_build_third_party_libs.sh
+  - src/local_third_party/bitcoin -> scripts/download_and_build_secp256k1.sh
+  - src/local_third_party/boost/boost -> scripts/download_and_build_boost.sh
+  - src/local_third_party/boost/stage -> scripts/download_and_build_boost.sh
+  - src/local_third_party/cryptopp -> scripts/download_and_build_cryptopp.sh
+  - src/local_third_party/curl -> scripts/download_and_build_curl.sh
+  - src/local_third_party/ed25519 -> scripts/download_and_build_ed25519.sh
+  - src/local_third_party/g3log -> scripts/download_and_build_g3log.sh
+  - src/local_third_party/gmp -> scripts/download_and_build_gmp.sh
+  - src/local_third_party/googletest -> scripts/download_and_build_googletest.sh
+  - src/local_third_party/json -> download_and_build_third_party_libs.sh
+  - src/local_third_party/JUCE -> scripts/download_and_build_JUCE.sh
+  - src/local_third_party/lua -> scripts/download_and_build_lua.sh
+  - src/local_third_party/LuaJIT -> scripts/download_and_build_LuaJIT.sh
+  - src/local_third_party/protobuf -> scripts/download_and_build_protobuf.sh
+  - src/local_third_party/replxx -> scripts/download_and_build_replxx.sh
   - src/local_third_party/sol2 -> download_and_build_third_party_libs.sh
   - src/local_third_party/boost_1_70_0.tar.gz
   - src/local_third_party/bzip2-1.0.6.tar.gz
@@ -80,7 +82,7 @@ install:
 #     sudo chmod +x bazel-0.21.0-installer-linux-x86_64.sh
 #
 #     sudo ./bazel-0.21.0-installer-linux-x86_64.sh
-- sh: ./download_and_build_third_party_libs.sh
+- sh: ./download_and_build_.sh
 # examine build state
 - sh: pwd
 - sh: ls -la src/local_third_party
