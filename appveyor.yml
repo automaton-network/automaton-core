@@ -82,7 +82,7 @@ install:
 #     sudo chmod +x bazel-0.21.0-installer-linux-x86_64.sh
 #
 #     sudo ./bazel-0.21.0-installer-linux-x86_64.sh
-- sh: ./download_and_build_.sh
+- sh: ./download_and_build_third_party_libs.sh
 # examine build state
 - sh: pwd
 - sh: ls -la src/local_third_party
