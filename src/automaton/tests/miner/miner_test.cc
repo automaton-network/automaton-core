@@ -30,7 +30,7 @@ TEST(miner, generate_valid_key) {
   bool success = mine_key(mask, difficulty, priv_key);
   EXPECT_EQ(success, true);
 
-  secp256k1_ec_pubkey_create(context, pubkey, priv_key);
+  EXPECT_TRUE(secp256k1_ec_pubkey_create(context, pubkey, priv_key));
 
   unsigned char pub_key_serialized[65];
   size_t outLen = 65;

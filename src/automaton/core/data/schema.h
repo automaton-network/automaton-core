@@ -26,6 +26,8 @@ namespace data {
 
 class schema {
  public:
+  virtual ~schema() = 0;
+
   /**
    Allowed data types.
   **/
