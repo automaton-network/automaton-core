@@ -16,6 +16,8 @@ schema::field_info::field_info(uint32_t tag,
     , is_repeated(is_repeated) {
 }
 
+schema::~schema() {}
+
 }  // namespace data
 }  // namespace core
 }  // namespace automaton

@@ -1,3 +1,4 @@
+#include <curl/curl.h>
 #include <future>
 #include <fstream>
 #include <iostream>
@@ -123,6 +124,9 @@ int main(int argc, char* argv[]) {
 
   default_node_updater* updater;
 {
+  // TODO(asen): Get rid of this, it is temporary to verify libcurl works across all platforms.
+  curl_global_init(CURL_GLOBAL_DEFAULT);
+
   automaton::core::io::init_logger();
   automaton::core::cli::cli cli;
   engine script(core_factory);
