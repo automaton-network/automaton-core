@@ -87,9 +87,14 @@ file(
 
 add_library(automaton-core STATIC ${CRYPTO_FILES})
 
+find_package(OpenSSL REQUIRED)
+find_package(ZLIB REQUIRED)
+
 target_link_libraries(
   automaton-core
   Threads::Threads
+  OpenSSL::SSL
+  ${ZLIB_LIBRARIES}
   ${CMAKE_DL_LIBS}
   ${LOCAL_THIRD_PARTY_LIBS}
 )
@@ -239,4 +244,24 @@ add_executable(
 target_link_libraries(
   eth_contract_test
   eth_contract
+)
+
+add_library(
+  eth_contract0
+  automaton/core/eth_contract/eth_contract0.cc
+)
+
+target_link_libraries(
+  eth_contract0
+  automaton-core
+)
+
+add_executable(
+  eth_contract_test0
+  automaton/core/eth_contract/eth_contract_test0.cc
+)
+
+target_link_libraries(
+  eth_contract_test0
+  eth_contract0
 )

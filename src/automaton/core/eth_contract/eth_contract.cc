@@ -119,6 +119,7 @@ void eth_contract::call(const std::string& from_address, const std::string& fnam
         it->second(automaton::core::common::status::internal("Could not connect to server!"), "");
       }
       callbacks.clear();
+      return;
     }
   }
   if (conn->get_state() == connection::state::disconnected) {
