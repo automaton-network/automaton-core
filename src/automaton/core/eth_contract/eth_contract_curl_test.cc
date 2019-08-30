@@ -5,7 +5,7 @@
 
 #include <curl/curl.h>  // NOLINT
 
-#include "automaton/core/eth_contract/eth_contract0.h"
+#include "automaton/core/eth_contract/eth_contract_curl.h"
 #include "automaton/core/io/io.h"
 
 using automaton::core::eth_contract::dec_to_32hex;

@@ -3,7 +3,7 @@
 #include <string>
 #include <utility>
 
-#include "automaton/core/eth_contract/eth_contract.h"
+#include "automaton/core/eth_contract/eth_contract_raw.h"
 #include "automaton/core/io/io.h"
 #include "automaton/core/network/tcp_implementation.h"
 

@@ -1,4 +1,4 @@
-#include "automaton/core/eth_contract/eth_contract0.h"
+#include "automaton/core/eth_contract/eth_contract_curl.h"
 
 #include <iomanip>
 #include <string>
