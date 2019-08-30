@@ -1,4 +1,4 @@
-#include "automaton/core/eth_contract/eth_contract.h"
+#include "automaton/core/eth_contract/eth_contract_raw.h"
 
 #include <iomanip>
 #include <string>
@@ -22,6 +22,7 @@ static const char* CRLF2 = "\r\n\r\n";
 static const uint32_t BUFFER_SIZE = 512;
 static const uint32_t WAITING_HEADER = 1;
 static const uint32_t WAITING_BODY = 2;
+static const uint32_t GAS_LIMIT = 6000000;  // TODO(kari): Get this value from the blockchain before sending transaction
 
 namespace automaton {
 namespace core {
@@ -50,7 +51,7 @@ uint32_t hex_to_dec(const std::string& hex) {
 std::unordered_map<std::string, std::shared_ptr<eth_contract> > eth_contract::contracts;
 
 void eth_contract::register_contract(const std::string& server, const std::string& address,
-    std::unordered_map<std::string, std::string> signs) {
+    std::unordered_map<std::string, std::pair<std::string, bool> > signs) {
   if (contracts.find(address) != contracts.end()) {
     LOG(INFO) << "Contract already registered!";
     return;
@@ -68,9 +69,10 @@ std::shared_ptr<eth_contract> eth_contract::get_contract(const std::string& addr
 }
 
 eth_contract::eth_contract(const std::string& server, const std::string& address,
-    std::unordered_map<std::string, std::string> signs): call_id(0), server(server), address(address) {
+    std::unordered_map<std::string, std::pair<std::string, bool> > signs):
+    call_id(0), server(server), address(address) {
   for (auto it = signs.begin(); it != signs.end(); ++it) {
-    signatures[it->first] = "0x" + (bin2hex(hash(it->second))).substr(0, 8);
+    signatures[it->first] = std::make_pair("0x" + (bin2hex(hash(it->second.first))).substr(0, 8), it->second.second);
   }
 
   header = "";
@@ -91,10 +93,14 @@ void eth_contract::call(const std::string& from_address, const std::string& fnam
     return;
   }
   callbacks[++call_id] = callback;
+  bool is_transaction = it->second.second;
   std::stringstream data;
-  data << "{\"jsonrpc\":\"2.0\",\"method\":\"eth_call\",\"params\": [{ \"to\":\"" <<
-      address << "\",\"data\":\"" << it->second <<
-      params << "\",\"from\":\"" << from_address << "\"},\"latest\"],\"id\":" << call_id << "}";
+  data << "{\"jsonrpc\":\"2.0\",\"method\":\"" << (is_transaction ? "eth_sendTransaction" : "eth_call") <<
+      "\",\"params\":[{ \"to\":\"" << address <<
+      "\",\"data\":\"" << it->second.first << params <<
+      "\",\"gas\":" << GAS_LIMIT <<  // TODO(kari): Get this from the blockchain
+      ",\"from\":\"" << from_address << "\"}" << (is_transaction ? "" : ",\"latest\"") <<
+      "],\"id\":" << call_id << "}";
 
   std::stringstream ss;
   ss << "POST / HTTP/1.1\r\n";
@@ -113,6 +119,7 @@ void eth_contract::call(const std::string& from_address, const std::string& fnam
         it->second(automaton::core::common::status::internal("Could not connect to server!"), "");
       }
       callbacks.clear();
+      return;
     }
   }
   if (conn->get_state() == connection::state::disconnected) {
@@ -127,6 +134,7 @@ void eth_contract::call(const std::string& from_address, const std::string& fnam
 void eth_contract::handle_message(const automaton::core::common::status& s) {
   if (s.code != automaton::core::common::status::OK) {
     // TODO(kari): Send error to all callbakcs or only to the first?
+    message = "";
     return;
   }
 
@@ -219,6 +227,7 @@ void eth_contract::read_body() {
 void eth_contract::on_message_received(connection_id c, std::shared_ptr<char> buffer,
     uint32_t bytes_read, uint32_t mid) {
   std::string s(buffer.get(), bytes_read);
+  std::cout << "=== RECEIVED ===\n" << s << "\n====" << std::endl;
   switch (mid) {
     case WAITING_HEADER: {
       header += s;
