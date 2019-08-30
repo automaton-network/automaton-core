@@ -227,41 +227,41 @@ target_link_libraries(
 )
 
 add_library(
-  eth_contract
-  automaton/core/eth_contract/eth_contract.cc
+  eth_contract_raw
+  automaton/core/eth_contract/eth_contract_raw.cc
 )
 
 target_link_libraries(
-  eth_contract
+  eth_contract_raw
   automaton-core
 )
 
 add_executable(
-  eth_contract_test
-  automaton/core/eth_contract/eth_contract_test.cc
+  eth_contract_raw_test
+  automaton/core/eth_contract/eth_contract_raw_test.cc
 )
 
 target_link_libraries(
-  eth_contract_test
-  eth_contract
+  eth_contract_raw_test
+  eth_contract_raw
 )
 
 add_library(
-  eth_contract0
-  automaton/core/eth_contract/eth_contract0.cc
+  eth_contract_curl
+  automaton/core/eth_contract/eth_contract_curl.cc
 )
 
 target_link_libraries(
-  eth_contract0
+  eth_contract_curl
   automaton-core
 )
 
 add_executable(
-  eth_contract_test0
-  automaton/core/eth_contract/eth_contract_test0.cc
+  eth_contract_curl_test
+  automaton/core/eth_contract/eth_contract_curl_test.cc
 )
 
 target_link_libraries(
-  eth_contract_test0
-  eth_contract0
+  eth_contract_curl_test
+  eth_contract_curl
 )

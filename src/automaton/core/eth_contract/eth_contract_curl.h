@@ -1,5 +1,5 @@
-#ifndef AUTOMATON_CORE_ETH_CONTRACT_ETH_CONTRACT0_H_
-#define AUTOMATON_CORE_ETH_CONTRACT_ETH_CONTRACT0_H_
+#ifndef AUTOMATON_CORE_ETH_CONTRACT_ETH_CONTRACT_CURL_H_
+#define AUTOMATON_CORE_ETH_CONTRACT_ETH_CONTRACT_CURL_H_
 
 #include <functional>
 #include <memory>
@@ -88,4 +88,4 @@ class eth_contract: public std::enable_shared_from_this<eth_contract> {
 }  // namespace automaton
 
 
-#endif  // AUTOMATON_CORE_ETH_CONTRACT_ETH_CONTRACT0_H_
+#endif  // AUTOMATON_CORE_ETH_CONTRACT_ETH_CONTRACT_CURL_H_

@@ -1,5 +1,5 @@
-#ifndef AUTOMATON_CORE_ETH_CONTRACT_ETH_CONTRACT_H_
-#define AUTOMATON_CORE_ETH_CONTRACT_ETH_CONTRACT_H_
+#ifndef AUTOMATON_CORE_ETH_CONTRACT_ETH_CONTRACT_RAW_H_
+#define AUTOMATON_CORE_ETH_CONTRACT_ETH_CONTRACT_RAW_H_
 
 #include <functional>
 #include <memory>
@@ -97,4 +97,4 @@ class eth_contract: public automaton::core::network::connection::connection_hand
 }  // namespace automaton
 
 
-#endif  // AUTOMATON_CORE_ETH_CONTRACT_ETH_CONTRACT_H_
+#endif  // AUTOMATON_CORE_ETH_CONTRACT_ETH_CONTRACT_RAW_H_
