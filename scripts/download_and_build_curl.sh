@@ -13,7 +13,11 @@ if [ ! -f curl/lib/.libs/libcurl.a ]; then
   print_separator "=" 80
 
   cd curl
-  ./configure --disable-shared && make -j$CPUCOUNT
+  export OPENSSL_INC=$(cd ../openssl/include; pwd)
+  export OPENSSL_LIB=$(cd ../openssl; pwd)
+  export CPPFLAGS="-I$OPENSSL_INC"
+  export LDFLAGS="-L$OPENSSL_LIB"
+  ./configure --disable-shared --with-ssl=$OPENSSL_LIB && make -j$CPUCOUNT
   cd ..
 else
   print_separator "=" 80

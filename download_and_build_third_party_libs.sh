@@ -45,6 +45,9 @@ JSON_VER="3.2.0"
 #  get_archive "http://phoenixnap.dl.sourceforge.net/project/lzmautils/xz-5.2.3.tar.gz" \
 #  "xz-5.2.3.tar.gz" "71928b357d0a09a12a4b4c5fafca8c31c19b0e7d3b8ebb19622e96f26dbf28cb"
 
+# OpenSSL is used by libcurl so needs to be built prior.
+. $AUTOMATON_ROOT/scripts/download_and_build_openssl.sh
+
 . $AUTOMATON_ROOT/scripts/download_and_build_boost.sh
 . $AUTOMATON_ROOT/scripts/download_and_build_cryptopp.sh
 . $AUTOMATON_ROOT/scripts/download_and_build_curl.sh
