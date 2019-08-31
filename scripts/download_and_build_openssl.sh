@@ -10,7 +10,11 @@ OPENSSL_VER="1.0.2s" # cabd5c9492825ce5bd23f3c3aeed6a97f8142f606d893df216411f07d
 # Build OpenSSL
 if [ ! -f openssl/libcrypto.a ]; then
   cd openssl
-  ./config no-shared
+  if $darwin; then
+    ./Configure no-shared darwin64-x86_64-cc
+  else
+    ./config no-shared
+  fi
   make clean
   make -j$CPUCOUNT
   cd ..
