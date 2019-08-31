@@ -90,14 +90,14 @@ file(
 
 add_library(automaton-core STATIC ${CRYPTO_FILES})
 
-find_package(OpenSSL REQUIRED)
-find_package(ZLIB REQUIRED)
+#find_package(OpenSSL REQUIRED)
+#find_package(ZLIB REQUIRED)
 
 target_link_libraries(
   automaton-core
   Threads::Threads
-  OpenSSL::SSL
-  ${ZLIB_LIBRARIES}
+#  OpenSSL::SSL
+#  ${ZLIB_LIBRARIES}
   ${CMAKE_DL_LIBS}
   ${LOCAL_THIRD_PARTY_LIBS}
 )
