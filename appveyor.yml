@@ -30,6 +30,7 @@ for:
   - src/local_third_party/JUCE -> scripts/download_and_build_JUCE.sh
   - src/local_third_party/lua -> scripts/download_and_build_lua.sh
   - src/local_third_party/LuaJIT -> scripts/download_and_build_LuaJIT.sh
+  - src/local_third_party/openssl -> scripts/download_and_build_openssl.sh
   - src/local_third_party/protobuf -> scripts/download_and_build_protobuf.sh
   - src/local_third_party/replxx -> scripts/download_and_build_replxx.sh
   - src/local_third_party/sol2 -> download_and_build_third_party_libs.sh
