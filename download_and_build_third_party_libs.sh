@@ -58,6 +58,7 @@ JSON_VER="3.2.0"
 . $AUTOMATON_ROOT/scripts/download_and_build_JUCE.sh
 . $AUTOMATON_ROOT/scripts/download_and_build_lua.sh
 . $AUTOMATON_ROOT/scripts/download_and_build_LuaJIT.sh
+. $AUTOMATON_ROOT/scripts/download_and_build_pcre.sh
 . $AUTOMATON_ROOT/scripts/download_and_build_protobuf.sh
 . $AUTOMATON_ROOT/scripts/download_and_build_replxx.sh
 . $AUTOMATON_ROOT/scripts/download_and_build_secp256k1.sh
