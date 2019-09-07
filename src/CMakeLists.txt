@@ -231,7 +231,7 @@ target_link_libraries(
 
 add_library(
   eth_contract_raw
-  automaton/core/eth_contract/eth_contract_raw.cc
+  automaton/core/interop/ethereum/eth_contract_raw.cc
 )
 
 target_link_libraries(
@@ -241,7 +241,7 @@ target_link_libraries(
 
 add_executable(
   eth_contract_raw_test
-  automaton/core/eth_contract/eth_contract_raw_test.cc
+  automaton/core/interop/ethereum/eth_contract_raw_test.cc
 )
 
 target_link_libraries(
@@ -251,7 +251,7 @@ target_link_libraries(
 
 add_library(
   eth_contract_curl
-  automaton/core/eth_contract/eth_contract_curl.cc
+  automaton/core/interop/ethereum/eth_contract_curl.cc
 )
 
 target_link_libraries(
