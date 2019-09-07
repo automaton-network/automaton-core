@@ -74,6 +74,7 @@ file(
   automaton/core/crypto/ed25519_orlp/*.cc
   automaton/core/data/*.cc
   automaton/core/data/protobuf/*.cc
+  automaton/core/interop/ethereum/eth_contract_curl.cc
   automaton/core/io/*.cc
   automaton/core/network/*.cc
   automaton/core/node/*.cc
@@ -249,22 +250,12 @@ target_link_libraries(
   eth_contract_raw
 )
 
-add_library(
-  eth_contract_curl
-  automaton/core/interop/ethereum/eth_contract_curl.cc
-)
-
-target_link_libraries(
-  eth_contract_curl
-  automaton-core
-)
-
 add_executable(
   eth_contract_curl_test
-  automaton/core/eth_contract/eth_contract_curl_test.cc
+  automaton/core/interop/ethereum/eth_contract_curl_test.cc
 )
 
 target_link_libraries(
   eth_contract_curl_test
-  eth_contract_curl
+  automaton-core
 )
