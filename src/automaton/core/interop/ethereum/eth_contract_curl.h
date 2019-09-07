@@ -88,4 +88,4 @@ class eth_contract: public std::enable_shared_from_this<eth_contract> {
 }  // namespace automaton
 
 
-#endif  // AUTOMATON_CORE_INTEROP_ETHEREUM_ETH_CONTRACT_ETH_CONTRACT_CURL_H_
+#endif  // AUTOMATON_CORE_INTEROP_ETHEREUM_ETH_CONTRACT_CURL_H_
