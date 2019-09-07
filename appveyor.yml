@@ -93,7 +93,7 @@ build_script:
 
 test_script:
 # - cmd: bazel test --test_output=errors --test_size_filters=small --test_tag_filters=-flaky //automaton/tests/...
-- sh: cd automaton && ./lint.sh && ./lint_ui.sh && cd ..
+- sh: cd automaton && ./lint.sh && cd ..
 - sh: mkdir -p build && cd build
 - sh: cmake -DCMAKE_BUILD_TYPE=Release .. && make -j8 && make -j8 test CTEST_OUTPUT_ON_FAILURE=TRUE
 - sh: cd ..
