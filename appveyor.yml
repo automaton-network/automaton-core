@@ -31,6 +31,7 @@ for:
   - src/local_third_party/lua -> scripts/download_and_build_lua.sh
   - src/local_third_party/LuaJIT -> scripts/download_and_build_LuaJIT.sh
   - src/local_third_party/openssl -> scripts/download_and_build_openssl.sh
+  - src/local_third_party/pcre -> scripts/download_and_build_pcre.sh
   - src/local_third_party/protobuf -> scripts/download_and_build_protobuf.sh
   - src/local_third_party/replxx -> scripts/download_and_build_replxx.sh
   - src/local_third_party/sol2 -> download_and_build_third_party_libs.sh
@@ -45,6 +46,7 @@ for:
   - src/local_third_party/JUCE-5.4.3.tar.gz
   - src/local_third_party/lua-5.3.5.tar.gz
   - src/local_third_party/LuaJIT-2.0.5.tar.gz
+  - src/local_third_party/pcre-8.43.tar.gz
   - src/local_third_party/replxx-release-0.0.1.tar.gz
   - src/local_third_party/v0.17.1.tar.gz
   - src/local_third_party/v3.6.1.2.tar.gz
