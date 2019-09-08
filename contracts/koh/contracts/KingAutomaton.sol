@@ -5,7 +5,7 @@ contract KingAutomaton {
   // Initialization
   //////////////////////////////////////////////////////////////////////////////////////////////////
 
-  constructor(uint numSlots, uint8 minDifficultyBits, uint predefinedMask, uint initialDailySupply) public {
+  constructor(uint256 numSlots, uint8 minDifficultyBits, uint256 predefinedMask, uint256 initialDailySupply) public {
     initMining(numSlots, minDifficultyBits, predefinedMask, initialDailySupply);
     initNames();
     initTreasury();
@@ -28,17 +28,17 @@ contract KingAutomaton {
   string public constant name = "Automaton Network Validator Bootstrap";
   string public constant symbol = "AUTO";
   uint8 public constant decimals = 18;
-  uint public totalSupply = 0;
+  uint256 public totalSupply = 0;
 
   // solhint-disable-next-line no-simple-event-func-name
-  event Transfer(address indexed _from, address indexed _to, uint _value);
-  event Approval(address indexed _owner, address indexed _spender, uint _value);
+  event Transfer(address indexed _from, address indexed _to, uint256 _value);
+  event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 
-  uint constant private MAX_uint = 2**256 - 1;
-  mapping (address => uint) public balances;
-  mapping (address => mapping (address => uint)) public allowed;
+  uint256 constant private MAX_uint = 2**256 - 1;
+  mapping (address => uint256) public balances;
+  mapping (address => mapping (address => uint256)) public allowed;
 
-  function transfer(address _to, uint _value) public returns (bool success) {
+  function transfer(address _to, uint256 _value) public returns (bool success) {
     require(balances[msg.sender] >= _value);
     balances[msg.sender] -= _value;
     balances[_to] += _value;
@@ -46,8 +46,8 @@ contract KingAutomaton {
     return true;
   }
 
-  function transferFrom(address _from, address _to, uint _value) public returns (bool success) {
-    uint allowance = allowed[_from][msg.sender];
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
+    uint256 allowance = allowed[_from][msg.sender];
     require(balances[_from] >= _value && allowance >= _value);
     balances[_to] += _value;
     balances[_from] -= _value;
@@ -58,23 +58,23 @@ contract KingAutomaton {
     return true;
   }
 
-  function balanceOf(address _owner) public view returns (uint balance) {
+  function balanceOf(address _owner) public view returns (uint256 balance) {
     return balances[_owner];
   }
 
-  function approve(address _spender, uint _value) public returns (bool success) {
+  function approve(address _spender, uint256 _value) public returns (bool success) {
     allowed[msg.sender][_spender] = _value;
     emit Approval(msg.sender, _spender, _value); //solhint-disable-line indent, no-unused-vars
     return true;
   }
 
-  function allowance(address _owner, address _spender) public view returns (uint remaining) {
+  function allowance(address _owner, address _spender) public view returns (uint256 remaining) {
     return allowed[_owner][_spender];
   }
 
   // This is only to be used with special purpose community accounts like Treasury, Exchange.
   // Those accounts help to represent the total supply correctly.
-  function transferInternal(address _from, address _to, uint _value) private returns (bool success) {
+  function transferInternal(address _from, address _to, uint256 _value) private returns (bool success) {
     require(balances[_from] >= _value, "Insufficient balance");
     balances[_to] += _value;
     balances[_from] -= _value;
@@ -82,7 +82,7 @@ contract KingAutomaton {
     return true;
   }
 
-  function mint(address _receiver, uint _value) private {
+  function mint(address _receiver, uint256 _value) private {
     balances[_receiver] += _value;
     totalSupply += _value;
     emit Transfer(address(0), _receiver, _value); //solhint-disable-line indent, no-unused-vars
@@ -107,8 +107,8 @@ contract KingAutomaton {
     string documentsLink;
     bytes documentsHash;
 
-    uint yesVotes;
-    uint noVotes;
+    uint256 yesVotes;
+    uint256 noVotes;
   }
 
   Proposal[] proposals;
@@ -120,29 +120,29 @@ contract KingAutomaton {
   // Mining
   //////////////////////////////////////////////////////////////////////////////////////////////////
 
-  event NewSlotKing(uint slot, address newOwner);
+  event NewSlotKing(uint256 slot, address newOwner);
 
   struct ValidatorSlot {
     address owner;
-    uint difficulty;
-    uint last_claim_time;
+    uint256 difficulty;
+    uint256 last_claim_time;
   }
   ValidatorSlot[] public slots;
 
-  uint public minDifficulty;          // Minimum difficulty
-  uint public mask;                   // Prevents premine
-  uint public numTakeOvers;           // Number of times a slot was taken over by a new king.
-  uint public rewardPerSlotPerSecond; // Validator reward per slot per second.
+  uint256 public minDifficulty;          // Minimum difficulty
+  uint256 public mask;                   // Prevents premine
+  uint256 public numTakeOvers;           // Number of times a slot was taken over by a new king.
+  uint256 public rewardPerSlotPerSecond; // Validator reward per slot per second.
 
-  function initMining(uint numSlots, uint8 minDifficultyBits, uint predefinedMask, uint initialDailySupply) private {
+  function initMining(uint256 numSlots, uint8 minDifficultyBits, uint256 predefinedMask, uint256 initialDailySupply) private {
     require(numSlots > 0);
     require(minDifficultyBits > 0);
 
     slots.length = numSlots;
-    minDifficulty = (2 ** uint(minDifficultyBits) - 1) << (256 - minDifficultyBits);
+    minDifficulty = (2 ** uint256(minDifficultyBits) - 1) << (256 - minDifficultyBits);
     if (predefinedMask == 0) {
       // Prevents premining with a known predefined mask.
-      mask = uint(keccak256(abi.encodePacked(now, msg.sender)));
+      mask = uint256(keccak256(abi.encodePacked(now, msg.sender)));
     } else {
       // Setup predefined mask, useful for testing purposes.
       mask = predefinedMask;
@@ -151,27 +151,48 @@ contract KingAutomaton {
     rewardPerSlotPerSecond = (1 ether * initialDailySupply) / 1 days / numSlots;
   }
 
-  function getSlotsNumber() public view returns(uint) {
+  function getSlotsNumber() public view returns(uint256) {
     return slots.length;
   }
 
-  function getSlotOwner(uint slot) public view returns(address) {
+  function getSlotOwner(uint256 slot) public view returns(address) {
     return slots[slot].owner;
   }
 
-  function getSlotDifficulty(uint slot) public view returns(uint) {
+  function getSlotDifficulty(uint256 slot) public view returns(uint256) {
     return slots[slot].difficulty;
   }
 
-  function getSlotLastClaimTime(uint slot) public view returns(uint) {
+  function getSlotLastClaimTime(uint256 slot) public view returns(uint256) {
     return slots[slot].last_claim_time;
   }
 
-  function getMask() public view returns(uint) {
+  function getOwners(uint256 start, uint256 len) public view returns(address[] memory result) {
+    result = new address[](len);
+    for(uint256 i = 0; i < len; i++) {
+      result[i] = slots[start + i].owner;
+    }
+  }
+
+  function getDifficulties(uint256 start, uint256 len) public view returns(uint256[] memory result) {
+    result = new uint256[](len);
+    for(uint256 i = 0; i < len; i++) {
+      result[i] = slots[start + i].difficulty;
+    }
+  }
+
+  function getLastClaimTimes(uint256 start, uint256 len) public view returns(uint256[] memory result) {
+    result = new uint256[](len);
+    for(uint256 i = 0; i < len; i++) {
+      result[i] = slots[start + i].last_claim_time;
+    }
+  }
+
+  function getMask() public view returns(uint256) {
     return mask;
   }
 
-  function getClaimed() public view returns(uint) {
+  function getClaimed() public view returns(uint256) {
     return numTakeOvers;
   }
 
@@ -189,27 +210,27 @@ contract KingAutomaton {
     bytes32 r,
     bytes32 s
   ) public {
-    uint slot = uint(pubKeyX) % slots.length;
-    uint key = uint(pubKeyX) ^ mask;
+    uint256 slot = uint256(pubKeyX) % slots.length;
+    uint256 key = uint256(pubKeyX) ^ mask;
 
     // Check if the key can take over the slot and become the new king.
     require(key > minDifficulty && key > slots[slot].difficulty, "Low key difficulty");
 
     // Make sure the signature is valid.
-    require(verifySignature(pubKeyX, pubKeyY, bytes32(uint(msg.sender)), v, r, s), "Signature not valid");
+    require(verifySignature(pubKeyX, pubKeyY, bytes32(uint256(msg.sender)), v, r, s), "Signature not valid");
 
     // TODO(asen): Implement reward decaying over time.
 
     // Kick out prior king if any and reward them.
-    uint last_time = slots[slot].last_claim_time;
+    uint256 last_time = slots[slot].last_claim_time;
     if (last_time != 0) {
       require (last_time < now, "mining same slot in same block or clock is wrong");
-      uint value = (now - last_time) * rewardPerSlotPerSecond;
+      uint256 value = (now - last_time) * rewardPerSlotPerSecond;
       mint(address(treasuryAddress), value);
       mint(slots[slot].owner, value);
     } else {
       // Reward first time validators as if they held the slot for 1 hour.
-      uint value = (3600) * rewardPerSlotPerSecond;
+      uint256 value = (3600) * rewardPerSlotPerSecond;
       mint(address(treasuryAddress), value);
       mint(msg.sender, value);
     }
@@ -260,41 +281,41 @@ contract KingAutomaton {
   // DEX
   //////////////////////////////////////////////////////////////////////////////////////////////////
 
-  uint public minOrderETH = 1 ether / 10;
-  uint public minOrderAUTO = 1000 ether;
+  uint256 public minOrderETH = 1 ether / 10;
+  uint256 public minOrderAUTO = 1000 ether;
 
   enum OrderType { Buy, Sell, Auction }
 
   struct Order {
-    uint AUTO;
-    uint ETH;
+    uint256 AUTO;
+    uint256 ETH;
     address payable owner;
     OrderType orderType;
   }
 
   Order[] public orders;
 
-  function getExchangeBalance() public view returns (uint) {
+  function getExchangeBalance() public view returns (uint256) {
     return balanceOf(exchangeAddress);
   }
 
-  function removeOrder(uint _id) private {
+  function removeOrder(uint256 _id) private {
     orders[_id] = orders[orders.length - 1];
     orders.length--;
   }
 
-  function getOrdersLength() public view returns (uint) {
+  function getOrdersLength() public view returns (uint256) {
     return orders.length;
   }
 
-  function buy(uint _AUTO) public payable returns (uint _id) {
+  function buy(uint256 _AUTO) public payable returns (uint256 _id) {
     require(msg.value >= minOrderETH, "Minimum ETH requirement not met");
     require(_AUTO >= minOrderAUTO, "Minimum AUTO requirement not met");
     _id = orders.length;
     orders.push(Order(_AUTO, msg.value, msg.sender, OrderType.Buy));
   }
 
-  function sellNow(uint _id, uint _AUTO, uint _ETH) public {
+  function sellNow(uint256 _id, uint256 _AUTO, uint256 _ETH) public {
     require(_id < orders.length, "Invalid Order ID");
     Order memory o = orders[_id];
     require(o.AUTO == _AUTO, "Order AUTO does not match requested size");
@@ -305,7 +326,7 @@ contract KingAutomaton {
     removeOrder(_id);
   }
 
-  function sell(uint _AUTO, uint _ETH) public returns (uint _id){
+  function sell(uint256 _AUTO, uint256 _ETH) public returns (uint256 _id){
     require(_AUTO >= minOrderAUTO, "Minimum AUTO requirement not met");
     require(_ETH >= minOrderETH, "Minimum ETH requirement not met");
     transfer(exchangeAddress, _AUTO);
@@ -313,7 +334,7 @@ contract KingAutomaton {
     orders.push(Order(_AUTO, _ETH, msg.sender, OrderType.Sell));
   }
 
-  function buyNow(uint _id, uint _AUTO) public payable {
+  function buyNow(uint256 _id, uint256 _AUTO) public payable {
     require(_id < orders.length, "Invalid Order ID");
     Order memory o = orders[_id];
     require(o.AUTO == _AUTO, "Order AUTO does not match requested size");
@@ -324,7 +345,7 @@ contract KingAutomaton {
     removeOrder(_id);
   }
 
-  function cancelOrder(uint _id) public {
+  function cancelOrder(uint256 _id) public {
     Order memory o = orders[_id];
     require(o.owner == msg.sender);
 
@@ -344,15 +365,15 @@ contract KingAutomaton {
   //////////////////////////////////////////////////////////////////////////////////////////////////
 
   // Returns the Ethereum address corresponding to the input public key.
-  function getAddressFromPubKey(bytes32 pubkeyX, bytes32 pubkeyY) private pure returns (uint) {
-    return uint(keccak256(abi.encodePacked(pubkeyX, pubkeyY))) & 0x00FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+  function getAddressFromPubKey(bytes32 pubkeyX, bytes32 pubkeyY) private pure returns (uint256) {
+    return uint256(keccak256(abi.encodePacked(pubkeyX, pubkeyY))) & 0x00FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
   }
 
   // Verifies that signature of a message matches the given public key.
   function verifySignature(bytes32 pubkeyX, bytes32 pubkeyY, bytes32 hash,
       uint8 v, bytes32 r, bytes32 s) private pure returns (bool) {
-    uint addr = getAddressFromPubKey(pubkeyX, pubkeyY);
+    uint256 addr = getAddressFromPubKey(pubkeyX, pubkeyY);
     address addr_r = ecrecover(hash, v, r, s);
-    return addr == uint(addr_r);
+    return addr == uint256(addr_r);
   }
 }
