@@ -17,7 +17,8 @@ static const uint32_t MSG_BUF_SIZE = 1024;
 
 namespace automaton {
 namespace core {
-namespace eth_contract {
+namespace interop {
+namespace ethereum {
 
 // Helper encode/decode functions
 
@@ -53,19 +54,15 @@ class eth_contract: public std::enable_shared_from_this<eth_contract> {
     @param[in] address public key from which transaction is sent; not needed if called funcion is not transaction
     @param[in] f function name/alias as given in register_contract
     @param[in] params concatenated function parameters where every parameter is padded to 32
-    @param[in] callback function to be called when result from the transaction/eth function call is received or error
-        happen.
+    @returns status code
   */
-  void call(const std::string& address, const std::string& f, const std::string& params,
-      std::function<void(const automaton::core::common::status& s, const std::string& result)> callback);
+  common::status call(const std::string& address, const std::string& f, const std::string& params);
 
  private:
   uint32_t call_id;
   std::string server;
   std::string address;  // ETH address of the contract
   std::unordered_map<std::string, std::pair<std::string, bool> > signatures;  // function signatures
-  std::unordered_map<uint32_t,
-      std::function<void(const automaton::core::common::status&, const std::string&)> > callbacks;
 
   CURL *curl;
   CURLcode res;
@@ -78,12 +75,13 @@ class eth_contract: public std::enable_shared_from_this<eth_contract> {
   eth_contract(const std::string& server, const std::string& address,
       std::unordered_map<std::string, std::pair<std::string, bool> > signatures);
 
-  void handle_message(const automaton::core::common::status& s);
+  common::status handle_message();
 
   std::string create_raw_transaction();
 };
 
-}  // namespace eth_contract
+}  // namespace ethereum
+}  // namespace interop
 }  // namespace core
 }  // namespace automaton
 

@@ -1,9 +1,9 @@
-JUCE_VER="5.4.3"
+JUCE_VER="5.4.4"
 
 # Download JUCE
 [ ! -d JUCE ] && \
   get_archive "https://github.com/WeAreROLI/JUCE/archive/$JUCE_VER.tar.gz" \
-  "JUCE-$JUCE_VER.tar.gz" "05cfec616c854d0f8f6646c0d8a7ac868410b25a3ba2c839879a7904504d5403"
+  "JUCE-$JUCE_VER.tar.gz" "40536c5792002ceec09faea8d5a57d5c17486f8805c5efe3bc734e27d2df2202"
 [ -d JUCE-$JUCE_VER ] && mv JUCE-$JUCE_VER JUCE
 
 # Build JUCE Projucer -- only when not in CI

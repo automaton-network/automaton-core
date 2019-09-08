@@ -8,8 +8,9 @@
 #include "automaton/core/interop/ethereum/eth_contract_curl.h"
 #include "automaton/core/io/io.h"
 
-using automaton::core::eth_contract::dec_to_32hex;
-using automaton::core::eth_contract::hex_to_dec;
+using automaton::core::interop::ethereum::dec_to_32hex;
+using automaton::core::interop::ethereum::hex_to_dec;
+using automaton::core::common::status;
 
 /*
   TODO(kari):
@@ -33,7 +34,7 @@ int main() {
 
   curl_global_init(CURL_GLOBAL_ALL);
 
-  using namespace automaton::core::eth_contract;  // NOLINT
+  using namespace automaton::core::interop::ethereum;  // NOLINT
 
   eth_contract::register_contract(url, contract_addr, {
     {"getSlotsNumber", {"getSlotsNumber()", false}},
@@ -53,54 +54,49 @@ int main() {
     return 0;
   }
 
-  contract->call("", "getSlotsNumber", "",
-      [](const automaton::core::common::status& s, const std::string& response) {
-        if (s.code == automaton::core::common::status::OK) {
-          std::cout << "Number of slots: " << hex_to_dec(response) << std::endl;
-        } else {
-          std::cout << "Error (getSlotsNumber()) " << s << std::endl;
-        }
-      });
-  contract->call("", "getSlotOwner", dec_to_32hex(2),
-      [](const automaton::core::common::status& s, const std::string& response) {
-        if (s.code == automaton::core::common::status::OK) {
-          std::cout << "Slot 2 owner: " << response << std::endl;
-        } else {
-          std::cout << "Error (getSlotOwner(2)) " << s << std::endl;
-        }
-      });
-  contract->call("", "getSlotDifficulty", dec_to_32hex(2),
-      [](const automaton::core::common::status& s, const std::string& response) {
-        if (s.code == automaton::core::common::status::OK) {
-          std::cout << "Slot 2 difficulty: " << response << std::endl;
-        } else {
-          std::cout << "Error (getSlotDifficulty(2)) " << s << std::endl;
-        }
-      });
-  contract->call("", "getSlotLastClaimTime", dec_to_32hex(2),
-      [](const automaton::core::common::status& s, const std::string& response) {
-        if (s.code == automaton::core::common::status::OK) {
-          std::cout << "Slot 2 last claim time: " << hex_to_dec(response) << std::endl;
-        } else {
-          std::cout << "Error (getSlotLastClaimTime(2)) " << s << std::endl;
-        }
-      });
-  contract->call("", "getMask", "",
-      [](const automaton::core::common::status& s, const std::string& response) {
-        if (s.code == automaton::core::common::status::OK) {
-          std::cout << "Mask: " << response << std::endl;
-        } else {
-          std::cout << "Error (getMask()) " << s << std::endl;
-        }
-      });
-  contract->call("", "getClaimed", "",
-      [](const automaton::core::common::status& s, const std::string& response) {
-        if (s.code == automaton::core::common::status::OK) {
-          std::cout << "Number of slot claims: " << hex_to_dec(response) << std::endl;
-        } else {
-          std::cout << "Error (getClaimed()) " << s << std::endl;
-        }
-      });
+  status s = status::ok();
+
+  s = contract->call("", "getSlotsNumber", "");
+  if (s.code == automaton::core::common::status::OK) {
+    std::cout << "Number of slots: " << hex_to_dec(s.msg) << std::endl;
+  } else {
+    std::cout << "Error (getSlotsNumber()) " << s << std::endl;
+  }
+
+  s = contract->call("", "getSlotOwner", dec_to_32hex(2));
+  if (s.code == automaton::core::common::status::OK) {
+    std::cout << "Slot 2 owner: " << s.msg << std::endl;
+  } else {
+    std::cout << "Error (getSlotOwner(2)) " << s << std::endl;
+  }
+
+  s = contract->call("", "getSlotDifficulty", dec_to_32hex(2));
+  if (s.code == automaton::core::common::status::OK) {
+    std::cout << "Slot 2 difficulty: " << s.msg << std::endl;
+  } else {
+    std::cout << "Error (getSlotDifficulty(2)) " << s << std::endl;
+  }
+
+  s = contract->call("", "getSlotLastClaimTime", dec_to_32hex(2));
+  if (s.code == automaton::core::common::status::OK) {
+    std::cout << "Slot 2 last claim time: " << hex_to_dec(s.msg) << std::endl;
+  } else {
+    std::cout << "Error (getSlotLastClaimTime(2)) " << s << std::endl;
+  }
+
+  s = contract->call("", "getMask", "");
+  if (s.code == automaton::core::common::status::OK) {
+    std::cout << "Mask: " << s.msg << std::endl;
+  } else {
+    std::cout << "Error (getMask()) " << s << std::endl;
+  }
+
+  s = contract->call("", "getClaimed", "");
+  if (s.code == automaton::core::common::status::OK) {
+    std::cout << "Number of slot claims: " << hex_to_dec(s.msg) << std::endl;
+  } else {
+    std::cout << "Error (getClaimed()) " << s << std::endl;
+  }
 
   std::this_thread::sleep_for(std::chrono::milliseconds(6000));
 
