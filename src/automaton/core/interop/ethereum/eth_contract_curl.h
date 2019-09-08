@@ -48,6 +48,9 @@ class eth_contract: public std::enable_shared_from_this<eth_contract> {
       std::unordered_map<std::string, std::pair<std::string, bool> > signs);
   static std::shared_ptr<eth_contract> get_contract(const std::string&);
 
+  eth_contract(const std::string& server, const std::string& address,
+      std::unordered_map<std::string, std::pair<std::string, bool> > signatures);
+
   ~eth_contract();
 
   /**
@@ -71,9 +74,6 @@ class eth_contract: public std::enable_shared_from_this<eth_contract> {
   char curl_err_buf[ERROR_BUF_SIZE];
 
   static size_t curl_callback(void *contents, size_t size, size_t nmemb, std::string *s);
-
-  eth_contract(const std::string& server, const std::string& address,
-      std::unordered_map<std::string, std::pair<std::string, bool> > signatures);
 
   common::status handle_message();
 

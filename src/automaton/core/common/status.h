@@ -36,6 +36,10 @@ struct status {
   status_code code;
   std::string msg;
 
+  bool is_ok() {
+    return code == OK;
+  }
+
   static status ok() {
     return status(OK);
   }
