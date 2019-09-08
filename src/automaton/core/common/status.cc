@@ -1,8 +1,16 @@
 #include "automaton/core/common/status.h"
 
+#include <sstream>
+
 namespace automaton {
 namespace core {
 namespace common {
+
+std::string status::to_string() const {
+  std::stringstream ss;
+  ss << status(*this);
+  return ss.str();
+}
 
 std::ostream& operator<<(std::ostream& os, const status& s) {
   switch (s.code) {

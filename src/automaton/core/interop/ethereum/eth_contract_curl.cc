@@ -11,6 +11,7 @@
 
 using automaton::core::crypto::cryptopp::Keccak_256_cryptopp;
 using automaton::core::io::bin2hex;
+using automaton::core::common::status;
 
 using json = nlohmann::json;
 
@@ -18,7 +19,8 @@ static const char* GAS_LIMIT = "0x5B8D80";  // TODO(kari): Get this value from t
 
 namespace automaton {
 namespace core {
-namespace eth_contract {
+namespace interop {
+namespace ethereum {
 
 std::string hash(const std::string& data) {
   Keccak_256_cryptopp hasher;
@@ -89,14 +91,12 @@ eth_contract::~eth_contract() {
   }
 }
 
-void eth_contract::call(const std::string& from_address, const std::string& fname, const std::string& params,
-    std::function<void(const automaton::core::common::status&, const std::string&)> callback) {
+status eth_contract::call(const std::string& from_address, const std::string& fname, const std::string& params) {
+  call_id++;
   auto it = signatures.find(fname);
   if (it == signatures.end()) {
-    callback(automaton::core::common::status::invalid_argument("Function signature is not found!"), "");
-    return;
+    return status::invalid_argument("Function signature is not found!");
   }
-  callbacks[++call_id] = callback;
   bool is_transaction = it->second.second;
   std::stringstream data;
   std::string string_data;
@@ -105,10 +105,8 @@ void eth_contract::call(const std::string& from_address, const std::string& fnam
         "\",\"data\":\"" << it->second.first << params <<
         "\",\"gas\":\"" << GAS_LIMIT << "\"},\"latest\"" << "],\"id\":" << call_id << "}";
   } else {
-    callbacks[call_id](automaton::core::common::status::internal(
-        "eth_sendTransaction and eth_sendRawTransaction are not yet supported!!"), "");
-    callbacks.erase(call_id);
-    return;
+    return status::internal("eth_sendTransaction and eth_sendRawTransaction are not yet supported!!");
+
     // send raw transaction
     // std::stringstream ss;
     // ss << "{\"from\":\"" << from_address << "\", \"to\":\"" << address << "\", \"data\":\"" << params << "\"}";
@@ -130,57 +128,46 @@ void eth_contract::call(const std::string& from_address, const std::string& fnam
       if (len) {
         LOG(ERROR) << "Error message: " << curl_err_buf;
       }
+      return status::internal("CURL error");
     } else {
-      handle_message(automaton::core::common::status::ok());
+      return handle_message();
     }
   } else {
     LOG(ERROR) << "No curl!";
-    callbacks[call_id](automaton::core::common::status::internal("No curl!"), "");
-    callbacks.erase(call_id);
+    return status::internal("No curl!");
   }
 
   LOG(INFO) << "\n======= REQUEST =======\n" << string_data << "\n=====================";
 }
 
-void eth_contract::handle_message(const automaton::core::common::status& s) {
-  if (s.code != automaton::core::common::status::OK) {
-    // TODO(kari): Send error to all callbakcs or only to the first?
-    LOG(ERROR) << "Call result:: status code -> " << s << " message: " << message;
-    return;
-  }
-
+status eth_contract::handle_message() {
   json j;
-  uint32_t call_id;
+  uint32_t result_call_id;
   std::stringstream ss(message);
   ss >> j;
+  message = "";
 
   if (j.find("id") != j.end()) {
-    call_id = j["id"].get<uint32_t>();
+    result_call_id = j["id"].get<uint32_t>();
   } else {
-    LOG(ERROR) << "Id not found!";
-    message = "";
-    return;
+    LOG(ERROR) << "ID not found!";
+    return status::internal("ID not found!");
   }
 
-  auto it = callbacks.find(call_id);
-  if (it == callbacks.end()) {
-    LOG(ERROR) << "Callback with id" << call_id << "not found!";
-    message = "";
-    return;
+  if (result_call_id != call_id) {
+    LOG(ERROR) << "Result ID " << result_call_id << " does not match request ID: " << call_id;
+    return status::internal("Result ID does not match request ID!");
   }
-
-  auto callback = it->second;
 
   if (j.find("error") != j.end()) {
     json obj = j["error"];
     std::string error = obj["message"].get<std::string>();
-    callback(automaton::core::common::status::internal(error), "");
+    return status::internal(error);
   } else if (j.find("result") != j.end()) {
     std::string result = j["result"].get<std::string>();
-    callback(automaton::core::common::status::ok(), result.substr(2));
+    return status::ok(result.substr(2));
   }
-  callbacks.erase(it);
-  message = "";
+  return status::internal("No result and no error!?");
 }
 
 size_t eth_contract::curl_callback(void *contents, size_t size, size_t nmemb, std::string *s) {
@@ -197,6 +184,7 @@ size_t eth_contract::curl_callback(void *contents, size_t size, size_t nmemb, st
   return new_length;
 }
 
-}  // namespace eth_contract
+}  // namespace ethereum
+}  // namespace interop
 }  // namespace core
 }  // namespace automaton

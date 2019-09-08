@@ -3,6 +3,7 @@
 
 #include <ostream>
 #include <string>
+#include <iostream>
 
 namespace automaton {
 namespace core {
@@ -37,6 +38,10 @@ struct status {
 
   static status ok() {
     return status(OK);
+  }
+
+  static status ok(std::string msg) {
+    return status(OK, msg);
   }
 
   static status canceled(std::string msg) {
@@ -90,6 +95,8 @@ struct status {
   static status data_loss(std::string msg) {
     return status(DATA_LOSS, msg);
   }
+
+  std::string to_string() const;
 };
 
 std::ostream& operator<<(std::ostream& os, const status& s);
