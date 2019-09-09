@@ -15,9 +15,12 @@ if [ ! -f curl/lib/.libs/libcurl.a ]; then
   cd curl
   export OPENSSL_INC=$(cd ../openssl/include; pwd)
   export OPENSSL_LIB=$(cd ../openssl; pwd)
-  export CPPFLAGS="-I$OPENSSL_INC"
-  export LDFLAGS="-L$OPENSSL_LIB"
-  ./configure --disable-shared --with-ssl=$OPENSSL_LIB && make -j$CPUCOUNT
+  export ZLIB_INC=$(cd ../zlib; pwd)
+  export ZLIB_LIB=$(cd ../zlib; pwd)
+  export CPPFLAGS="-I$OPENSSL_INC -I$ZLIB_INC"
+  export LDFLAGS="-L$OPENSSL_LIB -L$ZLIB_LIB"
+  ./configure --without-libidn2 --disable-ldap --disable-shared --with-ssl=$OPENSSL_LIB --with-zlib=$ZLIB_LIB \
+    && make -j$CPUCOUNT
   cd ..
 else
   print_separator "=" 80
