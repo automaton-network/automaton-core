@@ -78,6 +78,7 @@ eth_contract::eth_contract(const std::string& server, const std::string& address
     curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, curl_err_buf);
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_callback);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &message);
+    curl_easy_setopt(curl, CURLOPT_ENCODING, "gzip");
 
     // DEBUG
     // curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
