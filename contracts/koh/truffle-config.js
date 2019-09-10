@@ -84,6 +84,13 @@ module.exports = {
       network_id: "*",
       gasPrice: 3000000000,  // 3 gwei (in wei) (default: 100 gwei)
     },
+
+    aws: {
+      host: "54.174.16.2",   // For testing purposes only, not a static IP! Subject to change!
+      port: 7545,
+      network_id: "*",
+      gasPrice: 3000000000,  // 3 gwei (in wei) (default: 100 gwei)
+    },
   },
 
   // Set default mocha options here, use special reporters etc.
@@ -94,11 +101,11 @@ module.exports = {
   // Configure your compilers
   compilers: {
     solc: {
-      version: "0.5.8",    // Fetch exact version from solc-bin (default: truffle's version)
-      docker: false,       // Use "0.5.1" you've installed locally with docker (default: false)
-      settings: {          // See the solidity docs for advice about optimization and evmVersion
+      version: "0.5.11",   // Fetch exact version from solc-bin (default: truffle's version)
+      docker: false,
+      settings: {
         optimizer: {
-          enabled: false,
+          enabled: true,
           runs: 200
         },
         evmVersion: "byzantium"
