@@ -85,6 +85,22 @@ std::string hex2bin(const std::string& input) {
   return output;
 }
 
+std::string dec2hex(uint32_t n) {
+  std::stringstream ss;
+  ss << std::hex << std::noshowbase << n;
+  if (ss.str().size() % 2) {
+    return "0" + ss.str();
+  }
+  return ss.str();
+}
+
+uint32_t hex2dec(const std::string& hex) {
+  std::stringstream ss(hex);
+  uint32_t n;
+  ss >> std::hex >> n;
+  return n;
+}
+
 std::string get_date_string(std::chrono::system_clock::time_point t) {
   auto as_time_t = std::chrono::system_clock::to_time_t(t);
   struct tm* tm;
