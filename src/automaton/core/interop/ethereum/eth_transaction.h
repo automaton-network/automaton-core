@@ -14,7 +14,7 @@ std::string rlp_encode(std::string s, bool is_list);
 
 std::string check_and_sign(const unsigned char* priv_key, const unsigned char* message);
 
-std::string recover_addres(const unsigned char* rsv, const unsigned char* message);
+std::string recover_address(const unsigned char* rsv, const unsigned char* message_hash);
 
 /**
   Ethereum transaction. Transaction fields should be given as hex strings WITHOUT '0x' prefix.
