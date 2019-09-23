@@ -54,11 +54,11 @@ std::string rlp_encode(std::string s, bool is_list) {
   return ss.str();
 }
 
-std::string check_and_sign(const unsigned char* priv_key, const unsigned char* message) {
+std::string check_and_sign(const unsigned char* priv_key, const unsigned char* message_hash) {
   secp256k1_context* context = secp256k1_context_create(SECP256K1_CONTEXT_SIGN | SECP256K1_CONTEXT_VERIFY);
   secp256k1_pubkey* pubkey = new secp256k1_pubkey();
 
-  std::string rsv = sign(priv_key, message);
+  std::string rsv = sign(priv_key, message_hash);
 
   if (!secp256k1_ec_pubkey_create(context, pubkey, priv_key)) {
     LOG(WARNING) << "Invalid private key!!!" << bin2hex(std::string(reinterpret_cast<const char*>(priv_key), 32));
@@ -67,7 +67,7 @@ std::string check_and_sign(const unsigned char* priv_key, const unsigned char* m
   return rsv;
 }
 
-std::string recover_addres(const unsigned char* rsv, const unsigned char* message) {
+std::string recover_address(const unsigned char* rsv, const unsigned char* message_hash) {
   int32_t v = rsv[64];
   v -= 27;
   auto* ctx = secp256k1_context_create(SECP256K1_CONTEXT_SIGN | SECP256K1_CONTEXT_VERIFY);
@@ -77,7 +77,7 @@ std::string recover_addres(const unsigned char* rsv, const unsigned char* messag
     return "";
   }
   secp256k1_pubkey* pubkey = new secp256k1_pubkey();
-  if (!secp256k1_ecdsa_recover(ctx, pubkey, &signature, (unsigned char*) message)) {
+  if (!secp256k1_ecdsa_recover(ctx, pubkey, &signature, (unsigned char*) message_hash)) {
     LOG(ERROR) << "Cannot recover signature!";
     return "";
   }
@@ -101,7 +101,7 @@ std::string eth_transaction::sign_tx(const std::string& private_key_hex) {
       reinterpret_cast<const unsigned char*>(hashed_tx.c_str()));
   int32_t v = rsv[64];
   v -= 27;
-  // std::cout << "ADDRESS: " << bin2hex(recover_addres(reinterpret_cast<const unsigned char*>(rsv.c_str()),
+  // std::cout << "ADDRESS: " << bin2hex(recover_address(reinterpret_cast<const unsigned char*>(rsv.c_str()),
       // reinterpret_cast<const unsigned char*>(hashed_tx.c_str()))) << std::endl;
   std::stringstream tx;
   uint32_t newv = hex2dec(chainId) * 2 + ((v % 2) ? 36 : 35);

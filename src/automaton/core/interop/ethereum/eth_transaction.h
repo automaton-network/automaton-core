@@ -12,7 +12,7 @@ std::string hash(const std::string& data);
 
 std::string rlp_encode(std::string s, bool is_list);
 
-std::string check_and_sign(const unsigned char* priv_key, const unsigned char* message);
+std::string check_and_sign(const unsigned char* priv_key, const unsigned char* message_hash);
 
 std::string recover_address(const unsigned char* rsv, const unsigned char* message_hash);
 
