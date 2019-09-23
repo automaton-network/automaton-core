@@ -114,13 +114,13 @@ int main() {
       "306859f991a82dc312fafa31b13bb182e26148e479bae608edd55090cf0e30e2";
 
   eth_transaction t;
-  t.nonce = "01";
-  t.gasPrice = "1388";  // 5 000
-  t.gasLimit = "5B8D80";  // 6M
+  t.nonce = "05";
+  t.gas_price = "1388";  // 5 000
+  t.gas_limit = "5B8D80";  // 6M
   t.to = CONTRACT_ADDR;
   t.value = "";
   t.data = claim_slot_data.str();
-  t.chainId = "01";
+  t.chain_id = "01";
 
   s = contract->call("claimSlot", t.sign_tx(PRIVATE_KEY));
   if (s.code == automaton::core::common::status::OK) {

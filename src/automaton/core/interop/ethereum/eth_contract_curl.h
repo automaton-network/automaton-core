@@ -20,6 +20,13 @@ namespace core {
 namespace interop {
 namespace ethereum {
 
+/* TODO(kari):
+  * Create transaction in call() and fill the values.
+  * Transaction default field values (gas_price, chain_id) and values taken automatically from the blockchain (nonce,
+gas_limit).
+*/
+
+
 // Helper encode/decode functions
 
 std::string hash(const std::string& data);
