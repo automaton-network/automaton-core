@@ -7,6 +7,7 @@
 #include <json.hpp>
 
 #include "automaton/core/crypto/cryptopp/Keccak_256_cryptopp.h"
+#include "automaton/core/interop/ethereum/eth_transaction.h"
 #include "automaton/core/io/io.h"
 
 using automaton::core::crypto::cryptopp::Keccak_256_cryptopp;
@@ -22,28 +23,10 @@ namespace core {
 namespace interop {
 namespace ethereum {
 
-std::string hash(const std::string& data) {
-  Keccak_256_cryptopp hasher;
-  uint8_t digest[32];
-  hasher.calculate_digest(reinterpret_cast<const uint8_t*>(data.data()), data.size(), digest);
-  return std::string(reinterpret_cast<char*>(digest), 32);
-}
-
 std::string dec_to_32hex(uint32_t n) {
   std::stringstream ss;
   ss << std::setfill('0') << std::setw(64) << std::hex << n;
   return ss.str();
-}
-
-uint32_t hex_to_dec(const std::string& hex) {
-  std::stringstream ss(hex);
-  uint32_t n;
-  ss >> std::hex >> n;
-  return n;
-}
-
-std::string create_raw_transaction(const std::string& tx) {
-  return "";
 }
 
 std::unordered_map<std::string, std::shared_ptr<eth_contract> > eth_contract::contracts;
@@ -92,7 +75,7 @@ eth_contract::~eth_contract() {
   }
 }
 
-status eth_contract::call(const std::string& from_address, const std::string& fname, const std::string& params) {
+status eth_contract::call(const std::string& fname, const std::string& params) {
   call_id++;
   auto it = signatures.find(fname);
   if (it == signatures.end()) {
@@ -102,19 +85,12 @@ status eth_contract::call(const std::string& from_address, const std::string& fn
   std::stringstream data;
   std::string string_data;
   if (!is_transaction) {
-    data << "{\"jsonrpc\":\"2.0\",\"method\":\"eth_call\",\"params\":[{ \"to\":\"" << address <<
+    data << "{\"jsonrpc\":\"2.0\",\"method\":\"eth_call\",\"params\":[{ \"to\":\"0x" << address <<
         "\",\"data\":\"" << it->second.first << params <<
         "\",\"gas\":\"" << GAS_LIMIT << "\"},\"latest\"" << "],\"id\":" << call_id << "}";
   } else {
-    return status::internal("eth_sendTransaction and eth_sendRawTransaction are not yet supported!!");
-
-    // send raw transaction
-    // std::stringstream ss;
-    // ss << "{\"from\":\"" << from_address << "\", \"to\":\"" << address << "\", \"data\":\"" << params << "\"}";
-    // std::string signed_tx = create_raw_transaction(ss.str());
-    //
-    // data << "{\"jsonrpc\":\"2.0\",\"method\":\"eth_sendRawTransaction\",\"params\":[{\"data\":\"" <<
-    // signed_tx << "},\"latest\"") << "],\"id\":" << call_id << "}";
+    data << "{\"jsonrpc\":\"2.0\",\"method\":\"eth_sendRawTransaction\",\"params\":[\"0x" <<
+        params << "\"],\"id\":" << call_id << "}";
   }
 
   string_data = data.str();

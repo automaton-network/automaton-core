@@ -75,6 +75,7 @@ file(
   automaton/core/data/*.cc
   automaton/core/data/protobuf/*.cc
   automaton/core/interop/ethereum/eth_contract_curl.cc
+  automaton/core/interop/ethereum/eth_transaction.cc
   automaton/core/io/*.cc
   automaton/core/network/*.cc
   automaton/core/node/*.cc

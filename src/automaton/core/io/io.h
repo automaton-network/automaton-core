@@ -59,6 +59,16 @@ std::string bin2hex(const std::string& input);
 */
 std::string hex2bin(const std::string& input);
 
+/**
+  Returns string representing hex value of a number. Does not contain base prefix 0x. Length is always even.
+*/
+std::string dec2hex(uint32_t n);
+
+/**
+  Returns a number from its hex representation.
+*/
+uint32_t hex2dec(const std::string& hex);
+
 
 /**
   Returns string representation of a date.
