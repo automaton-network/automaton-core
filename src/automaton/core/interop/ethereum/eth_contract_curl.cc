@@ -87,11 +87,6 @@ std::unordered_map<std::string, std::pair<std::string, bool> > eth_contract::par
       functions[name] = std::make_pair(signature.str(), is_transaction);
     }
   }
-  std::cout << std::endl;
-  for (auto it = functions.begin(); it != functions.end(); ++it) {
-    std::cout << it->first << ": " << it->second.first << " is_transaction: " <<
-        std::boolalpha << it->second.second << std::endl;
-  }
   return functions;
 }
 
