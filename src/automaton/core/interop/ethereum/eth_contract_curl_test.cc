@@ -1,3 +1,4 @@
+#include <fstream>
 #include <iostream>
 #include <memory>
 #include <string>
@@ -18,7 +19,7 @@ using automaton::core::common::status;
 static const char* URL = "127.0.0.1:7545";
 static const char* CONTRACT_ADDR = "22D9d6faB361FaA969D2EfDE420472633cBB7B11";
 static const char* PRIVATE_KEY = "56aac550d97013a8402c98e3b2aeb20482d19f142a67022d2ab357eb8bb673b0";
-
+static const char* JSON_FILE = "../contracts/koh/build/contracts/KingAutomaton.json";
 /*
   TODO(kari):
   * make this file test
@@ -43,15 +44,10 @@ int main() {
 
   using namespace automaton::core::interop::ethereum;  // NOLINT
 
-  eth_contract::register_contract(URL, CONTRACT_ADDR, {
-    {"getSlotsNumber", {"getSlotsNumber()", false}},
-    {"getSlotOwner", {"getSlotOwner(uint256)", false}},
-    {"getSlotDifficulty", {"getSlotDifficulty(uint256)", false}},
-    {"getSlotLastClaimTime", {"getSlotLastClaimTime(uint256)", false}},
-    {"getMask", {"getMask()", false}},
-    {"getClaimed", {"getClaimed()", false}},
-    {"claimSlot", {"claimSlot(bytes32,bytes32,uint8,bytes32,bytes32)", true}}
-  });
+  std::fstream fs(JSON_FILE, std::fstream::in);
+  std::string file_content((std::istreambuf_iterator<char>(fs)), (std::istreambuf_iterator<char>()));
+  eth_contract::register_contract(URL, CONTRACT_ADDR, file_content);
+  fs.close();
 
   auto contract = eth_contract::get_contract(CONTRACT_ADDR);
   if (contract == nullptr) {
@@ -114,7 +110,7 @@ int main() {
       "306859f991a82dc312fafa31b13bb182e26148e479bae608edd55090cf0e30e2";
 
   eth_transaction t;
-  t.nonce = "05";
+  t.nonce = "04";
   t.gas_price = "1388";  // 5 000
   t.gas_limit = "5B8D80";  // 6M
   t.to = CONTRACT_ADDR;

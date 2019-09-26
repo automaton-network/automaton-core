@@ -9,6 +9,7 @@
 #include <vector>
 
 #include <curl/curl.h>  // NOLINT
+#include <json.hpp>
 
 #include "automaton/core/network/connection.h"
 
@@ -25,7 +26,6 @@ namespace ethereum {
   * Transaction default field values (gas_price, chain_id) and values taken automatically from the blockchain (nonce,
 gas_limit).
 */
-
 
 // Helper encode/decode functions
 
@@ -46,15 +46,15 @@ class eth_contract: public std::enable_shared_from_this<eth_contract> {
   /**
     @param[in] server ip address or url
     @param[in] address contract address on ethereum main or testnet
-    @param[in] signs map of function name/alias -> {function signature, true/false is transaction}
-        e.g. {"getSlotsNumber", {"getSlotsNumber()", false}}
+    @param[in] contract_json compiled contract json file
   */
+
   static void register_contract(const std::string& server, const std::string& address,
-      std::unordered_map<std::string, std::pair<std::string, bool> > signs);
+      const std::string& contract_json);
+
   static std::shared_ptr<eth_contract> get_contract(const std::string&);
 
-  eth_contract(const std::string& server, const std::string& address,
-      std::unordered_map<std::string, std::pair<std::string, bool> > signatures);
+  eth_contract(const std::string& server, const std::string& address, const std::string& contract_json);
 
   ~eth_contract();
 
@@ -69,6 +69,7 @@ class eth_contract: public std::enable_shared_from_this<eth_contract> {
   uint32_t call_id;
   std::string server;
   std::string address;  // ETH address of the contract
+  nlohmann::json contract_json;
   std::unordered_map<std::string, std::pair<std::string, bool> > signatures;  // function signatures
 
   CURL *curl;
@@ -76,6 +77,8 @@ class eth_contract: public std::enable_shared_from_this<eth_contract> {
   std::string message;
 
   char curl_err_buf[ERROR_BUF_SIZE];
+
+  static std::unordered_map<std::string, std::pair<std::string, bool> > parse_abi(nlohmann::json json_abi);
 
   static size_t curl_callback(void *contents, size_t size, size_t nmemb, std::string *s);
 

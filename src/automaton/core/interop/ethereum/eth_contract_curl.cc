@@ -4,8 +4,6 @@
 #include <string>
 #include <utility>
 
-#include <json.hpp>
-
 #include "automaton/core/crypto/cryptopp/Keccak_256_cryptopp.h"
 #include "automaton/core/interop/ethereum/eth_transaction.h"
 #include "automaton/core/io/io.h"
@@ -32,12 +30,12 @@ std::string dec_to_32hex(uint32_t n) {
 std::unordered_map<std::string, std::shared_ptr<eth_contract> > eth_contract::contracts;
 
 void eth_contract::register_contract(const std::string& server, const std::string& address,
-    std::unordered_map<std::string, std::pair<std::string, bool> > signs) {
+    const std::string& contract_json) {
   if (contracts.find(address) != contracts.end()) {
     LOG(INFO) << "Contract already registered!";
     return;
   }
-  contracts[address] = std::shared_ptr<eth_contract>(new eth_contract(server, address, signs));
+  contracts[address] = std::shared_ptr<eth_contract>(new eth_contract(server, address, contract_json));
 }
 
 std::shared_ptr<eth_contract> eth_contract::get_contract(const std::string& address) {
@@ -49,10 +47,73 @@ std::shared_ptr<eth_contract> eth_contract::get_contract(const std::string& addr
   return it->second;
 }
 
+std::unordered_map<std::string, std::pair<std::string, bool> > eth_contract::parse_abi(json json_abi) {
+  std::unordered_map<std::string, std::pair<std::string, bool> > functions;
+  for (json::iterator it = json_abi.begin(); it != json_abi.end(); ++it) {
+    json jobj = it.value();
+    std::string name;
+    std::stringstream signature;
+    bool is_transaction;
+    if ((jobj.find("type") != jobj.end() && jobj["type"].get<std::string>() == "function") ||
+        jobj.find("type") == jobj.end()) {  // default value for "type" is "function"
+      if (jobj.find("name") != jobj.end()) {
+        name = jobj["name"].get<std::string>();
+        signature << name << '(';
+      } else {
+        LOG(FATAL) << "Function doesn't have \"name\" !";
+      }
+      if (jobj.find("constant") != jobj.end()) {
+        is_transaction = !jobj["constant"].get<bool>();
+      } else {
+        LOG(FATAL) << "Function doesn't have \"constant\" !";
+      }
+      if (jobj.find("inputs") != jobj.end()) {
+        std::vector<json> inputs = jobj["inputs"].get<std::vector<json> >();
+        for (auto i = 0; i < inputs.size(); ++i) {
+          auto& inp = inputs[i];
+          if (inp.find("type") != inp.end()) {
+            signature << inp["type"].get<std::string>();
+            if (i < inputs.size() - 1) {
+              signature << ",";
+            }
+          } else {
+            LOG(FATAL) << "Input doesn't have \"type\" !";
+          }
+        }
+      } else {
+        LOG(FATAL) << "Function doesn't have \"inputs\" !";
+      }
+      signature << ')';
+      functions[name] = std::make_pair(signature.str(), is_transaction);
+    }
+  }
+  std::cout << std::endl;
+  for (auto it = functions.begin(); it != functions.end(); ++it) {
+    std::cout << it->first << ": " << it->second.first << " is_transaction: " <<
+        std::boolalpha << it->second.second << std::endl;
+  }
+  return functions;
+}
+
 eth_contract::eth_contract(const std::string& server, const std::string& address,
-    std::unordered_map<std::string, std::pair<std::string, bool> > signs):
-    call_id(0), server(server), address(address) {
-  for (auto it = signs.begin(); it != signs.end(); ++it) {
+    const std::string& contract_json_string):call_id(0), server(server), address(address) {
+  json j;
+  std::stringstream ss(contract_json_string);
+  try {
+    ss >> j;
+  } catch (const std::exception& e) {
+    LOG(FATAL) << "Invalid json! " << e.what();
+  }
+  contract_json = j;
+  json json_abi;
+  if (j.find("abi") != j.end()) {
+    json_abi = j["abi"].get<json>();
+  } else {
+    LOG(FATAL) << "No abi!";
+  }
+
+  auto functions = parse_abi(json_abi);
+  for (auto it = functions.begin(); it != functions.end(); ++it) {
     signatures[it->first] = std::make_pair("0x" + (bin2hex(hash(it->second.first))).substr(0, 8), it->second.second);
   }
   curl = curl_easy_init();
