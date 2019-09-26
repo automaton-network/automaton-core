@@ -30,12 +30,12 @@ std::string dec_to_32hex(uint32_t n) {
 std::unordered_map<std::string, std::shared_ptr<eth_contract> > eth_contract::contracts;
 
 void eth_contract::register_contract(const std::string& server, const std::string& address,
-    const std::string& contract_json) {
+    const std::string& abi_json) {
   if (contracts.find(address) != contracts.end()) {
     LOG(INFO) << "Contract already registered!";
     return;
   }
-  contracts[address] = std::shared_ptr<eth_contract>(new eth_contract(server, address, contract_json));
+  contracts[address] = std::shared_ptr<eth_contract>(new eth_contract(server, address, abi_json));
 }
 
 std::shared_ptr<eth_contract> eth_contract::get_contract(const std::string& address) {
@@ -91,23 +91,16 @@ std::unordered_map<std::string, std::pair<std::string, bool> > eth_contract::par
 }
 
 eth_contract::eth_contract(const std::string& server, const std::string& address,
-    const std::string& contract_json_string):call_id(0), server(server), address(address) {
+    const std::string& abi_json_string):call_id(0), server(server), address(address) {
   json j;
-  std::stringstream ss(contract_json_string);
+  std::stringstream ss(abi_json_string);
   try {
     ss >> j;
   } catch (const std::exception& e) {
     LOG(FATAL) << "Invalid json! " << e.what();
   }
-  contract_json = j;
-  json json_abi;
-  if (j.find("abi") != j.end()) {
-    json_abi = j["abi"].get<json>();
-  } else {
-    LOG(FATAL) << "No abi!";
-  }
-
-  auto functions = parse_abi(json_abi);
+  abi = j;
+  auto functions = parse_abi(abi);
   for (auto it = functions.begin(); it != functions.end(); ++it) {
     signatures[it->first] = std::make_pair("0x" + (bin2hex(hash(it->second.first))).substr(0, 8), it->second.second);
   }

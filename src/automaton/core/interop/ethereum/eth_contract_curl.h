@@ -46,15 +46,15 @@ class eth_contract: public std::enable_shared_from_this<eth_contract> {
   /**
     @param[in] server ip address or url
     @param[in] address contract address on ethereum main or testnet
-    @param[in] contract_json compiled contract json file
+    @param[in] abi_json contract abi as json string
   */
 
   static void register_contract(const std::string& server, const std::string& address,
-      const std::string& contract_json);
+      const std::string& abi_json);
 
   static std::shared_ptr<eth_contract> get_contract(const std::string&);
 
-  eth_contract(const std::string& server, const std::string& address, const std::string& contract_json);
+  eth_contract(const std::string& server, const std::string& address, const std::string& abi_json);
 
   ~eth_contract();
 
@@ -69,7 +69,7 @@ class eth_contract: public std::enable_shared_from_this<eth_contract> {
   uint32_t call_id;
   std::string server;
   std::string address;  // ETH address of the contract
-  nlohmann::json contract_json;
+  nlohmann::json abi;
   std::unordered_map<std::string, std::pair<std::string, bool> > signatures;  // function signatures
 
   CURL *curl;

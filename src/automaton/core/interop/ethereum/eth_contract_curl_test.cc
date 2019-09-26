@@ -5,6 +5,7 @@
 #include <utility>
 
 #include <curl/curl.h>  // NOLINT
+#include <json.hpp>
 
 #include "automaton/core/interop/ethereum/eth_contract_curl.h"
 #include "automaton/core/interop/ethereum/eth_transaction.h"
@@ -14,6 +15,8 @@ using automaton::core::interop::ethereum::dec_to_32hex;
 using automaton::core::interop::ethereum::eth_transaction;
 using automaton::core::io::hex2dec;
 using automaton::core::common::status;
+
+using json = nlohmann::json;
 
 // Ganache test
 static const char* URL = "127.0.0.1:7545";
@@ -45,8 +48,16 @@ int main() {
   using namespace automaton::core::interop::ethereum;  // NOLINT
 
   std::fstream fs(JSON_FILE, std::fstream::in);
-  std::string file_content((std::istreambuf_iterator<char>(fs)), (std::istreambuf_iterator<char>()));
-  eth_contract::register_contract(URL, CONTRACT_ADDR, file_content);
+  json j, abi;
+  fs >> j;
+  if (j.find("abi") != j.end()) {
+    abi = j["abi"].get<json>();
+  } else {
+    LOG(FATAL) << "No abi!";
+  }
+  std::string abi_string = abi.dump();
+  // std::string file_content((std::istreambuf_iterator<char>(fs)), (std::istreambuf_iterator<char>()));
+  eth_contract::register_contract(URL, CONTRACT_ADDR, abi_string);
   fs.close();
 
   auto contract = eth_contract::get_contract(CONTRACT_ADDR);
