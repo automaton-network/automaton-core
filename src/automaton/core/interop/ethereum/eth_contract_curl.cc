@@ -134,7 +134,7 @@ status eth_contract::call(const std::string& fname, const std::string& params) {
   std::stringstream data;
   std::string string_data;
   if (!is_transaction) {
-    data << "{\"jsonrpc\":\"2.0\",\"method\":\"eth_call\",\"params\":[{ \"to\":\"0x" << address <<
+    data << "{\"jsonrpc\":\"2.0\",\"method\":\"eth_call\",\"params\":[{ \"to\":\"" << address <<
         "\",\"data\":\"" << it->second.first << params <<
         "\",\"gas\":\"" << GAS_LIMIT << "\"},\"latest\"" << "],\"id\":" << call_id << "}";
   } else {
@@ -143,6 +143,8 @@ status eth_contract::call(const std::string& fname, const std::string& params) {
   }
 
   string_data = data.str();
+  LOG(INFO) << "\n======= REQUEST =======\n" << string_data << "\n=====================";
+
   if (curl) {
     /* set the error buffer as empty before performing a request */
     curl_err_buf[0] = '\0';
@@ -152,7 +154,7 @@ status eth_contract::call(const std::string& fname, const std::string& params) {
       size_t len = strlen(curl_err_buf);
       LOG(ERROR) << "Curl result code != CURLE_OK. Result code: " << res;
       if (len) {
-        LOG(ERROR) << "Error message: " << curl_err_buf;
+        return status::internal(std::string(curl_err_buf, len));
       }
       return status::internal("CURL error");
     } else {
@@ -162,8 +164,6 @@ status eth_contract::call(const std::string& fname, const std::string& params) {
     LOG(ERROR) << "No curl!";
     return status::internal("No curl!");
   }
-
-  LOG(INFO) << "\n======= REQUEST =======\n" << string_data << "\n=====================";
 }
 
 status eth_contract::handle_message() {
@@ -173,7 +173,7 @@ status eth_contract::handle_message() {
   ss >> j;
   message = "";
 
-  if (j.find("id") != j.end()) {
+  if (j.find("id") != j.end() && j["id"].is_number()) {
     result_call_id = j["id"].get<uint32_t>();
   } else {
     LOG(ERROR) << "ID not found!";
@@ -187,11 +187,17 @@ status eth_contract::handle_message() {
 
   if (j.find("error") != j.end()) {
     json obj = j["error"];
-    std::string error = obj["message"].get<std::string>();
-    return status::internal(error);
+    if (obj.is_string()) {
+      std::string error = obj["message"].get<std::string>();
+      return status::internal(error);
+    }
+    return status::internal(obj.dump());
   } else if (j.find("result") != j.end()) {
-    std::string result = j["result"].get<std::string>();
-    return status::ok(result.substr(2));
+    if (j["result"].is_string()) {
+      std::string result = j["result"].get<std::string>();
+      return status::ok(result.substr(2));
+    }
+    return status::ok(j["result"].dump());
   }
   return status::internal("No result and no error!?");
 }
@@ -200,7 +206,7 @@ size_t eth_contract::curl_callback(void *contents, size_t size, size_t nmemb, st
   size_t new_length = size * nmemb;
   try {
     s->append(reinterpret_cast<char*>(contents), new_length);
-    LOG(INFO) << "=== CHUNK ===\n"
+    LOG(INFO) << "\n=== CHUNK ===\n"
         << std::string(reinterpret_cast<char*>(contents), new_length) << "\n ===== EoCH ====";
   }
   catch (std::bad_alloc &e) {

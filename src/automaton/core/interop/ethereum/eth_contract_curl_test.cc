@@ -9,18 +9,21 @@
 
 #include "automaton/core/interop/ethereum/eth_contract_curl.h"
 #include "automaton/core/interop/ethereum/eth_transaction.h"
+#include "automaton/core/interop/ethereum/eth_helper_functions.h"
 #include "automaton/core/io/io.h"
 
 using automaton::core::interop::ethereum::dec_to_32hex;
 using automaton::core::interop::ethereum::eth_transaction;
 using automaton::core::io::hex2dec;
+using automaton::core::io::hex2bin;
 using automaton::core::common::status;
 
 using json = nlohmann::json;
 
 // Ganache test
 static const char* URL = "127.0.0.1:7545";
-static const char* CONTRACT_ADDR = "22D9d6faB361FaA969D2EfDE420472633cBB7B11";
+static const char* CONTRACT_ADDR = "0x22D9d6faB361FaA969D2EfDE420472633cBB7B11";
+static const char* ADDRESS = "0x603CB0d1c8ab86E72beb3c7DF564A36D7B85ecD2";
 static const char* PRIVATE_KEY = "56aac550d97013a8402c98e3b2aeb20482d19f142a67022d2ab357eb8bb673b0";
 static const char* JSON_FILE = "../contracts/koh/build/contracts/KingAutomaton.json";
 /*
@@ -69,6 +72,27 @@ int main() {
 
   status s = status::ok();
 
+  s = eth_getTransactionCount(URL, ADDRESS);
+  if (s.code == automaton::core::common::status::OK) {
+    std::cout << "Nonce is: " << hex2dec(s.msg) << std::endl;
+  } else {
+    std::cout << "Error (eth_getTransactionCount()) " << s << std::endl;
+  }
+
+  s = eth_getCode(URL, CONTRACT_ADDR);
+  if (s.code == automaton::core::common::status::OK) {
+    std::cout << "Code: " << s.msg.substr(2, 100) << " [...]" << std::endl;
+  } else {
+    std::cout << "Error (eth_getCode()) " << s << std::endl;
+  }
+
+  s = eth_gasPrice(URL);
+  if (s.code == automaton::core::common::status::OK) {
+    std::cout << "Gas price: " << hex2dec(s.msg) << std::endl;
+  } else {
+    std::cout << "Error (eth_gasPrice()) " << s << std::endl;
+  }
+
   s = contract->call("getSlotsNumber", "");
   if (s.code == automaton::core::common::status::OK) {
     std::cout << "Number of slots: " << hex2dec(s.msg) << std::endl;
@@ -115,25 +139,40 @@ int main() {
   // std::cin >> private_key;
 
   std::stringstream claim_slot_data;
+  // TODO(kari): Update this after proper call of automaton-miner
   claim_slot_data << "6b2c8c48" << "8a3892c2e85cf7fdbd795f2e91e88e406bad72b5a40d3511d64f9e4b57417477" <<
       "83f7b3e3c13b106102fd5cf8c41e6950d6f14b28391189c5fb1400cc0336a391" << std::string(62, '0') << "1c"
       "87c600b5e492f852a057e391ed4cd4c4e07b10c959777939e195cdc84cb9c434" <<
       "306859f991a82dc312fafa31b13bb182e26148e479bae608edd55090cf0e30e2";
 
   eth_transaction t;
-  t.nonce = "04";
+  t.nonce = "06";
   t.gas_price = "1388";  // 5 000
   t.gas_limit = "5B8D80";  // 6M
-  t.to = CONTRACT_ADDR;
+  t.to = std::string(CONTRACT_ADDR + 2);
   t.value = "";
   t.data = claim_slot_data.str();
   t.chain_id = "01";
 
+  std::string transaction_receipt = "";
+
   s = contract->call("claimSlot", t.sign_tx(PRIVATE_KEY));
   if (s.code == automaton::core::common::status::OK) {
     std::cout << "Claim slot result: " << s.msg << std::endl;
+    transaction_receipt = s.msg;
   } else {
     std::cout << "Error (claimSlot) " << s << std::endl;
+  }
+
+  if (transaction_receipt != "" && transaction_receipt != "null") {
+    s = eth_getTransactionReceipt(URL, transaction_receipt);
+    if (s.code == automaton::core::common::status::OK) {
+      std::cout << "Transaction receipt: " << s.msg << std::endl;
+    } else {
+      std::cout << "Error (eth_getTransactionReceipt()) " << s << std::endl;
+    }
+  } else {
+    std::cout << "Transaction receipt is NULL!" << std::endl;
   }
 
   curl_global_cleanup();
