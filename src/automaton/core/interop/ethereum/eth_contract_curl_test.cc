@@ -36,8 +36,6 @@ static const char* ADDRESS = "0x2a9fe9D9b0dae89C48b8B8F4E008E17f1A1ED4A6";
 // static const char* CONTRACT_ADDR = "...";
 // static const char* ADDRESS = "0x5a0b54d5dc17e0aadc383d2db43b0a0d3e029c4c";
 
-static const std::string BIN_ADDRESS = hex2bin(std::string(24, '0') + std::string(ADDRESS+2));
-
 static const char* PRIVATE_KEY = "56aac550d97013a8402c98e3b2aeb20482d19f142a67022d2ab357eb8bb673b0";
 // static const char* PRIVATE_KEY = "11937405a1975b68ff0e0fc7e3eedcf21e953113b35f95af30839b44b4960c99";
 
@@ -50,6 +48,8 @@ void callback_func(const automaton::core::common::status& s, const std::string& 
 }
 
 int main() {
+  std::string BIN_ADDRESS = hex2bin(std::string(24, '0') + std::string(ADDRESS+2));
+
   // std::string url, contract_addr;
   // std::cout << "Enter URL: ";
   // std::cin >> url;
