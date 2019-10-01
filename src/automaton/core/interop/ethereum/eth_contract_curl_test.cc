@@ -105,7 +105,6 @@ int main() {
 
   s = eth_getCode(URL, CONTRACT_ADDR);
   if (s.code == automaton::core::common::status::OK) {
-    std::cout << s.msg << std::endl;
     if (s.msg == "0x") {
       std::cout << "Contract NOT FOUND!" << std::endl;
     } else {

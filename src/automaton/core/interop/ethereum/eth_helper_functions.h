@@ -32,7 +32,6 @@ static size_t curl_callback(void *contents, size_t size, size_t nmemb, std::stri
 }
 
 static status handle_result(const std::string& result) {
-  std::cout << "RESULT:\n" << result << std::endl;
   json j;
   std::stringstream ss(result);
   try {
