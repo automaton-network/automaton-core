@@ -192,6 +192,10 @@ contract KingAutomaton {
     return mask;
   }
 
+  function getMinDifficulty() public view returns(uint256) {
+    return minDifficulty;
+  }
+
   function getClaimed() public view returns(uint256) {
     return numTakeOvers;
   }

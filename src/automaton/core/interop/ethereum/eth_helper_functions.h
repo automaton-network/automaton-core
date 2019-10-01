@@ -34,7 +34,11 @@ static size_t curl_callback(void *contents, size_t size, size_t nmemb, std::stri
 static status handle_result(const std::string& result) {
   json j;
   std::stringstream ss(result);
-  ss >> j;
+  try {
+    ss >> j;
+  } catch (...) {
+    return status::internal("Could not parse JSON!");
+  }
 
   if (j.find("error") != j.end()) {
     json obj = j["error"];
@@ -64,15 +68,21 @@ static status curl_post(const std::string& url, const std::string& data) {
   LOG(INFO) << "\n======= REQUEST =======\n" << data << "\n=====================";
 
   if (curl) {
+    struct curl_slist *list = NULL;
+
+    list = curl_slist_append(list, "Content-Type: application/json");
+
     curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
     curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, curl_err_buf);
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_callback);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &message);
     curl_easy_setopt(curl, CURLOPT_ENCODING, "gzip");
+    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, list);
 
     curl_err_buf[0] = '\0';
     curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data.c_str());
     res = curl_easy_perform(curl);
+    curl_slist_free_all(list);
     if (res != CURLE_OK) {
       size_t len = strlen(curl_err_buf);
       LOG(ERROR) << "Curl result code != CURLE_OK. Result code: " << res;
