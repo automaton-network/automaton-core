@@ -32,17 +32,17 @@ static const char* URL = "127.0.0.1:7545";
 
 static const char* CONTRACT_ADDR = "0x22D9d6faB361FaA969D2EfDE420472633cBB7B11";
 static const char* ADDRESS = "0x603CB0d1c8ab86E72beb3c7DF564A36D7B85ecD2";
+static const char* PRIVATE_KEY = "56aac550d97013a8402c98e3b2aeb20482d19f142a67022d2ab357eb8bb673b0";
 
 // static const char* CONTRACT_ADDR = "0x9de3744909Ba0587A988E10eE7F73960e224980F";
 // static const char* ADDRESS = "0x2a9fe9D9b0dae89C48b8B8F4E008E17f1A1ED4A6";
+// static const char* PRIVATE_KEY = "11937405a1975b68ff0e0fc7e3eedcf21e953113b35f95af30839b44b4960c99";
 
 // Connect via CloudFlare
 // static const char* URL = "https://cloudflare-eth.com/";
 // static const char* CONTRACT_ADDR = "...";
 // static const char* ADDRESS = "0x5a0b54d5dc17e0aadc383d2db43b0a0d3e029c4c";
 
-static const char* PRIVATE_KEY = "56aac550d97013a8402c98e3b2aeb20482d19f142a67022d2ab357eb8bb673b0";
-// static const char* PRIVATE_KEY = "11937405a1975b68ff0e0fc7e3eedcf21e953113b35f95af30839b44b4960c99";
 
 static const char* JSON_FILE = "../contracts/koh/build/contracts/KingAutomaton.json";
 
@@ -110,10 +110,11 @@ int main() {
 
   s = eth_getCode(URL, CONTRACT_ADDR);
   if (s.code == automaton::core::common::status::OK) {
-    if (s.msg == "0x") {
+    if (s.msg == "") {
       std::cout << "Contract NOT FOUND!" << std::endl;
+      return 1;
     } else {
-      std::cout << "Code: " << s.msg.substr(2) << " [...]" << std::endl;
+      std::cout << "Code: " << s.msg.substr(0, std::min<size_t>(64, s.msg.size())) << "..." << std::endl;
     }
   } else {
     std::cout << "Error (eth_getCode()) " << s << std::endl;

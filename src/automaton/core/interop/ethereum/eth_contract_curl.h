@@ -71,6 +71,7 @@ class eth_contract: public std::enable_shared_from_this<eth_contract> {
   std::string address;  // ETH address of the contract
   nlohmann::json abi;
   std::unordered_map<std::string, std::pair<std::string, bool> > signatures;  // function signatures
+  struct curl_slist *list = NULL;
 
   CURL *curl;
   CURLcode res;

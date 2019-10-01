@@ -106,11 +106,13 @@ eth_contract::eth_contract(const std::string& server, const std::string& address
   }
   curl = curl_easy_init();
   if (curl) {
+    list = curl_slist_append(list, "Content-Type: application/json");
     curl_easy_setopt(curl, CURLOPT_URL, server.c_str());
     curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, curl_err_buf);
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_callback);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &message);
     curl_easy_setopt(curl, CURLOPT_ENCODING, "gzip");
+    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, list);
 
     // DEBUG
     // curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
@@ -120,6 +122,7 @@ eth_contract::eth_contract(const std::string& server, const std::string& address
 
 eth_contract::~eth_contract() {
   if (curl) {
+    curl_slist_free_all(list);
     curl_easy_cleanup(curl);
   }
 }
@@ -173,8 +176,8 @@ status eth_contract::handle_message() {
   try {
     ss >> j;
   } catch (const std::exception& e) {
-    LOG(ERROR) << "Invalid JSON!\n" + e.what();
-    return status::internal("Invalid JSON!\n" + e.what());
+    LOG(ERROR) << "Invalid JSON!\n" << e.what();
+    return status::internal(e.what());
   }
   message = "";
 
