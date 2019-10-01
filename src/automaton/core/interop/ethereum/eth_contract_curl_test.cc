@@ -8,28 +8,42 @@
 #include <json.hpp>
 
 #include "automaton/core/interop/ethereum/eth_contract_curl.h"
-#include "automaton/core/interop/ethereum/eth_transaction.h"
 #include "automaton/core/interop/ethereum/eth_helper_functions.h"
+#include "automaton/core/interop/ethereum/eth_transaction.h"
 #include "automaton/core/io/io.h"
+#include "automaton/tools/miner/miner.h"
 
+using automaton::core::common::status;
 using automaton::core::interop::ethereum::dec_to_32hex;
 using automaton::core::interop::ethereum::eth_transaction;
-using automaton::core::io::hex2dec;
+using automaton::core::io::bin2hex;
+using automaton::core::io::dec2hex;
 using automaton::core::io::hex2bin;
-using automaton::core::common::status;
+using automaton::core::io::hex2dec;
+using automaton::tools::miner::gen_pub_key;
+using automaton::tools::miner::mine_key;
+using automaton::tools::miner::sign;
 
 using json = nlohmann::json;
 
 // Ganache test
 static const char* URL = "127.0.0.1:7545";
-static const char* CONTRACT_ADDR = "0x22D9d6faB361FaA969D2EfDE420472633cBB7B11";
-static const char* ADDRESS = "0x603CB0d1c8ab86E72beb3c7DF564A36D7B85ecD2";
+static const char* CONTRACT_ADDR = "0x9de3744909Ba0587A988E10eE7F73960e224980F";
+static const char* ADDRESS = "0x2a9fe9D9b0dae89C48b8B8F4E008E17f1A1ED4A6";
+
+// Connect via CloudFlare
+// static const char* URL = "https://cloudflare-eth.com/";
+// static const char* CONTRACT_ADDR = "...";
+// static const char* ADDRESS = "0x5a0b54d5dc17e0aadc383d2db43b0a0d3e029c4c";
+
+static const std::string BIN_ADDRESS = hex2bin(std::string(24, '0') + std::string(ADDRESS+2));
+
 static const char* PRIVATE_KEY = "56aac550d97013a8402c98e3b2aeb20482d19f142a67022d2ab357eb8bb673b0";
+// static const char* PRIVATE_KEY = "11937405a1975b68ff0e0fc7e3eedcf21e953113b35f95af30839b44b4960c99";
+
 static const char* JSON_FILE = "../contracts/koh/build/contracts/KingAutomaton.json";
-/*
-  TODO(kari):
-  * make this file test
-*/
+
+// TODO(kari): Turn this file into an integration test.
 
 void callback_func(const automaton::core::common::status& s, const std::string& response) {
   std::cout << "\n======= RESPONSE =======\n" << s << "\n" << response << "\n=====================\n\n";
@@ -72,25 +86,33 @@ int main() {
 
   status s = status::ok();
 
+  uint32_t nonce = 0;
   s = eth_getTransactionCount(URL, ADDRESS);
   if (s.code == automaton::core::common::status::OK) {
-    std::cout << "Nonce is: " << hex2dec(s.msg) << std::endl;
+    nonce = hex2dec(s.msg);
+    std::cout << "Nonce is: " << nonce << std::endl;
   } else {
     std::cout << "Error (eth_getTransactionCount()) " << s << std::endl;
   }
 
-  s = eth_getCode(URL, CONTRACT_ADDR);
-  if (s.code == automaton::core::common::status::OK) {
-    std::cout << "Code: " << s.msg.substr(2, 100) << " [...]" << std::endl;
-  } else {
-    std::cout << "Error (eth_getCode()) " << s << std::endl;
-  }
-
+  std::cout << "Fetching Gas price..." << std::endl;
   s = eth_gasPrice(URL);
   if (s.code == automaton::core::common::status::OK) {
     std::cout << "Gas price: " << hex2dec(s.msg) << std::endl;
   } else {
     std::cout << "Error (eth_gasPrice()) " << s << std::endl;
+  }
+
+  s = eth_getCode(URL, CONTRACT_ADDR);
+  if (s.code == automaton::core::common::status::OK) {
+    std::cout << s.msg << std::endl;
+    if (s.msg == "0x") {
+      std::cout << "Contract NOT FOUND!" << std::endl;
+    } else {
+      std::cout << "Code: " << s.msg.substr(2) << " [...]" << std::endl;
+    }
+  } else {
+    std::cout << "Error (eth_getCode()) " << s << std::endl;
   }
 
   s = contract->call("getSlotsNumber", "");
@@ -121,11 +143,22 @@ int main() {
     std::cout << "Error (getSlotLastClaimTime(2)) " << s << std::endl;
   }
 
+  std::string hex_mask;
   s = contract->call("getMask", "");
   if (s.code == automaton::core::common::status::OK) {
+    hex_mask = s.msg;
     std::cout << "Mask: " << s.msg << std::endl;
   } else {
     std::cout << "Error (getMask()) " << s << std::endl;
+  }
+
+  std::string hex_min_diff;
+  s = contract->call("getMinDifficulty", "");
+  if (s.code == automaton::core::common::status::OK) {
+    hex_min_diff = s.msg;
+    std::cout << "Min Difficulty: " << s.msg << std::endl;
+  } else {
+    std::cout << "Error (getMinDifficulty()) " << s << std::endl;
   }
 
   s = contract->call("getClaimed", "");
@@ -135,18 +168,38 @@ int main() {
     std::cout << "Error (getClaimed()) " << s << std::endl;
   }
 
-  // std::cout << "Enter private key: ";
-  // std::cin >> private_key;
+  // Mine key.
+  unsigned char mask[32];
+  unsigned char difficulty[32];
+  unsigned char pk[32];
+  std::string bin_mask = hex2bin(hex_mask);
+  memcpy(&mask, bin_mask.c_str(), 32);
+  std::string bin_min_diff = hex2bin(hex_min_diff);
+  memcpy(&difficulty, bin_min_diff.c_str(), 32);
+  unsigned int keys_generated = mine_key(mask, difficulty, pk, 10000000);
 
+  // Generate signature.
+  std::string pub_key = gen_pub_key(pk);
+  std::string sig = sign(pk, reinterpret_cast<const unsigned char *>(BIN_ADDRESS.c_str()));
+
+  // Encode claimSlot data.
   std::stringstream claim_slot_data;
-  // TODO(kari): Update this after proper call of automaton-miner
-  claim_slot_data << "6b2c8c48" << "8a3892c2e85cf7fdbd795f2e91e88e406bad72b5a40d3511d64f9e4b57417477" <<
-      "83f7b3e3c13b106102fd5cf8c41e6950d6f14b28391189c5fb1400cc0336a391" << std::string(62, '0') << "1c"
-      "87c600b5e492f852a057e391ed4cd4c4e07b10c959777939e195cdc84cb9c434" <<
-      "306859f991a82dc312fafa31b13bb182e26148e479bae608edd55090cf0e30e2";
+  claim_slot_data
+      // claimSlot signature
+      << "6b2c8c48"
+      // pubKeyX
+      << bin2hex(pub_key.substr(0, 32))
+      // pubKeyY
+      << bin2hex(pub_key.substr(32, 32))
+      // v
+      << std::string(62, '0') << bin2hex(sig.substr(64, 1))
+      // r
+      << bin2hex(sig.substr(0, 32))
+      // s
+      << bin2hex(sig.substr(32, 32));
 
   eth_transaction t;
-  t.nonce = "06";
+  t.nonce = dec2hex(nonce);
   t.gas_price = "1388";  // 5 000
   t.gas_limit = "5B8D80";  // 6M
   t.to = std::string(CONTRACT_ADDR + 2);
@@ -159,7 +212,7 @@ int main() {
   s = contract->call("claimSlot", t.sign_tx(PRIVATE_KEY));
   if (s.code == automaton::core::common::status::OK) {
     std::cout << "Claim slot result: " << s.msg << std::endl;
-    transaction_receipt = s.msg;
+    transaction_receipt = "0x" + s.msg;
   } else {
     std::cout << "Error (claimSlot) " << s << std::endl;
   }

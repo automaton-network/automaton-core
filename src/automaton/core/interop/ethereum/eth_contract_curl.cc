@@ -170,7 +170,12 @@ status eth_contract::handle_message() {
   json j;
   uint32_t result_call_id;
   std::stringstream ss(message);
-  ss >> j;
+  try {
+    ss >> j;
+  } catch (const std::exception& e) {
+    LOG(ERROR) << "Invalid JSON!\n" + e.what();
+    return status::internal("Invalid JSON!\n" + e.what());
+  }
   message = "";
 
   if (j.find("id") != j.end() && j["id"].is_number()) {
