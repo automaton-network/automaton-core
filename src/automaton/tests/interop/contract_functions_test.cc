@@ -50,14 +50,11 @@ int main() {
   }
 
   status s = status::ok();
-  std::string decoded, bin;
 
   s = contract->call("getOwners", "[0,16]");
   if (s.code == automaton::core::common::status::OK) {
     std::vector<uint32_t> res;
-    bin = hex2bin(s.msg);
-    decoded = decode("[\"address[]\"]", bin);
-    json j = json::parse(decoded);
+    json j = json::parse(s.msg);
     try {
       res = (*j.begin()).get<std::vector<uint32_t> >();
     } catch (const std::exception& e) {
@@ -73,9 +70,7 @@ int main() {
   s = contract->call("getDifficulties", "[15,5]");
   if (s.code == automaton::core::common::status::OK) {
     std::vector<uint32_t> res;
-    bin = hex2bin(s.msg);
-    decoded = decode("[\"uint256[]\"]", bin);
-    json j = json::parse(decoded);
+    json j = json::parse(s.msg);
     try {
       res = (*j.begin()).get<std::vector<uint32_t> >();
     } catch (const std::exception& e) {
@@ -91,9 +86,7 @@ int main() {
   s = contract->call("getLastClaimTimes", "[2,18]");
   if (s.code == automaton::core::common::status::OK) {
     std::vector<uint32_t> res;
-    bin = hex2bin(s.msg);
-    decoded = decode("[\"uint256[]\"]", bin);
-    json j = json::parse(decoded);
+    json j = json::parse(s.msg);
     try {
       res = (*j.begin()).get<std::vector<uint32_t> >();
     } catch (const std::exception& e) {

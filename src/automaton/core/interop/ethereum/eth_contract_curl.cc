@@ -55,7 +55,8 @@ void eth_contract::parse_abi(json json_abi) {
     bool is_transaction;
     if ((jobj.find("type") != jobj.end() && jobj["type"].get<std::string>() == "function") ||
         jobj.find("type") == jobj.end()) {  // default value for "type" is "function"
-      std::stringstream params;
+      std::stringstream inputs;
+      std::stringstream outputs;
       std::stringstream signature;
       if (jobj.find("name") != jobj.end()) {
         name = jobj["name"].get<std::string>();
@@ -68,18 +69,18 @@ void eth_contract::parse_abi(json json_abi) {
       } else {
         LOG(FATAL) << "Function doesn't have \"constant\" !";
       }
-      params << '[';
+      inputs << '[';
       if (jobj.find("inputs") != jobj.end()) {
-        std::vector<json> inputs = jobj["inputs"].get<std::vector<json> >();
-        for (auto i = 0; i < inputs.size(); ++i) {
-          auto& inp = inputs[i];
+        std::vector<json> v_inputs = jobj["inputs"].get<std::vector<json> >();
+        for (auto i = 0; i < v_inputs.size(); ++i) {
+          auto& inp = v_inputs[i];
           if (inp.find("type") != inp.end()) {
             auto s = inp["type"].get<std::string>();
             signature << s;
-            params << '"' << s << '"';
-            if (i < inputs.size() - 1) {
+            inputs << '"' << s << '"';
+            if (i < v_inputs.size() - 1) {
               signature << ',';
-              params << ',';
+              inputs << ',';
             }
           } else {
             LOG(FATAL) << "Input doesn't have \"type\" !";
@@ -88,10 +89,29 @@ void eth_contract::parse_abi(json json_abi) {
       } else {
         LOG(FATAL) << "Function doesn't have \"inputs\" !";
       }
+      outputs << '[';
+      if (jobj.find("outputs") != jobj.end()) {
+        std::vector<json> v_outputs = jobj["outputs"].get<std::vector<json> >();
+        for (auto i = 0; i < v_outputs.size(); ++i) {
+          auto& out = v_outputs[i];
+          if (out.find("type") != out.end()) {
+            outputs << '"' << out["type"].get<std::string>() << '"';
+            if (i < v_outputs.size() - 1) {
+              outputs << ',';
+            }
+          } else {
+            LOG(FATAL) << "Output doesn't have \"type\" !";
+          }
+        }
+      } else {
+        LOG(FATAL) << "Function doesn't have \"outputs\" !";
+      }
+      inputs << ']';
       signature << ')';
-      params << ']';
+      outputs << ']';
       signatures[name] = std::make_pair("0x" + (bin2hex(hash(signature.str()))).substr(0, 8), is_transaction);
-      param_lists[name] = params.str();
+      function_inputs[name] = inputs.str();
+      function_outputs[name] = outputs.str();
     }
   }
 }
@@ -140,11 +160,14 @@ status eth_contract::call(const std::string& fname, const std::string& params) {
   std::stringstream data;
   std::string string_data;
   if (!is_transaction) {
-    auto p_it = param_lists.find(fname);
-    if (p_it == param_lists.end()) {
-      return status::invalid_argument("Function signature is not found in param_lists!");
+    auto p_it = function_inputs.find(fname);
+    if (p_it == function_inputs.end()) {
+      return status::invalid_argument("Function signature is not found in function_inputs!");
     }
-    std::string encoded_params = encode(p_it->second, params);
+    std::string encoded_params = "";
+    if (p_it->second != "[]") {
+      encoded_params = encode(p_it->second, params);
+    }
     data << "{\"jsonrpc\":\"2.0\",\"method\":\"eth_call\",\"params\":[{ \"to\":\"" << address <<
         "\",\"data\":\"" << it->second.first << bin2hex(encoded_params) <<
         "\",\"gas\":\"" << GAS_LIMIT << "\"},\"latest\"" << "],\"id\":" << call_id << "}";
@@ -169,7 +192,7 @@ status eth_contract::call(const std::string& fname, const std::string& params) {
       }
       return status::internal("CURL error");
     } else {
-      return handle_message();
+      return handle_message(fname);
     }
   } else {
     LOG(ERROR) << "No curl!";
@@ -177,7 +200,7 @@ status eth_contract::call(const std::string& fname, const std::string& params) {
   }
 }
 
-status eth_contract::handle_message() {
+status eth_contract::handle_message(const std::string& fname) {
   json j;
   uint32_t result_call_id;
   std::stringstream ss(message);
@@ -211,7 +234,16 @@ status eth_contract::handle_message() {
   } else if (j.find("result") != j.end()) {
     if (j["result"].is_string()) {
       std::string result = j["result"].get<std::string>();
-      return status::ok(result.substr(2));
+      std::string bin = hex2bin(result.substr(2));
+      auto p_it = function_outputs.find(fname);
+      if (p_it == function_outputs.end()) {
+        return status::invalid_argument("Function signature is not found in function_outputs!");
+      }
+      if (p_it->second != "[]") {
+        std::string decoded = decode(p_it->second, bin);
+        return status::ok(decoded);
+      }
+      return status::ok("");
     }
     return status::ok(j["result"].dump());
   }

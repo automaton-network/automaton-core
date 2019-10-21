@@ -71,7 +71,8 @@ class eth_contract: public std::enable_shared_from_this<eth_contract> {
   std::string address;  // ETH address of the contract
   nlohmann::json abi;
   std::unordered_map<std::string, std::pair<std::string, bool> > signatures;  // function signatures
-  std::unordered_map<std::string, std::string> param_lists;  // function parameter list
+  std::unordered_map<std::string, std::string> function_inputs;
+  std::unordered_map<std::string, std::string> function_outputs;
   struct curl_slist *list = NULL;
 
   CURL *curl;
@@ -83,7 +84,7 @@ class eth_contract: public std::enable_shared_from_this<eth_contract> {
   static size_t curl_callback(void *contents, size_t size, size_t nmemb, std::string *s);
 
   void parse_abi(nlohmann::json json_abi);
-  common::status handle_message();
+  common::status handle_message(const std::string& f);
 };
 
 }  // namespace ethereum
