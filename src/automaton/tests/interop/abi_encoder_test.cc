@@ -19,6 +19,7 @@ using automaton::core::interop::ethereum::fixed_size_bytes;
 using automaton::core::interop::ethereum::fixed_size_array;
 using automaton::core::interop::ethereum::dynamic_size_bytes;
 using automaton::core::interop::ethereum::dynamic_size_array;
+using automaton::core::interop::ethereum::string;
 using automaton::core::io::bin2hex;
 using automaton::core::io::hex2bin;
 using automaton::core::io::hex2dec;
@@ -45,11 +46,11 @@ int main() {
   EXPECT_EQ(t.array_len, 0);
   t = get_type("string");
   EXPECT_EQ(t.str, "string");
-  EXPECT_EQ(t.s_type, dynamic_size_bytes);
+  EXPECT_EQ(t.s_type, string);
   EXPECT_EQ(t.array_len, 0);
   t = get_type("string[5][]");
   EXPECT_EQ(t.str, "string[5][]");
-  EXPECT_EQ(t.s_type, dynamic_size_bytes | fixed_size_array);
+  EXPECT_EQ(t.s_type, string | fixed_size_array);
   EXPECT_EQ(t.array_len, 5);
 
   t = extract_array_type("uint256[][]");
@@ -59,7 +60,7 @@ int main() {
 
   t = extract_array_type("string[5][]");
   EXPECT_EQ(t.str, "string[]");
-  EXPECT_EQ(t.s_type, dynamic_size_bytes | dynamic_size_array);
+  EXPECT_EQ(t.s_type, string | dynamic_size_array);
   EXPECT_EQ(t.array_len, 0);
 
   t = extract_array_type("int[][5]");
@@ -89,86 +90,85 @@ int main() {
   EXPECT_EQ(decoded, parameters);
 
   signatures = "[\"uint\"]";
-  parameters = "[\"02\"]";
+  parameters = "[2]";
   encoded = encode(signatures, parameters);
   decoded = decode(signatures, encoded);
   EXPECT_EQ(decoded, parameters);
 
   signatures = "[\"uint[][]\",\"string[]\"]";
-  parameters = "[[[\"01\",\"02\"],[\"03\"]],[\"" + bin2hex("one") + "\",\"" + bin2hex("two") + "\",\""
-      + bin2hex("three") + "\"]]";
+  parameters = "[[[1,2],[3]],[\"one\",\"two\",\"three\"]]";
   encoded = encode(signatures, parameters);
   decoded = decode(signatures, encoded);
   EXPECT_EQ(decoded, parameters);
 
   signatures = "[\"uint[]\",\"string\"]";
-  parameters = "[[\"01\",\"02\"],\"616161\"]";
+  parameters = "[[1,2],\"aaa\"]";
   encoded = encode(signatures, parameters);
   decoded = decode(signatures, encoded);
   EXPECT_EQ(decoded, parameters);
 
   signatures = "[\"uint\",\"string[2]\"]";
-  parameters = "[\"01\",[\"616161\",\"656565\"]]";
+  parameters = "[15,[\"aaa\",\"eee\"]]";
   encoded = encode(signatures, parameters);
   decoded = decode(signatures, encoded);
   EXPECT_EQ(decoded, parameters);
 
   signatures = "[\"string[2]\"]";
-  parameters = "[[\"616161\",\"656565\"]]";
+  parameters = "[[\"aaa\",\"eee\"]]";
   encoded = encode(signatures, parameters);
   decoded = decode(signatures, encoded);
   EXPECT_EQ(decoded, parameters);
 
   signatures = "[\"string[][2]\"]";
-  parameters = "[[[\"616161\",\"656565\"],[\"707070\",\"717171\"]]]";
+  parameters = "[[[\"aaa\",\"eee\"],[\"ppp\",\"ooo\"]]]";
   encoded = encode(signatures, parameters);
   decoded = decode(signatures, encoded);
   EXPECT_EQ(decoded, parameters);
 
   signatures = "[\"string[][2]\",\"uint8[][]\"]";
-  parameters = "[[[\"616161\",\"656565\"],[\"707070\",\"717171\"]],[[\"07\",\"08\"],[\"05\"]]]";
+  parameters = "[[[\"aaa\",\"eee\"],[\"ooo\",\"ppp\"]],[[7,8],[5]]]";
   encoded = encode(signatures, parameters);
   decoded = decode(signatures, encoded);
   EXPECT_EQ(decoded, parameters);
 
   signatures = "[\"string[2][2]\"]";
-  parameters = "[[[\"616161\",\"656565\"],[\"707070\",\"717171\"]]]";
+  parameters = "[[[\"aaa\",\"eee\"],[\"ooo\",\"ppp\"]]]";
   encoded = encode(signatures, parameters);
   decoded = decode(signatures, encoded);
   EXPECT_EQ(decoded, parameters);
 
   signatures = "[\"string[][2][]\"]";
-  parameters = "[[[[\"616161\"],[\"656565\"]],[[\"707070\"],[\"717171\",\"737373\"]]]]";
+  parameters = "[[[[\"aaa\"],[\"eee\"]],[[\"ooo\"],[\"ppp\",\"ooo\"]]]]";
   encoded = encode(signatures, parameters);
   decoded = decode(signatures, encoded);
   EXPECT_EQ(decoded, parameters);
 
   signatures = "[\"uint256[2]\"]";
-  parameters = "[[\"01\",\"02\"]]";
+  parameters = "[[1,2]]";
   encoded = encode(signatures, parameters);
   decoded = decode(signatures, encoded);
   EXPECT_EQ(decoded, parameters);
 
   signatures = "[\"uint256[2][3]\"]";
-  parameters = "[[[\"01\",\"02\",\"03\"],[\"05\",\"06\",\"07\"]]]";
+  parameters = "[[[1,2,3],[5,6,7]]]";
   encoded = encode(signatures, parameters);
   decoded = decode(signatures, encoded);
   EXPECT_EQ(decoded, parameters);
 
   signatures = "[\"uint256[2][3]\", \"string[][2][]\"]";
-  parameters = "[[[\"01\",\"02\",\"03\"],[\"05\",\"06\",\"07\"]],[[[\"616161\"],[\"656565\"]],[[\"707070\"],[\"717171\",\"737373\"]]]]";  // NOLINT
+  parameters = "[[[1,2,3],[5,6,7]],[[[\"aaa\"],[\"eee\"]],[[\"ooo\"],[\"ppp\",\"ooo\"]]]]";  // NOLINT
   encoded = encode(signatures, parameters);
   decoded = decode(signatures, encoded);
   EXPECT_EQ(decoded, parameters);
 
   signatures = "[\"string[][2][]\", \"uint256[2][3]\"]";
-  parameters = "[[[[\"616161\"],[\"656565\"]],[[\"707070\"],[\"717171\",\"737373\"]]],[[\"01\",\"02\",\"03\"],[\"05\",\"06\",\"07\"]]]";  // NOLINT
+  parameters = "[[[[\"aaa\"],[\"eee\"]],[[\"ooo\"],[\"ppp\",\"rrr\"]]],[[1,2,3],[5,6,7]]]";  // NOLINT
   encoded = encode(signatures, parameters);
   decoded = decode(signatures, encoded);
   EXPECT_EQ(decoded, parameters);
 
   signatures = "[\"uint256[2][3]\", \"string[][2][2]\"]";
-  parameters = "[[[\"01\",\"02\",\"03\"],[\"05\",\"06\",\"07\"]],[[[\"616161\",\"656565\"],[\"717171\",\"737373\"]]]]";  // NOLINT
+  parameters = "[[[1,2,3],[5,6,7]],[[[\"aaa\",\"eee\"],[\"ppp\",\"rrr\"]]]]";  // NOLINT
   encoded = encode(signatures, parameters);
   decoded = decode(signatures, encoded);
   EXPECT_EQ(decoded, parameters);

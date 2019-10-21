@@ -271,3 +271,13 @@ add_test(
   COMMAND encoder_test
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
+
+add_executable(
+  contract_functions_test
+  automaton/tests/interop/contract_functions_test.cc
+)
+
+target_link_libraries(
+  contract_functions_test
+  automaton-core
+)

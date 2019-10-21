@@ -6,6 +6,7 @@
 
 #include "automaton/core/crypto/cryptopp/Keccak_256_cryptopp.h"
 #include "automaton/core/interop/ethereum/eth_transaction.h"
+#include "automaton/core/interop/ethereum/eth_helper_functions.h"
 #include "automaton/core/io/io.h"
 
 using automaton::core::crypto::cryptopp::Keccak_256_cryptopp;
@@ -47,15 +48,15 @@ std::shared_ptr<eth_contract> eth_contract::get_contract(const std::string& addr
   return it->second;
 }
 
-std::unordered_map<std::string, std::pair<std::string, bool> > eth_contract::parse_abi(json json_abi) {
-  std::unordered_map<std::string, std::pair<std::string, bool> > functions;
+void eth_contract::parse_abi(json json_abi) {
   for (json::iterator it = json_abi.begin(); it != json_abi.end(); ++it) {
     json jobj = it.value();
     std::string name;
-    std::stringstream signature;
     bool is_transaction;
     if ((jobj.find("type") != jobj.end() && jobj["type"].get<std::string>() == "function") ||
         jobj.find("type") == jobj.end()) {  // default value for "type" is "function"
+      std::stringstream params;
+      std::stringstream signature;
       if (jobj.find("name") != jobj.end()) {
         name = jobj["name"].get<std::string>();
         signature << name << '(';
@@ -67,14 +68,18 @@ std::unordered_map<std::string, std::pair<std::string, bool> > eth_contract::par
       } else {
         LOG(FATAL) << "Function doesn't have \"constant\" !";
       }
+      params << '[';
       if (jobj.find("inputs") != jobj.end()) {
         std::vector<json> inputs = jobj["inputs"].get<std::vector<json> >();
         for (auto i = 0; i < inputs.size(); ++i) {
           auto& inp = inputs[i];
           if (inp.find("type") != inp.end()) {
-            signature << inp["type"].get<std::string>();
+            auto s = inp["type"].get<std::string>();
+            signature << s;
+            params << '"' << s << '"';
             if (i < inputs.size() - 1) {
-              signature << ",";
+              signature << ',';
+              params << ',';
             }
           } else {
             LOG(FATAL) << "Input doesn't have \"type\" !";
@@ -84,10 +89,11 @@ std::unordered_map<std::string, std::pair<std::string, bool> > eth_contract::par
         LOG(FATAL) << "Function doesn't have \"inputs\" !";
       }
       signature << ')';
-      functions[name] = std::make_pair(signature.str(), is_transaction);
+      params << ']';
+      signatures[name] = std::make_pair("0x" + (bin2hex(hash(signature.str()))).substr(0, 8), is_transaction);
+      param_lists[name] = params.str();
     }
   }
-  return functions;
 }
 
 eth_contract::eth_contract(const std::string& server, const std::string& address,
@@ -100,10 +106,7 @@ eth_contract::eth_contract(const std::string& server, const std::string& address
     LOG(FATAL) << "Invalid json! " << e.what();
   }
   abi = j;
-  auto functions = parse_abi(abi);
-  for (auto it = functions.begin(); it != functions.end(); ++it) {
-    signatures[it->first] = std::make_pair("0x" + (bin2hex(hash(it->second.first))).substr(0, 8), it->second.second);
-  }
+  parse_abi(abi);
   curl = curl_easy_init();
   if (curl) {
     list = curl_slist_append(list, "Content-Type: application/json");
@@ -137,8 +140,13 @@ status eth_contract::call(const std::string& fname, const std::string& params) {
   std::stringstream data;
   std::string string_data;
   if (!is_transaction) {
+    auto p_it = param_lists.find(fname);
+    if (p_it == param_lists.end()) {
+      return status::invalid_argument("Function signature is not found in param_lists!");
+    }
+    std::string encoded_params = encode(p_it->second, params);
     data << "{\"jsonrpc\":\"2.0\",\"method\":\"eth_call\",\"params\":[{ \"to\":\"" << address <<
-        "\",\"data\":\"" << it->second.first << params <<
+        "\",\"data\":\"" << it->second.first << bin2hex(encoded_params) <<
         "\",\"gas\":\"" << GAS_LIMIT << "\"},\"latest\"" << "],\"id\":" << call_id << "}";
   } else {
     data << "{\"jsonrpc\":\"2.0\",\"method\":\"eth_sendRawTransaction\",\"params\":[\"0x" <<
