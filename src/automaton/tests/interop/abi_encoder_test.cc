@@ -83,7 +83,7 @@ int main() {
 
   std::string encoded, decoded, signatures, parameters;
 
-  signatures = "[\"bytes32\"]";
+  signatures = "[\"bytes\"]";
   parameters = "[\"A30B12\"]";
   encoded = encode(signatures, parameters);
   decoded = decode(signatures, encoded);
