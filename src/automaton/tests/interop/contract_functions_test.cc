@@ -9,12 +9,9 @@
 
 using json = nlohmann::json;
 
-using automaton::core::io::dec2hex;
+using namespace automaton::core::interop::ethereum;  // NOLINT
 
 static const char* JSON_FILE = "../contracts/koh/build/contracts/KingAutomaton.json";
-// Infura
-// static const char* URL = "https://kovan.infura.io/v3/7119e5ddd0464f82a44feb2b2e7b6c41";
-// static const char* CONTRACT_ADDR = "0x0c922889801b2753AaCd5887B5Ef7e40B9f17C11";
 // Ganache
 static const char* URL = "127.0.0.1:7545";
 static const char* CONTRACT_ADDR = "0x22D9d6faB361FaA969D2EfDE420472633cBB7B11";
@@ -53,15 +50,15 @@ int main() {
 
   s = contract->call("getOwners", "[0,16]");
   if (s.code == automaton::core::common::status::OK) {
-    std::vector<uint32_t> res;
+    std::vector<std::string> res;
     json j = json::parse(s.msg);
     try {
-      res = (*j.begin()).get<std::vector<uint32_t> >();
+      res = (*j.begin()).get<std::vector<std::string> >();
     } catch (const std::exception& e) {
       std::cout << "JSON Error! " << e.what() << std::endl;
     }
     for (uint32_t i = 0; i < res.size(); ++i) {
-      std::cout << "owner " << i << ": " << dec2hex(res[i]) << std::endl;
+      std::cout << "owner " << i << ": " << res[i] << std::endl;
     }
   } else {
     std::cout << "Error (getOwners()) " << s << std::endl;
@@ -69,10 +66,10 @@ int main() {
 
   s = contract->call("getDifficulties", "[15,5]");
   if (s.code == automaton::core::common::status::OK) {
-    std::vector<uint32_t> res;
+    std::vector<std::string> res;
     json j = json::parse(s.msg);
     try {
-      res = (*j.begin()).get<std::vector<uint32_t> >();
+      res = (*j.begin()).get<std::vector<std::string> >();
     } catch (const std::exception& e) {
       std::cout << "JSON Error! " << e.what() << std::endl;
     }
@@ -85,10 +82,10 @@ int main() {
 
   s = contract->call("getLastClaimTimes", "[2,18]");
   if (s.code == automaton::core::common::status::OK) {
-    std::vector<uint32_t> res;
+    std::vector<std::string> res;
     json j = json::parse(s.msg);
     try {
-      res = (*j.begin()).get<std::vector<uint32_t> >();
+      res = (*j.begin()).get<std::vector<std::string> >();
     } catch (const std::exception& e) {
       std::cout << "JSON Error! " << e.what() << std::endl;
     }

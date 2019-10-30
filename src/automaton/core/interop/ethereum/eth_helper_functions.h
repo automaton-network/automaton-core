@@ -8,6 +8,7 @@
 #include <utility>
 #include <vector>
 
+#include "integer.h"  // NOLINT
 #include "gtest/gtest.h"
 #include <curl/curl.h>  // NOLINT
 #include <json.hpp>  // NOLINT
@@ -135,14 +136,14 @@ static status eth_getTransactionReceipt(const std::string& url, const std::strin
 
 // Argument encoding and decoding
 
-// TODO(kari): Add support for numbers bigger than 64 bits and for fixed-point numbers.
+// TODO(kari): 1) Add support for fixed-point numbers. 2) Show address as string in hex?
 
 static const uint32_t BUFFER_SIZE = 2048;
 
 enum abi_type {
   empty = 0,
-  numerical = 1,  // bool, int<>, uint<>, fixed, unfixed, fixed<M>x<N>, ufixed<M>x<N>, address(uint160)
-  fixed_size_bytes = 2,  // bytes<>, function(bytes24)
+  numerical = 1,  // bool, int<>, uint<>, fixed, ufixed, fixed<M>x<N>, ufixed<M>x<N>
+  fixed_size_bytes = 2,  // bytes<>, function(bytes24), address(uint160)
   dynamic_size_bytes = 4,  // bytes
   string = 8,  // string
   fixed_size_array = 16,  // uint256[3], bytes[7]
@@ -197,7 +198,7 @@ static type get_type(std::string s) {
     s = s.substr(0, k1);
   }
 
-  if (s == "function" || (s.find("bytes") == 0  && s.size() > 5)) {
+  if (s == "function" || (s.find("bytes") == 0 && s.size() > 5) || s == "address") {
     t.s_type = (abi_type)(t.s_type | fixed_size_bytes);
   } else if (s == "bytes") {
     t.s_type = (abi_type)(t.s_type | dynamic_size_bytes);
@@ -217,7 +218,7 @@ static type extract_array_type(std::string s) {
     s.erase(k1, k2 - k1 + 1);
     new_t = get_type(s);
   } else {
-    LOG(ERROR) << "Not an array!: " << s;
+    LOG(ERROR) << "Array expected!: " << s;
   }
   return new_t;
 }
@@ -251,16 +252,6 @@ static std::string encode_string(const std::string& byte_array) {
   return ss.str();
 }
 
-static std::string bin_to_32(const std::string& s) {
-  if (s.size() > 32) {
-    LOG(ERROR) << "String size > 32!" << s;
-    return s.substr(0, 32);
-  }
-  std::stringstream ss;
-  ss << std::string(32 - s.size(), '\0') << s;
-  return ss.str();
-}
-
 static std::string uint_to_32(uint64_t n) {
   char bytes[8];
   bytes[7] = (n) & 0xFF;
@@ -275,36 +266,21 @@ static std::string uint_to_32(uint64_t n) {
   return std::string(24, '\0') + std::string(bytes, 8);
 }
 
-static std::string int_to_32(int64_t n) {
-  char bytes[8];
-  bytes[7] = (n) & 0xFF;
-  bytes[6] = (n >> 8) & 0xFF;
-  bytes[5] = (n >> 16) & 0xFF;
-  bytes[4] = (n >> 24) & 0xFF;
-  bytes[3] = (n >> 32) & 0xFF;
-  bytes[2] = (n >> 40) & 0xFF;
-  bytes[1] = (n >> 48) & 0xFF;
-  bytes[0] = (n >> 56) & 0xFF;
-
-  return std::string(24, '\0') + std::string(bytes, 8);
+static std::string int_to_32(const std::string& sig, const std::string& s) {
+  CryptoPP::Integer::Signedness sign = sig[0] == 'u' ? CryptoPP::Integer::UNSIGNED : CryptoPP::Integer::SIGNED;
+  CryptoPP::Integer i(s.c_str());
+  uint8_t bytes[32] = {0};
+  i.Encode(bytes, 32, sign);
+  return std::string(reinterpret_cast<const char*>(bytes), 32);
 }
 
-static std::string double_to_32(double d) {
-  LOG(ERROR) << "Unsuported data type double!";
-  return "";
-}
-
-static std::string _32_to_bin(const std::string& s) {
-  if (s.size() != 32) {
-    LOG(ERROR) << "Invalid argument format!" << s;
-    return "";
-  }
-  uint32_t pos = 0;
-  while (pos < 32 && s[pos] == '\0') ++pos;
-  if (pos == 32) {
-    return "";
-  }
-  return s.substr(pos);
+static std::string _32_to_int(const std::string& sig, const std::string& s) {
+  CryptoPP::Integer::Signedness sign = sig[0] == 'u' ? CryptoPP::Integer::UNSIGNED : CryptoPP::Integer::SIGNED;
+  CryptoPP::Integer i(reinterpret_cast<const uint8_t*>(s.c_str()), 32, sign);
+  std::stringstream ss;
+  ss << i;
+  std::string res = ss.str();
+  return res.substr(0, res.size() - 1);  // remove suffix
 }
 
 static uint64_t _32_to_uint(const std::string& s) {
@@ -318,24 +294,6 @@ static uint64_t _32_to_uint(const std::string& s) {
     n |= (k << ((7 - i) * 8));
   }
   return n;
-}
-
-static int64_t _32_to_int(const std::string& s) {
-  if (s.size() != 32) {
-    LOG(ERROR) << "Invalid argument format!" << s;
-    return 0;
-  }
-  int64_t n = 0;
-  for (auto i = 0; i < 8; i++) {
-    int64_t k = *reinterpret_cast<const uint8_t*>(&s[24 + i]);
-    n |= (k << ((7 - i) * 8));
-  }
-  return n;
-}
-
-static double _32_to_double(const std::string& sig, const std::string& s) {
-  LOG(ERROR) << "Unsuported data type double!";
-  return 0.;
 }
 
 static void check_and_resize_buffer(char** buffer, uint64_t* size, uint64_t pos, uint64_t data_size) {
@@ -356,7 +314,7 @@ static void encode_param(type t, const json& json_data, char** buffer, uint64_t*
     uint64_t* head_pos, uint64_t* tail_pos) {
   if (t.s_type & fixed_size_array) {
     if (!json_data.is_array() || json_data.size() != t.array_len) {
-      LOG(ERROR) << "Invalid argument!";
+      LOG(ERROR) << "Invalid argument! Expected array with length " << t.array_len << ", got " << json_data;
       return;
     }
     type tp = extract_array_type(t.str);
@@ -383,7 +341,7 @@ static void encode_param(type t, const json& json_data, char** buffer, uint64_t*
     }
   } else if (t.s_type & dynamic_size_array) {
     if (!json_data.is_array()) {
-      LOG(ERROR) << "Invalid argument!";
+      LOG(ERROR) << "Invalid argument! Expected array, got " << json_data;
       return;
     }
     std::string encoded = uint_to_32(json_data.size());
@@ -439,12 +397,25 @@ static void encode_param(type t, const json& json_data, char** buffer, uint64_t*
     *tail_pos += encoded.size();
   } else if (t.s_type == fixed_size_bytes) {
     if (!json_data.is_string()) {
-      LOG(ERROR) << "Invalid argument!";
+      LOG(ERROR) << "Invalid argument! Expected string, got " << json_data;
       return;
     }
     std::string data = json_data.get<std::string>();
     std::string bin_data = hex2bin(data);
-    std::string encoded = bin_to_32(bin_data);
+    if (bin_data.size() > 32) {
+      LOG(ERROR) << "Invalid argument! Size > 32 bytes! " << data;
+      return;
+    }
+    std::string encoded;
+    if (t.str == "address") {
+      if (bin_data.size() != 20) {
+        LOG(ERROR) << "Invalid argument! Address size != 20 bytes! " << data;
+        return;
+      }
+      encoded = std::string(12, '\0') + bin_data;
+    } else {
+      encoded = bin_data + std::string(32 - bin_data.size(), '\0');
+    }
     check_and_resize_buffer(buffer, buf_size, *head_pos, 32);
     memcpy(*buffer + *head_pos, encoded.c_str(), 32);
     *head_pos += 32;
@@ -452,34 +423,24 @@ static void encode_param(type t, const json& json_data, char** buffer, uint64_t*
     std::string encoded;
     if (t.str == "bool") {
       if (!json_data.is_boolean()) {
-        LOG(ERROR) << "Invalid argument!";
+        LOG(ERROR) << "Invalid argument! Expected boolean, got " << json_data;
         return;
       }
-      bool is_one = json_data.get<bool>();
-      encoded = uint_to_32(is_one ? 1 : 0);
-    } else if (t.str.find("uint") >= 0) {
-      if (!json_data.is_number()) {
-        LOG(ERROR) << "Invalid argument!";
-        return;
-      }
-      uint64_t n = json_data.get<uint64_t>();
-      encoded = uint_to_32(n);
+      encoded = uint_to_32(json_data.get<bool>() ? 1 : 0);
     } else if (t.str.find("int") >= 0) {
-      if (!json_data.is_number()) {
-        LOG(ERROR) << "Invalid argument!";
+      std::string s;
+      if (json_data.is_number()) {
+        s = std::to_string(json_data.get<uint64_t>());
+      } else if (json_data.is_string()) {
+        s = json_data.get<std::string>();
+      } else {
+        LOG(ERROR) << "Invalid argument! Expected number or string, got " << json_data;
         return;
       }
-      int64_t n = json_data.get<int64_t>();
-      encoded = int_to_32(n);
+      encoded = int_to_32(t.str, s);
     } else if (t.str.find("fixed") >= 0) {
       LOG(ERROR) << "Unsuported data type double!";
       return;
-      // if (!json_data.is_number()) {
-      //   LOG(ERROR) << "Invalid argument!";
-      //   return;
-      // }
-      // double n = json_data.get<double>();
-      // encoded = double_to_32(n);
     }
     check_and_resize_buffer(buffer, buf_size, *head_pos, 32);
     memcpy(*buffer + *head_pos, encoded.c_str(), 32);
@@ -600,7 +561,6 @@ static std::string decode_param(type t, const std::string& data, uint64_t pos) {
     } else {
       LOG(ERROR) << "Invalid type!";
       return "";
-      // ERROR
     }
     ss << ']';
     return ss.str();
@@ -618,27 +578,28 @@ static std::string decode_param(type t, const std::string& data, uint64_t pos) {
     if (t.str == "bool") {
       uint64_t k = _32_to_uint(res);
       return k > 0 ? "true" : "false";
-    } else if (t.str.find("uint") >= 0) {
-      return std::to_string(_32_to_uint(res));
     } else if (t.str.find("int") >= 0) {
-      return std::to_string(_32_to_int(res));
+      return '"' + _32_to_int(t.str, res) + '"';
     } else if (t.str.find("fixed") >= 0) {
       LOG(ERROR) << "Unsuported data type double!";
-      return "";
-      // return std::to_string(_32_to_double(t.str, res));
+      return "\"\"";
     }
     return "";
   } else if (t.s_type == fixed_size_bytes) {
+    if (t.str == "address") {
+      std::string res = data.substr(pos, 32);
+      return '"' + bin2hex(res.substr(12, 20)) + '"';
+    }
     std::regex rgx_sim("bytes(\\d+)");
     std::smatch match;
     const std::string sig = t.str;
     uint32_t k = 32;
     if (t.str == "function") {
-      k = 20;
+      k = 24;
     } else if (std::regex_match(sig.begin(), sig.end(), match, rgx_sim) && match.size() == 2) {
       k = std::stoul(match[1]);
     }
-    std::string res = data.substr(pos + 32 - k, k);
+    std::string res = data.substr(pos, k);
     return '"' + bin2hex(res) + '"';
   } else {
     LOG(ERROR) << "Undefined type: " << t.s_type;

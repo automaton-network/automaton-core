@@ -177,7 +177,8 @@ status eth_contract::call(const std::string& fname, const std::string& params) {
   }
 
   string_data = data.str();
-  LOG(INFO) << "\n======= REQUEST =======\n" << string_data << "\n=====================";
+  LOG(INFO) << "\n======= REQUEST =======\n" << fname << ", " << params << '\n' <<
+      string_data << "\n=====================";
 
   if (curl) {
     /* set the error buffer as empty before performing a request */
