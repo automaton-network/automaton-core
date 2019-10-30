@@ -23,10 +23,10 @@ set(LOCAL_THIRD_PARTY_LIBS
   ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/boost/stage/lib/libboost_filesystem.a
   ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/boost/stage/lib/libboost_iostreams.a
   ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/boost/stage/lib/libboost_system.a
+  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/curl/lib/.libs/libcurl.a
   ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/openssl/libssl.a
   ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/openssl/libcrypto.a
   ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/cryptopp/libcryptopp.a
-  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/curl/lib/.libs/libcurl.a
   ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/g3log/build/libg3logger.a
   ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/gmp/.libs/libgmp.a
   ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/lua/liblua.a
@@ -108,8 +108,6 @@ target_link_libraries(
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
   target_link_libraries(
     automaton-core
-    ssl
-    crypto
   )
 endif()
 

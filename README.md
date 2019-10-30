@@ -35,8 +35,16 @@ Telegram: https://t.me/automaton_network
 
 ### Prerequisites
 
+```
+sudo apt-get install build-essential git curl cmake autotools-dev autoconf autogen automake libtool
+```
+
 * Git
-* Bazel
+* curl
+* CMake
+* g++
+* autotools
+* libtool
 
 ### External Third Party Libraries
 
