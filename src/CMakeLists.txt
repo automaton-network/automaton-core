@@ -258,3 +258,24 @@ target_link_libraries(
   eth_contract_curl_test
   automaton-core
 )
+
+add_executable(
+  encoder_test
+  automaton/tests/interop/abi_encoder_test.cc
+)
+target_link_libraries(encoder_test automaton-core ${GTEST_LIBS})
+add_test(
+  NAME encoder_test
+  COMMAND encoder_test
+  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+add_executable(
+  contract_functions_test
+  automaton/tests/interop/contract_functions_test.cc
+)
+
+target_link_libraries(
+  contract_functions_test
+  automaton-core
+)
