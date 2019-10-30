@@ -136,7 +136,13 @@ static status eth_getTransactionReceipt(const std::string& url, const std::strin
 
 // Argument encoding and decoding
 
-// TODO(kari): 1) Add support for fixed-point numbers. 2) Show address as string in hex?
+/* TODO(kari):
+  	* Replace type bitmask with variables
+  	* Type structure is messy and confusing - clean it up
+  	* Use switch after replacing the bitmask
+  	* Move convertion functions to the io module
+    * Add support for fixed-point numbers
+*/
 
 static const uint32_t BUFFER_SIZE = 2048;
 
@@ -252,7 +258,7 @@ static std::string encode_string(const std::string& byte_array) {
   return ss.str();
 }
 
-static std::string uint_to_32(uint64_t n) {
+static std::string u64_to_u256(uint64_t n) {
   char bytes[8];
   bytes[7] = (n) & 0xFF;
   bytes[6] = (n >> 8) & 0xFF;
@@ -266,16 +272,20 @@ static std::string uint_to_32(uint64_t n) {
   return std::string(24, '\0') + std::string(bytes, 8);
 }
 
-static std::string int_to_32(const std::string& sig, const std::string& s) {
-  CryptoPP::Integer::Signedness sign = sig[0] == 'u' ? CryptoPP::Integer::UNSIGNED : CryptoPP::Integer::SIGNED;
+static std::string dec_to_i256(bool is_signed, std::string s) {
+  CryptoPP::Integer::Signedness sign = is_signed ? CryptoPP::Integer::SIGNED : CryptoPP::Integer::UNSIGNED;
+  if (s.substr(0, 2) == "0x") {
+    s = "h" + s.substr(2);
+  }
   CryptoPP::Integer i(s.c_str());
   uint8_t bytes[32] = {0};
   i.Encode(bytes, 32, sign);
   return std::string(reinterpret_cast<const char*>(bytes), 32);
 }
 
-static std::string _32_to_int(const std::string& sig, const std::string& s) {
-  CryptoPP::Integer::Signedness sign = sig[0] == 'u' ? CryptoPP::Integer::UNSIGNED : CryptoPP::Integer::SIGNED;
+static std::string i256_to_dec(bool is_signed, const std::string& s) {
+  // TODO(kari): If the number is more than 64 bits, throw error or use only 64 bits of it.
+  CryptoPP::Integer::Signedness sign = is_signed ? CryptoPP::Integer::SIGNED : CryptoPP::Integer::UNSIGNED;
   CryptoPP::Integer i(reinterpret_cast<const uint8_t*>(s.c_str()), 32, sign);
   std::stringstream ss;
   ss << i;
@@ -283,7 +293,7 @@ static std::string _32_to_int(const std::string& sig, const std::string& s) {
   return res.substr(0, res.size() - 1);  // remove suffix
 }
 
-static uint64_t _32_to_uint(const std::string& s) {
+static uint64_t u256_to_u64(const std::string& s) {
   if (s.size() != 32) {
     LOG(ERROR) << "Invalid argument format!" << s;
     return 0;
@@ -323,7 +333,7 @@ static void encode_param(type t, const json& json_data, char** buffer, uint64_t*
     if (tp.s_type == dynamic_size_bytes || tp.s_type == string || tp.s_type & dynamic_size_array) {
       std::string encoded;
       for (auto it = json_data.begin(); it != json_data.end(); ++it) {
-        encoded = uint_to_32(tail_prim_pos - *head_pos);
+        encoded = u64_to_u256(tail_prim_pos - *head_pos);
         check_and_resize_buffer(buffer, buf_size, head_prim_pos, 32);
         memcpy(*buffer + head_prim_pos, encoded.c_str(), 32);
         head_prim_pos += 32;
@@ -344,7 +354,7 @@ static void encode_param(type t, const json& json_data, char** buffer, uint64_t*
       LOG(ERROR) << "Invalid argument! Expected array, got " << json_data;
       return;
     }
-    std::string encoded = uint_to_32(json_data.size());
+    std::string encoded = u64_to_u256(json_data.size());
     check_and_resize_buffer(buffer, buf_size, *tail_pos, 32);
     memcpy(*buffer + *tail_pos, encoded.c_str(), 32);
     *tail_pos += 32;
@@ -359,7 +369,7 @@ static void encode_param(type t, const json& json_data, char** buffer, uint64_t*
     } else if (tp.s_type == dynamic_size_bytes || tp.s_type == string || tp.s_type & dynamic_size_array) {
       tail_prim_pos += (32 * json_data.size());
       for (auto it = json_data.begin(); it != json_data.end(); ++it) {
-        encoded = uint_to_32(tail_prim_pos - *tail_pos);
+        encoded = u64_to_u256(tail_prim_pos - *tail_pos);
         check_and_resize_buffer(buffer, buf_size, head_prim_pos, 32);
         memcpy(*buffer + head_prim_pos, encoded.c_str(), 32);
         head_prim_pos += 32;
@@ -387,7 +397,7 @@ static void encode_param(type t, const json& json_data, char** buffer, uint64_t*
     } else {
       s = data;
     }
-    std::string encoded = uint_to_32(s.size());
+    std::string encoded = u64_to_u256(s.size());
     check_and_resize_buffer(buffer, buf_size, *tail_pos, 32);
     memcpy(*buffer + *tail_pos, encoded.c_str(), 32);
     *tail_pos += 32;
@@ -426,7 +436,7 @@ static void encode_param(type t, const json& json_data, char** buffer, uint64_t*
         LOG(ERROR) << "Invalid argument! Expected boolean, got " << json_data;
         return;
       }
-      encoded = uint_to_32(json_data.get<bool>() ? 1 : 0);
+      encoded = u64_to_u256(json_data.get<bool>() ? 1 : 0);
     } else if (t.str.find("int") >= 0) {
       std::string s;
       if (json_data.is_number()) {
@@ -437,7 +447,8 @@ static void encode_param(type t, const json& json_data, char** buffer, uint64_t*
         LOG(ERROR) << "Invalid argument! Expected number or string, got " << json_data;
         return;
       }
-      encoded = int_to_32(t.str, s);
+      bool is_signed = t.str[0] != 'u';
+      encoded = dec_to_i256(is_signed, s);
     } else if (t.str.find("fixed") >= 0) {
       LOG(ERROR) << "Unsuported data type double!";
       return;
@@ -487,7 +498,7 @@ static std::string encode(const std::string& signatures_json, const std::string&
     signature = signatures[s_i];
     type t = get_type(signature);
     if (t.s_type == dynamic_size_bytes || t.s_type == string || t.s_type & dynamic_size_array) {
-      std::string encoded = uint_to_32(tail_pos);
+      std::string encoded = u64_to_u256(tail_pos);
       check_and_resize_buffer(&buffer, &buf_size, tail_pos, 32);
       memcpy(buffer + head_pos, encoded.c_str(), 32);
       head_pos += 32;
@@ -515,11 +526,11 @@ static std::string decode_param(type t, const std::string& data, uint64_t pos) {
     } else if (tp.s_type & dynamic_size_array || tp.s_type == string || tp.s_type == dynamic_size_bytes) {
       for (int32_t i = 0; i < t.array_len - 1; ++i) {
         std::string s = data.substr(pos + (32 * i), 32);
-        uint64_t offset = _32_to_uint(s);
+        uint64_t offset = u256_to_u64(s);
         ss << decode_param(tp, data, pos + offset) << ",";
       }
       std::string s = data.substr(pos + (32 * (t.array_len - 1)), 32);
-      uint64_t offset = _32_to_uint(s);
+      uint64_t offset = u256_to_u64(s);
       ss << decode_param(tp, data, pos + offset);
     } else if (tp.s_type & fixed_size_array) {
       for (int32_t i = 0; i < t.array_len - 1; ++i) {
@@ -532,7 +543,7 @@ static std::string decode_param(type t, const std::string& data, uint64_t pos) {
     return ss.str();
   } else if (t.s_type & dynamic_size_array) {
     std::string s = data.substr(pos, 32);
-    int64_t len = _32_to_uint(s);
+    int64_t len = u256_to_u64(s);
     pos += 32;
     std::stringstream ss;
     ss << '[';
@@ -546,11 +557,11 @@ static std::string decode_param(type t, const std::string& data, uint64_t pos) {
     } else if (tp.s_type & dynamic_size_array || tp.s_type == string || tp.s_type == dynamic_size_bytes) {
       for (int32_t i = 0; i < len - 1; ++i) {
         std::string s = data.substr(pos + (32 * i), 32);
-        uint64_t offset = _32_to_uint(s);
+        uint64_t offset = u256_to_u64(s);
         ss << decode_param(tp, data, pos + offset) << ",";
       }
       std::string s = data.substr(pos + (32 * (len - 1)), 32);
-      uint64_t offset = _32_to_uint(s);
+      uint64_t offset = u256_to_u64(s);
       ss << decode_param(tp, data, pos + offset);
     } else if (tp.s_type & fixed_size_array) {
       for (int32_t i = 0; i < len - 1; ++i) {
@@ -566,7 +577,7 @@ static std::string decode_param(type t, const std::string& data, uint64_t pos) {
     return ss.str();
   } else if (t.s_type == dynamic_size_bytes || t.s_type == string) {
     std::string s = data.substr(pos, 32);
-    int64_t len = _32_to_uint(s);
+    int64_t len = u256_to_u64(s);
     pos += 32;
     std::string res = data.substr(pos, len);
     if (t.s_type == string) {
@@ -576,10 +587,11 @@ static std::string decode_param(type t, const std::string& data, uint64_t pos) {
   } else if (t.s_type == numerical) {
     std::string res = data.substr(pos, 32);
     if (t.str == "bool") {
-      uint64_t k = _32_to_uint(res);
+      uint64_t k = u256_to_u64(res);
       return k > 0 ? "true" : "false";
     } else if (t.str.find("int") >= 0) {
-      return '"' + _32_to_int(t.str, res) + '"';
+      bool is_signed = t.str[0] != 'u';
+      return '"' + i256_to_dec(is_signed, res) + '"';
     } else if (t.str.find("fixed") >= 0) {
       LOG(ERROR) << "Unsuported data type double!";
       return "\"\"";
@@ -626,7 +638,7 @@ static std::string decode(const std::string& signatures_json, const std::string&
     type t = get_type(signature);
     if (t.s_type == dynamic_size_bytes || t.s_type == string || t.s_type & dynamic_size_array) {
       std::string s = data.substr(pos, 32);
-      uint64_t offset = _32_to_uint(s);
+      uint64_t offset = u256_to_u64(s);
       ss << decode_param(t, data, offset);
     } else {
       ss << decode_param(t, data, pos);
