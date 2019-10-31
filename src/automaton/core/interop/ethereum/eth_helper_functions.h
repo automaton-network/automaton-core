@@ -150,29 +150,23 @@ enum abi_type {
   empty = 0,
   numerical = 1,  // bool, int<>, uint<>, fixed, ufixed, fixed<M>x<N>, ufixed<M>x<N>
   fixed_size_bytes = 2,  // bytes<>, function(bytes24), address(uint160)
-  dynamic_size_bytes = 4,  // bytes
-  string = 8,  // string
-  fixed_size_array = 16,  // uint256[3], bytes[7]
-  dynamic_size_array = 32  // bool[], bytes[], uint256[][]
+  dynamic_size_bytes = 3,  // bytes
+  string = 4,  // string
+};
+
+enum abi_array_type {
+  no_array = 0,
+  fixed = 1,
+  dynamic = 2
 };
 
 static std::ostream& operator<<(std::ostream& os, const abi_type& obj) {
-  os << (int)obj << ": ";  // NOLINT
-
-  if (obj & numerical) {
-    os << "numerical ";
-  }
-  if (obj & fixed_size_bytes) {
-    os << "fixed_size_bytes ";
-  }
-  if (obj & dynamic_size_bytes) {
-    os << "dynamic_size_bytes ";
-  }
-  if (obj & fixed_size_array) {
-    os << "fixed_size_array ";
-  }
-  if (obj & dynamic_size_array) {
-    os << "dynamic_size_array ";
+  switch (obj) {
+    case numerical: os << "numerical"; break;
+    case string: os << "string"; break;
+    case fixed_size_bytes: os << "fixed_size_bytes"; break;
+    case dynamic_size_bytes: os << "dynamic_size_bytes"; break;
+    default: os << "no type"; break;
   }
   return os;
 }
@@ -180,47 +174,84 @@ static std::ostream& operator<<(std::ostream& os, const abi_type& obj) {
 struct type {
   std::string str = "";
   abi_type s_type = empty;
+  abi_array_type s_array_type = no_array;
   uint32_t array_len = 0;
 };
 
 static std::ostream& operator<<(std::ostream& os, const type& obj) {
-  os << "TYPE{" << obj.str << ", " << obj.s_type << ", " << obj.array_len << "}";
+  os << "TYPE{" << obj.str << ", " << obj.s_type;
+  if (obj.s_array_type != no_array) {
+    if (obj.s_array_type == fixed) {
+      os << ", fixed array of size ";
+    } else {
+      os << ", dynamic array of size ";
+    }
+    os << obj.array_len;
+  }
+  os << "}";
+  return os;
 }
 
 static type get_type(std::string s) {
   type t;
   t.str = s;
+  t.s_array_type = no_array;
+  t.array_len = 0;
+
+  bool is_array = false;
   // Check if it is an array and its size if any
-  auto k1 = s.find('[');
-  if (k1 != std::string::npos) {
-    auto k2 = s.find(']');
-    if (k1 == (k2 - 1)) {
-      t.s_type = (abi_type)(t.s_type | dynamic_size_array);
-    } else {
-      t.s_type = (abi_type)(t.s_type | fixed_size_array);
+  int32_t k1 = 0, k2 = 0, pos, first_pos;
+  first_pos = pos = s.find('[');
+  while (pos != std::string::npos) {
+    k1 = pos;
+    pos = s.find('[', pos + 1);
+  }
+  if (k1 != 0) {
+    k2 = s.find(']', k1 + 1);
+  }
+  if (k1 && k2) {
+    is_array = true;
+    if (k1 < (k2 - 1)) {
       std::string len_str = s.substr(k1 + 1, k2 - k1 - 1);
       t.array_len = stoi(len_str);
     }
-    s = s.substr(0, k1);
   }
 
-  if (s == "function" || (s.find("bytes") == 0 && s.size() > 5) || s == "address") {
-    t.s_type = (abi_type)(t.s_type | fixed_size_bytes);
-  } else if (s == "bytes") {
-    t.s_type = (abi_type)(t.s_type | dynamic_size_bytes);
-  } else if (s == "string") {
-    t.s_type = (abi_type)(t.s_type | string);
+  if (is_array) {
+    type arr_type = get_type(s.substr(0, k1));
+    t.s_type = arr_type.s_type;
+    if (arr_type.s_array_type == dynamic || t.array_len == 0 ||
+        t.s_type == dynamic_size_bytes || t.s_type == string) {
+      t.s_array_type = dynamic;
+    } else {
+      t.s_array_type = fixed;
+    }
   } else {
-    t.s_type = (abi_type)(t.s_type | numerical);  // TODO(kari): Could be invalid type
+    if (s == "function" || (s.find("bytes") == 0 && s.size() > 5) || s == "address") {
+      t.s_type = fixed_size_bytes;
+    } else if (s == "bytes") {
+      t.s_type = dynamic_size_bytes;
+    } else if (s == "string") {
+      t.s_type = string;
+    } else {
+      t.s_type = numerical;  // TODO(kari): Could be invalid type
+    }
   }
   return t;
 }
 
 static type extract_array_type(std::string s) {
   type new_t;
-  auto k1 = s.find('[');
-  auto k2 = s.find(']');
-  if (k1 != std::string::npos && k2 != std::string::npos) {
+  int32_t k1 = 0, k2 = 0, pos = 0;
+  pos = s.find('[', pos + 1);
+  while (pos != std::string::npos) {
+    k1 = pos;
+    pos = s.find('[', pos + 1);
+  }
+  if (k1 != 0) {
+    k2 = s.find(']', k1 + 1);
+  }
+  if (k1 && k2) {
     s.erase(k1, k2 - k1 + 1);
     new_t = get_type(s);
   } else {
@@ -233,19 +264,16 @@ static uint32_t calculate_offset(std::vector<std::string> params) {
   uint32_t tail_offset = 0;
   for (uint32_t i = 0; i < params.size(); ++i) {
     type t = get_type(params[i]);
-    if (t.s_type & fixed_size_array) {
+    if (t.s_array_type == fixed) {
       uint32_t element_count = 1;
       // Add the other dimenstions if any
-      while (t.s_type & fixed_size_array) {
+      while (t.s_array_type == fixed) {
         element_count *= t.array_len;
         t = extract_array_type(t.str);
       }
       tail_offset += 32 * element_count;
-    } else if (t.s_type == numerical || t.s_type == fixed_size_bytes || t.s_type == dynamic_size_bytes ||
-        t.s_type & dynamic_size_array || t.s_type == string) {
-      tail_offset += 32;
     } else {
-      LOG(ERROR) << "unknown type in calculate_offset: " << t.s_type;
+      tail_offset += 32;
     }
   }
   return tail_offset;
@@ -300,7 +328,7 @@ static uint64_t u256_to_u64(const std::string& s) {
   }
   uint64_t n = 0;
   for (auto i = 0; i < 8; i++) {
-    uint64_t k = *reinterpret_cast<const uint8_t*>(&s[24 + i]);
+    uint64_t k = reinterpret_cast<const uint8_t &>(s[24 + i]);
     n |= (k << ((7 - i) * 8));
   }
   return n;
@@ -322,51 +350,40 @@ static void check_and_resize_buffer(char** buffer, uint64_t* size, uint64_t pos,
 
 static void encode_param(type t, const json& json_data, char** buffer, uint64_t* buf_size,
     uint64_t* head_pos, uint64_t* tail_pos) {
-  if (t.s_type & fixed_size_array) {
+  if (t.s_array_type == fixed) {
     if (!json_data.is_array() || json_data.size() != t.array_len) {
       LOG(ERROR) << "Invalid argument! Expected array with length " << t.array_len << ", got " << json_data;
       return;
     }
     type tp = extract_array_type(t.str);
-    uint64_t head_prim_pos = *head_pos;
-    uint64_t tail_prim_pos = *tail_pos;
-    if (tp.s_type == dynamic_size_bytes || tp.s_type == string || tp.s_type & dynamic_size_array) {
-      std::string encoded;
-      for (auto it = json_data.begin(); it != json_data.end(); ++it) {
-        encoded = u64_to_u256(tail_prim_pos - *head_pos);
-        check_and_resize_buffer(buffer, buf_size, head_prim_pos, 32);
-        memcpy(*buffer + head_prim_pos, encoded.c_str(), 32);
-        head_prim_pos += 32;
-        encode_param(tp, *it, buffer, buf_size, &tail_prim_pos, &tail_prim_pos);
-      }
-      *head_pos = head_prim_pos;
-      *tail_pos = tail_prim_pos;
-    } else if (tp.s_type & numerical || tp.s_type & fixed_size_bytes || tp.s_type & fixed_size_array) {
-      for (auto it = json_data.begin(); it != json_data.end(); ++it) {
-        encode_param(tp, *it, buffer, buf_size, head_pos, tail_pos);
-      }
-    } else {
-      LOG(ERROR) << "Invalid type!" << tp.s_type;
-      return;
+    for (auto it = json_data.begin(); it != json_data.end(); ++it) {
+      encode_param(tp, *it, buffer, buf_size, head_pos, tail_pos);
     }
-  } else if (t.s_type & dynamic_size_array) {
+  } else if (t.s_array_type == dynamic) {
     if (!json_data.is_array()) {
       LOG(ERROR) << "Invalid argument! Expected array, got " << json_data;
       return;
     }
-    std::string encoded = u64_to_u256(json_data.size());
-    check_and_resize_buffer(buffer, buf_size, *tail_pos, 32);
-    memcpy(*buffer + *tail_pos, encoded.c_str(), 32);
-    *tail_pos += 32;
+    if (t.array_len && json_data.size() != t.array_len) {
+      LOG(ERROR) << "Invalid argument! Expected array with length " << t.array_len << ", got " << json_data;
+      return;
+    }
+    std::string encoded;
+    if (t.array_len == 0) {  // Size is unknown; not fixed
+      encoded = u64_to_u256(json_data.size());
+      check_and_resize_buffer(buffer, buf_size, *tail_pos, 32);
+      memcpy(*buffer + *tail_pos, encoded.c_str(), 32);
+      *tail_pos += 32;
+    }
     uint64_t head_prim_pos = *tail_pos;
     uint64_t tail_prim_pos = *tail_pos;
     type tp = extract_array_type(t.str);
-    if (tp.s_type & fixed_size_array) {
+    if (tp.s_array_type == fixed) {
       tail_prim_pos += (json_data.size() * calculate_offset({tp.str}));
       for (auto it = json_data.begin(); it != json_data.end(); ++it) {
         encode_param(tp, *it, buffer, buf_size, &head_prim_pos, &tail_prim_pos);
       }
-    } else if (tp.s_type == dynamic_size_bytes || tp.s_type == string || tp.s_type & dynamic_size_array) {
+    } else if (tp.s_type == dynamic_size_bytes || tp.s_type == string || tp.s_array_type == dynamic) {
       tail_prim_pos += (32 * json_data.size());
       for (auto it = json_data.begin(); it != json_data.end(); ++it) {
         encoded = u64_to_u256(tail_prim_pos - *tail_pos);
@@ -375,7 +392,7 @@ static void encode_param(type t, const json& json_data, char** buffer, uint64_t*
         head_prim_pos += 32;
         encode_param(tp, *it, buffer, buf_size, &tail_prim_pos, &tail_prim_pos);
       }
-    } else if (tp.s_type & numerical || tp.s_type & fixed_size_bytes) {
+    } else if (tp.s_type == numerical || tp.s_type == fixed_size_bytes) {
       tail_prim_pos += (32 * json_data.size());
       for (auto it = json_data.begin(); it != json_data.end(); ++it) {
         encode_param(tp, *it, buffer, buf_size, &head_prim_pos, &tail_prim_pos);
@@ -497,7 +514,7 @@ static std::string encode(const std::string& signatures_json, const std::string&
   for (; s_i < signatures.size(), p_it != j_params.end(); ++s_i, ++p_it) {
     signature = signatures[s_i];
     type t = get_type(signature);
-    if (t.s_type == dynamic_size_bytes || t.s_type == string || t.s_type & dynamic_size_array) {
+    if (t.s_type == dynamic_size_bytes || t.s_type == string || t.s_array_type == dynamic) {
       std::string encoded = u64_to_u256(tail_pos);
       check_and_resize_buffer(&buffer, &buf_size, tail_pos, 32);
       memcpy(buffer + head_pos, encoded.c_str(), 32);
@@ -513,48 +530,48 @@ static std::string encode(const std::string& signatures_json, const std::string&
 }
 
 static std::string decode_param(type t, const std::string& data, uint64_t pos) {
-  if (t.s_type & fixed_size_array) {
+  if (t.s_array_type == fixed) {
     auto tp = extract_array_type(t.str);
     std::stringstream ss;
     ss << '[';
-    if (tp.s_type == numerical || tp.s_type == fixed_size_bytes) {
-      for (int32_t i = 0; i < t.array_len - 1; ++i) {
-        ss << decode_param(tp, data, pos) << ",";
-        pos += 32;
-      }
-      ss << decode_param(tp, data, pos);
-    } else if (tp.s_type & dynamic_size_array || tp.s_type == string || tp.s_type == dynamic_size_bytes) {
-      for (int32_t i = 0; i < t.array_len - 1; ++i) {
-        std::string s = data.substr(pos + (32 * i), 32);
-        uint64_t offset = u256_to_u64(s);
-        ss << decode_param(tp, data, pos + offset) << ",";
-      }
-      std::string s = data.substr(pos + (32 * (t.array_len - 1)), 32);
-      uint64_t offset = u256_to_u64(s);
-      ss << decode_param(tp, data, pos + offset);
-    } else if (tp.s_type & fixed_size_array) {
+    if (tp.s_array_type == fixed) {
       for (int32_t i = 0; i < t.array_len - 1; ++i) {
         ss << decode_param(tp, data, pos) << ",";
         pos += calculate_offset({tp.str});
       }
       ss << decode_param(tp, data, pos);
+    } else if (tp.s_type == numerical || tp.s_type == fixed_size_bytes) {
+      for (int32_t i = 0; i < t.array_len - 1; ++i) {
+        ss << decode_param(tp, data, pos) << ",";
+        pos += 32;
+      }
+      ss << decode_param(tp, data, pos);
     }
     ss << ']';
     return ss.str();
-  } else if (t.s_type & dynamic_size_array) {
-    std::string s = data.substr(pos, 32);
-    int64_t len = u256_to_u64(s);
-    pos += 32;
+  } else if (t.s_array_type == dynamic) {
+    int64_t len = t.array_len;
+    if (len == 0) {
+      std::string s = data.substr(pos, 32);
+      len = u256_to_u64(s);
+      pos += 32;
+    }
     std::stringstream ss;
     ss << '[';
     auto tp = extract_array_type(t.str);
-    if (tp.s_type == numerical || tp.s_type == fixed_size_bytes) {
+    if (tp.s_array_type == no_array && (tp.s_type == numerical || tp.s_type == fixed_size_bytes)) {
       for (int32_t i = 0; i < len - 1; ++i) {
         ss << decode_param(tp, data, pos) << ",";
         pos += 32;
       }
       ss << decode_param(tp, data, pos);
-    } else if (tp.s_type & dynamic_size_array || tp.s_type == string || tp.s_type == dynamic_size_bytes) {
+    } else if (tp.s_array_type == fixed) {
+      for (int32_t i = 0; i < len - 1; ++i) {
+        ss << decode_param(tp, data, pos) << ",";
+        pos += calculate_offset({tp.str});
+      }
+      ss << decode_param(tp, data, pos);
+    } else if (tp.s_type == string || tp.s_type == dynamic_size_bytes || tp.s_array_type == dynamic) {
       for (int32_t i = 0; i < len - 1; ++i) {
         std::string s = data.substr(pos + (32 * i), 32);
         uint64_t offset = u256_to_u64(s);
@@ -563,12 +580,6 @@ static std::string decode_param(type t, const std::string& data, uint64_t pos) {
       std::string s = data.substr(pos + (32 * (len - 1)), 32);
       uint64_t offset = u256_to_u64(s);
       ss << decode_param(tp, data, pos + offset);
-    } else if (tp.s_type & fixed_size_array) {
-      for (int32_t i = 0; i < len - 1; ++i) {
-        ss << decode_param(tp, data, pos) << ",";
-        pos += calculate_offset({tp.str});
-      }
-      ss << decode_param(tp, data, pos);
     } else {
       LOG(ERROR) << "Invalid type!";
       return "";
@@ -636,7 +647,7 @@ static std::string decode(const std::string& signatures_json, const std::string&
   for (auto s_it = j_sigs.begin(); s_it != j_sigs.end();) {
     signature = (*s_it).get<std::string>();
     type t = get_type(signature);
-    if (t.s_type == dynamic_size_bytes || t.s_type == string || t.s_type & dynamic_size_array) {
+    if (t.s_type == dynamic_size_bytes || t.s_type == string || t.s_array_type == dynamic) {
       std::string s = data.substr(pos, 32);
       uint64_t offset = u256_to_u64(s);
       ss << decode_param(t, data, offset);
@@ -646,7 +657,7 @@ static std::string decode(const std::string& signatures_json, const std::string&
     if (++s_it != j_sigs.end()) {
       ss << ',';
     }
-    if (t.s_type & fixed_size_array) {
+    if (t.s_array_type == fixed) {
       pos += calculate_offset({t.str});
     } else {
       pos += 32;
