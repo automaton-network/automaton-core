@@ -264,11 +264,6 @@ add_executable(
   automaton/tests/interop/abi_encoder_test.cc
 )
 target_link_libraries(encoder_test automaton-core ${GTEST_LIBS})
-add_test(
-  NAME encoder_test
-  COMMAND encoder_test
-  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-)
 
 add_executable(
   contract_functions_test

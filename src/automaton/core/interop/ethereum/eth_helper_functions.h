@@ -526,13 +526,6 @@ static std::string encode(const std::string& signatures_json, const std::string&
   }
   std::string result = std::string(buffer, tail_pos);
   delete [] buffer;
-  // std::cout << "====== ENCODE ======= " << signatures_json << ", " << parameters_json << std::endl;
-  // uint64_t i = 0;
-  // for (; i < result.size() - 32; i += 32) {
-  //   std::cout << bin2hex(result.substr(i, 32)) << std::endl;
-  // }
-  // std::cout << bin2hex(result.substr(i, result.size() - i)) << std::endl;
-  // std::cout << "=========================================================" << std::endl;
   return std::move(result);
 }
 
