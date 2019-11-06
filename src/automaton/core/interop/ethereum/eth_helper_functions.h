@@ -92,6 +92,7 @@ static status curl_post(const std::string& url, const std::string& data) {
     curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data.c_str());
     res = curl_easy_perform(curl);
     curl_slist_free_all(list);
+    curl_easy_cleanup(curl);
     if (res != CURLE_OK) {
       size_t len = strlen(curl_err_buf);
       LOG(ERROR) << "Curl result code != CURLE_OK. Result code: " << res;

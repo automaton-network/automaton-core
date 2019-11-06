@@ -235,16 +235,16 @@ status eth_contract::handle_message(const std::string& fname) {
   } else if (j.find("result") != j.end()) {
     if (j["result"].is_string()) {
       std::string result = j["result"].get<std::string>();
-      std::string bin = hex2bin(result.substr(2));
       auto p_it = function_outputs.find(fname);
       if (p_it == function_outputs.end()) {
         return status::invalid_argument("Function signature is not found in function_outputs!");
       }
       if (p_it->second != "[]") {
+        std::string bin = hex2bin(result.substr(2));
         std::string decoded = decode(p_it->second, bin);
         return status::ok(decoded);
       }
-      return status::ok("");
+      return status::ok(result);
     }
     return status::ok(j["result"].dump());
   }
