@@ -88,6 +88,7 @@ int main() {
   }
 
   status s = status::ok();
+  json j_output;
 
   uint32_t nonce = 0;
   s = eth_getTransactionCount(URL, ADDRESS);
@@ -120,28 +121,33 @@ int main() {
 
   s = contract->call("getSlotsNumber", "");
   if (s.code == automaton::core::common::status::OK) {
-    std::cout << "Number of slots: " << hex2dec(s.msg) << std::endl;
+    j_output = json::parse(s.msg);
+    std::cout << "Number of slots: " << (*j_output.begin()).get<std::string>() << std::endl;
   } else {
     std::cout << "Error (getSlotsNumber()) " << s << std::endl;
   }
 
-  s = contract->call("getSlotOwner", dec_to_32hex(2));
+  s = contract->call("getSlotOwner", "[2]");
   if (s.code == automaton::core::common::status::OK) {
-    std::cout << "Slot 2 owner: " << s.msg << std::endl;
+    j_output = json::parse(s.msg);
+    std::cout << "Slot 2 owner: " << (*j_output.begin()).get<std::string>() << std::endl;
   } else {
     std::cout << "Error (getSlotOwner(2)) " << s << std::endl;
   }
 
-  s = contract->call("getSlotDifficulty", dec_to_32hex(2));
+  s = contract->call("getSlotDifficulty", "[2]");
   if (s.code == automaton::core::common::status::OK) {
-    std::cout << "Slot 2 difficulty: " << s.msg << std::endl;
+    j_output = json::parse(s.msg);
+    std::cout << "Slot 2 difficulty: " <<
+        bin2hex(dec_to_i256(false, (*j_output.begin()).get<std::string>())) << std::endl;
   } else {
     std::cout << "Error (getSlotDifficulty(2)) " << s << std::endl;
   }
 
-  s = contract->call("getSlotLastClaimTime", dec_to_32hex(2));
+  s = contract->call("getSlotLastClaimTime", "[2]");
   if (s.code == automaton::core::common::status::OK) {
-    std::cout << "Slot 2 last claim time: " << hex2dec(s.msg) << std::endl;
+    j_output = json::parse(s.msg);
+    std::cout << "Slot 2 last claim time: " << (*j_output.begin()).get<std::string>() << std::endl;
   } else {
     std::cout << "Error (getSlotLastClaimTime(2)) " << s << std::endl;
   }
@@ -149,8 +155,9 @@ int main() {
   std::string hex_mask;
   s = contract->call("getMask", "");
   if (s.code == automaton::core::common::status::OK) {
-    hex_mask = s.msg;
-    std::cout << "Mask: " << s.msg << std::endl;
+    j_output = json::parse(s.msg);
+    hex_mask = bin2hex(dec_to_i256(false, (*j_output.begin()).get<std::string>()));
+    std::cout << "Mask: " << hex_mask << std::endl;
   } else {
     std::cout << "Error (getMask()) " << s << std::endl;
   }
@@ -158,15 +165,17 @@ int main() {
   std::string hex_min_diff;
   s = contract->call("getMinDifficulty", "");
   if (s.code == automaton::core::common::status::OK) {
-    hex_min_diff = s.msg;
-    std::cout << "Min Difficulty: " << s.msg << std::endl;
+    j_output = json::parse(s.msg);
+    hex_min_diff = bin2hex(dec_to_i256(false, (*j_output.begin()).get<std::string>()));
+    std::cout << "Min Difficulty: " << hex_min_diff << std::endl;
   } else {
     std::cout << "Error (getMinDifficulty()) " << s << std::endl;
   }
 
   s = contract->call("getClaimed", "");
   if (s.code == automaton::core::common::status::OK) {
-    std::cout << "Number of slot claims: " << hex2dec(s.msg) << std::endl;
+    j_output = json::parse(s.msg);
+    std::cout << "Number of slot claims: " << (*j_output.begin()).get<std::string>() << std::endl;
   } else {
     std::cout << "Error (getClaimed()) " << s << std::endl;
   }
@@ -215,7 +224,7 @@ int main() {
   s = contract->call("claimSlot", t.sign_tx(PRIVATE_KEY));
   if (s.code == automaton::core::common::status::OK) {
     std::cout << "Claim slot result: " << s.msg << std::endl;
-    transaction_receipt = "0x" + s.msg;
+    transaction_receipt = s.msg;
   } else {
     std::cout << "Error (claimSlot) " << s << std::endl;
   }

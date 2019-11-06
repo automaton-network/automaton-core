@@ -74,7 +74,7 @@ int main() {
       std::cout << "JSON Error! " << e.what() << std::endl;
     }
     for (uint32_t i = 0; i < res.size(); ++i) {
-      std::cout << "difficulty " << i << ": " << res[i] << std::endl;
+      std::cout << "difficulty " << i << ": " << bin2hex(dec_to_i256(false, res[i])) << std::endl;
     }
   } else {
     std::cout << "Error (getDifficulties()) " << s << std::endl;
