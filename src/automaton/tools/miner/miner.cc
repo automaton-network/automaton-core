@@ -67,6 +67,8 @@ unsigned int mine_key(unsigned char* mask, unsigned char* difficulty, unsigned c
       break;
     }
   }
+  delete pubkey;
+  secp256k1_context_destroy(context);
   return keys_generated;
 }
 
@@ -77,7 +79,8 @@ std::string sign(const unsigned char* priv_key, const unsigned char* msg_hash) {
   int v = -1;
   secp256k1_ecdsa_sign_recoverable(context, &signature, (unsigned char*)msg_hash, (unsigned char*)priv_key, NULL, NULL);
   secp256k1_ecdsa_recoverable_signature_serialize_compact(context, (unsigned char*)signatureArr, &v, &signature);
-  signatureArr[64] = v+27;
+  secp256k1_context_destroy(context);
+  signatureArr[64] = v + 27;
   return std::string(reinterpret_cast<char*>(signatureArr), 65);
 }
 
@@ -87,12 +90,16 @@ std::string gen_pub_key(const unsigned char* priv_key) {
 
   if (!secp256k1_ec_pubkey_create(context, pubkey, priv_key)) {
     LOG(WARNING) << "Invalid priv_key " << bin2hex(std::string(reinterpret_cast<const char*>(priv_key), 32));
+    delete pubkey;
+    secp256k1_context_destroy(context);
     return "";
   }
 
   unsigned char pub_key_serialized[65];
   size_t outLen = 65;
   secp256k1_ec_pubkey_serialize(context, pub_key_serialized, &outLen, pubkey, SECP256K1_EC_UNCOMPRESSED);
+  delete pubkey;
+  secp256k1_context_destroy(context);
   return std::string(reinterpret_cast<char*>(&pub_key_serialized[1]), outLen);
 }
 
