@@ -123,6 +123,13 @@ static status eth_getCode(const std::string& url, const std::string& address) {
   return curl_post(url, ss.str());
 }
 
+static status eth_getBalance(const std::string& url, const std::string& address) {
+  std::stringstream ss;
+  ss << "{\"jsonrpc\":\"2.0\",\"method\":\"eth_getBalance\",\"params\":[\"" << address <<
+      "\",\"latest\"" << "],\"id\":1}";
+  return curl_post(url, ss.str());
+}
+
 static status eth_gasPrice(const std::string& url) {
   std::stringstream ss;
   ss << "{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}";
