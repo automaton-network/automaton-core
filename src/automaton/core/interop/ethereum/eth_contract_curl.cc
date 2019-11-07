@@ -251,14 +251,14 @@ status eth_contract::handle_message(const std::string& fname) {
   return status::internal("No result and no error!?");
 }
 
-size_t eth_contract::curl_callback(void *contents, size_t size, size_t nmemb, std::string *s) {
-  size_t new_length = size * nmemb;
+size_t eth_contract::curl_callback(void* contents, size_t size, size_t nmemb, std::string* s) {
+  size_t new_length = size* nmemb;
   try {
     s->append(reinterpret_cast<char*>(contents), new_length);
     LOG(INFO) << "\n=== CHUNK ===\n"
         << std::string(reinterpret_cast<char*>(contents), new_length) << "\n ===== EoCH ====";
   }
-  catch (std::bad_alloc &e) {
+  catch (std::bad_alloc& e) {
     LOG(ERROR) << "Bad_alloc while reading data!";
     return 0;
   }

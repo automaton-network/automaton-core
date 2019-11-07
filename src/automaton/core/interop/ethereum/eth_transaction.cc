@@ -62,30 +62,39 @@ std::string check_and_sign(const unsigned char* priv_key, const unsigned char* m
 
   if (!secp256k1_ec_pubkey_create(context, pubkey, priv_key)) {
     LOG(WARNING) << "Invalid private key!!!" << bin2hex(std::string(reinterpret_cast<const char*>(priv_key), 32));
+    delete pubkey;
+    secp256k1_context_destroy(context);
     return "";
   }
+  delete pubkey;
+  secp256k1_context_destroy(context);
   return rsv;
 }
 
 std::string recover_address(const unsigned char* rsv, const unsigned char* message_hash) {
   int32_t v = rsv[64];
   v -= 27;
-  auto* ctx = secp256k1_context_create(SECP256K1_CONTEXT_SIGN | SECP256K1_CONTEXT_VERIFY);
+  secp256k1_context* context = secp256k1_context_create(SECP256K1_CONTEXT_SIGN | SECP256K1_CONTEXT_VERIFY);
   secp256k1_ecdsa_recoverable_signature signature;
-  if (!secp256k1_ecdsa_recoverable_signature_parse_compact(ctx, &signature, (unsigned char*)rsv, v)) {
+  if (!secp256k1_ecdsa_recoverable_signature_parse_compact(context, &signature, (unsigned char*)rsv, v)) {
     LOG(ERROR) << "Cannot parse signature!";
+    secp256k1_context_destroy(context);
     return "";
   }
   secp256k1_pubkey* pubkey = new secp256k1_pubkey();
-  if (!secp256k1_ecdsa_recover(ctx, pubkey, &signature, (unsigned char*) message_hash)) {
+  if (!secp256k1_ecdsa_recover(context, pubkey, &signature, (unsigned char*) message_hash)) {
     LOG(ERROR) << "Cannot recover signature!";
+    delete pubkey;
+    secp256k1_context_destroy(context);
     return "";
   }
 
   size_t out_len = 65;
   unsigned char pub_key_serialized[out_len];
-  secp256k1_ec_pubkey_serialize(ctx, pub_key_serialized, &out_len, pubkey, SECP256K1_EC_UNCOMPRESSED);
+  secp256k1_ec_pubkey_serialize(context, pub_key_serialized, &out_len, pubkey, SECP256K1_EC_UNCOMPRESSED);
   std::string pub_key_uncompressed(reinterpret_cast<char*>(pub_key_serialized), out_len);
+  delete pubkey;
+  secp256k1_context_destroy(context);
   return hash(pub_key_uncompressed.substr(1)).substr(12);
 }
 
