@@ -8,6 +8,7 @@ contract OptimusPrime {
   uint256 constant UINT256_MIN = 0;
   uint256 constant UINT256_MAX = ~uint256(0);
   uint256 constant MSB_SET = 1 << 255;
+  uint256 constant ALL_BUT_MSB = MSB_SET - 1;
 
   // Voters
   uint256 public slots;
@@ -54,6 +55,7 @@ contract OptimusPrime {
     return slots - paidVotes;
   }
 
+  // Pay for multiple slots at once, 32 seems to be a reasonable amount.
   function payForGas(uint256 _slotsToPay) public {
     require(paidVotes + _slotsToPay <= slots);
     uint _newLength = paidVotes + _slotsToPay;
@@ -82,16 +84,20 @@ contract OptimusPrime {
     uint baseMask = (1 << bitsPerVote) - 1;
     uint mask = baseMask << offset;
 
-    // Modify vote selection.
+    // Reduce the vote count.
     uint vote = votes[index];
     uint oldChoice = (vote & mask) >> offset;
     if (oldChoice > 0) {
       voteCount[oldChoice]--;
     }
-    vote &= (mask ^ UINT256_MAX);
-    vote |= _choice << offset;
-    votes[index] = vote;
-    voteCount[_choice]++;
+
+    // Modify vote selection.
+    vote &= (mask ^ UINT256_MAX); // get rid of current choice using a mask.
+    vote |= _choice << offset;    // replace current choice using a mask.
+    votes[index] = vote;          // actually update the storage slot.
+    voteCount[_choice]++;         // update the total vote count based on the choice.
+
+    // Incentivize voters by giving them a refund.
     payGas1[_slot] = 0;
     payGas2[_slot] = 0;
   }
@@ -105,5 +111,9 @@ contract OptimusPrime {
 
     // Get vote
     return (votes[index] & mask) >> offset;
+  }
+
+  function getVoteCount(uint256 _choice) public view returns(uint256) {
+    return voteCount[_choice] & ALL_BUT_MSB;
   }
 }
