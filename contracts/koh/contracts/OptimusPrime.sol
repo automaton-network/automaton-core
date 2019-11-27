@@ -11,7 +11,7 @@ contract OptimusPrime {
 
   // Voters
   uint256 public slots;
-  address[] public owners;
+  mapping(uint256 => address) public owners;
 
   uint256 public numChoices;
   uint256 public bitsPerVote;
@@ -38,13 +38,11 @@ contract OptimusPrime {
   }
 
   constructor() public {
-    uint _packedSlotsAndNumChoices = 0x100000002;
-    slots = _packedSlotsAndNumChoices >> 16;
-    numChoices = _packedSlotsAndNumChoices & 0xFFFF;
+    slots = 65536;
+    numChoices = 2;
     require(numChoices <= 255);
     bitsPerVote = msb(numChoices + 1) + 1;
     votesPerWord = 255 / bitsPerVote;
-    owners.length = slots;
     votesWords = slots / votesPerWord;
 
     for (uint i = 0; i <= numChoices; i++) {
@@ -84,8 +82,6 @@ contract OptimusPrime {
     uint baseMask = (1 << bitsPerVote) - 1;
     uint mask = baseMask << offset;
 
-    index = index * 8;
-
     // Modify vote selection.
     uint vote = votes[index];
     uint oldChoice = (vote & mask) >> offset;
@@ -106,8 +102,6 @@ contract OptimusPrime {
     uint offset = (_slot % votesPerWord) * bitsPerVote;
     uint baseMask = (1 << bitsPerVote) - 1;
     uint mask = baseMask << offset;
-
-    index = index * 4;
 
     // Get vote
     return (votes[index] & mask) >> offset;
