@@ -42,7 +42,7 @@ contract OptimusPrime {
     slots = 65536;
     numChoices = 2;
     require(numChoices <= 255);
-    bitsPerVote = msb(numChoices + 1) + 1;
+    bitsPerVote = msb(numChoices) + 1;
     votesPerWord = 255 / bitsPerVote;
     votesWords = slots / votesPerWord;
 
