@@ -1,4 +1,4 @@
-JUCE_VER="5.4.4"
+JUCE_VER="5.4.5"
 
 # Download JUCE
 [ ! -d JUCE ] && \
