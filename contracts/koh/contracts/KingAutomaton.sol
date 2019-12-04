@@ -104,7 +104,7 @@ contract KingAutomaton {
   uint256 constant VOTES_PER_WORD = 127;
   uint256 constant BASE_MASK = (1 << BITS_PER_VOTE) - 1;
 
-  enum ProposalState {PrepayingGas, Started, Accepted, Rejected, InProbation, Completed}
+  enum ProposalState {Uninitialized, PrepayingGas, Started, Accepted, Rejected, InProbation, Completed}
 
   struct Proposal {
     address payable contributor;
@@ -117,7 +117,6 @@ contract KingAutomaton {
     uint256 probationPeriod;
     uint256 approvalPercentage;
 
-    uint256 slots;
     uint256 votesWords;
     uint256 paidVotes;
 
@@ -128,6 +127,14 @@ contract KingAutomaton {
   }
 
   mapping (uint256 => Proposal) public proposals;
+
+  modifier validProposalID(uint256 id) {
+  ProposalState state = proposals[id].state;
+    require(state == ProposalState.PrepayingGas || state == ProposalState.Started ||
+        state == ProposalState.Accepted || state == ProposalState.Rejected ||
+        state == ProposalState.InProbation || state == ProposalState.Completed, "Invalid proposal ID!");
+    _;
+  }
 
   function initTreasury() private {}
 
@@ -150,36 +157,46 @@ contract KingAutomaton {
       bytes memory documents_hash,
       uint256 probation_period,
       uint256 approval_percentage) public {
-    // require (?? proposals[id] == null)
-    proposals[id] = Proposal(contributor, title, documents_link, documents_hash, ProposalState.PrepayingGas,
-        MSB_SET, probation_period, approval_percentage, slots.length,
-        (slots.length + VOTES_PER_WORD - 1) / VOTES_PER_WORD, MSB_SET);
+    require(proposals[id].state == ProposalState.Uninitialized);
     Proposal storage p = proposals[id];
+
+    p.contributor = contributor;
+    p.title = title;
+    p.documentsLink = documents_link;
+    p.documentsHash = documents_hash;
+
+    p.state = ProposalState.PrepayingGas;
+    p.probationEndDate = MSB_SET;
+    p.probationPeriod = probation_period;
+    p.approvalPercentage = approval_percentage;
+
+    p.votesWords = (slots.length + VOTES_PER_WORD - 1) / VOTES_PER_WORD;
+    p.paidVotes = MSB_SET;
+
     for (uint i = 0; i <= NUM_CHOICES; i++) {
       p.voteCount[i] = MSB_SET;
     }
   }
 
-  function unpaidSlots(uint256 proposal_id) public view returns (uint256) {
+  function unpaidSlots(uint256 proposal_id) public view validProposalID(proposal_id) returns (uint256) {
     Proposal storage p = proposals[proposal_id];
-    require(p.paidVotes > 0, "Wrong proposal ID!");  // Check if proposal exists
     if (p.paidVotes == MSB_SET) {
-      return p.slots;
+      return slots.length;
     }
-    return p.slots - p.paidVotes;
+    return slots.length - p.paidVotes;
   }
 
+  // FOR TEST PURPOSES, TO BE DELETED
   function setOwner(uint256 _slot, address new_owner) public {
     slots[_slot].owner = new_owner;
   }
 
   // Pay for multiple slots at once, 32 seems to be a reasonable amount.
-  function payForGas(uint256 proposal_id, uint256 _slotsToPay) public {
+  function payForGas(uint256 proposal_id, uint256 _slotsToPay) public validProposalID(proposal_id) {
     Proposal storage p = proposals[proposal_id];
-    require(p.paidVotes > 0, "Wrong proposal ID!");  // Check if proposal exists
     uint256 unpaid_slots = unpaidSlots(proposal_id);
     require(unpaid_slots >= _slotsToPay, "Too many slots!");
-    uint _newLength = p.slots - unpaid_slots + _slotsToPay;
+    uint _newLength = slots.length - unpaid_slots + _slotsToPay;
     for (uint i = 1; i <= _slotsToPay; i++) {
       uint idx = _newLength - i;
       p.payGas1[idx] = p.payGas2[idx] = MSB_SET;
@@ -188,27 +205,23 @@ contract KingAutomaton {
       }
     }
     p.paidVotes = _newLength;
-    if (p.paidVotes == p.slots) {
+    if (p.paidVotes == slots.length) {
         p.state = ProposalState.Started;
     }
   }
 
-  // function setOwner(uint256 _slot) public
-
-  function findVoteDifference(uint256 proposal_id) view private returns (uint256) {
+  function calcVoteDifference(uint256 proposal_id) view private validProposalID(proposal_id) returns (uint256) {
     Proposal storage p = proposals[proposal_id];
     uint256 yes = p.voteCount[1];
     uint256 no = p.voteCount[2];
-    uint256 all = yes + no + p.voteCount[0];
     if (yes > no) {
-      return (yes - no) / all;
+      return (yes - no) / slots.length;
     }
-    return (no - yes) / all;
+    return (no - yes) / slots.length;
   }
 
-  function castVote(uint256 proposal_id, uint256 _slot, uint8 _choice) public {
+  function castVote(uint256 proposal_id, uint256 _slot, uint8 _choice) public validProposalID(proposal_id) {
     Proposal storage p = proposals[proposal_id];
-    require(p.paidVotes > 0, "Wrong proposal ID!");  // Check if proposal exists
     require(msg.sender == slots[_slot].owner, "Invalid slot owner");
     require(_choice <= 2, "Invalid choice");
 
@@ -235,9 +248,9 @@ contract KingAutomaton {
     p.payGas2[_slot] = 0;
   }
 
-  function getVote(uint256 proposal_id, uint256 _slot) public view returns (uint) {
+  function getVote(uint256 proposal_id, uint256 _slot) public view validProposalID(proposal_id) returns (uint) {
     Proposal storage p = proposals[proposal_id];
-    require(p.paidVotes > 0, "Wrong proposal ID!");  // Check if proposal exists
+
     // Calculate masks.
     uint index = _slot / VOTES_PER_WORD;
     uint offset = (_slot % VOTES_PER_WORD) * BITS_PER_VOTE;
@@ -247,10 +260,8 @@ contract KingAutomaton {
     return (p.votes[index] & mask) >> offset;
   }
 
-  function getVoteCount(uint256 proposal_id, uint256 _choice) public view returns(uint256) {
-    Proposal storage p = proposals[proposal_id];
-    require(p.paidVotes > 0, "Wrong proposal ID!");  // Check if proposal exists
-    return p.voteCount[_choice] & ALL_BUT_MSB;
+  function getVoteCount(uint256 proposal_id, uint256 _choice) public view validProposalID(proposal_id) returns(uint256) {
+    return proposals[proposal_id].voteCount[_choice] & ALL_BUT_MSB;
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////
