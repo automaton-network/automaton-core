@@ -92,14 +92,19 @@ contract KingAutomaton {
   // Treasury
   //////////////////////////////////////////////////////////////////////////////////////////////////
 
-  enum State {
-    Proposed,
-    Approved,
-    Rejected,
-    Accepted,
-    Terminated,
-    Completed
-  }
+  int256 constant INT256_MIN = int256(uint256(1) << 255);
+  int256 constant INT256_MAX = int256(~(uint256(1) << 255));
+  uint256 constant UINT256_MIN = 0;
+  uint256 constant UINT256_MAX = ~uint256(0);
+  uint256 constant MSB_SET = 1 << 255;
+  uint256 constant ALL_BUT_MSB = MSB_SET - 1;
+
+  uint256 constant NUM_CHOICES = 2;
+  uint256 constant BITS_PER_VOTE = 2;
+  uint256 constant VOTES_PER_WORD = 127;
+  uint256 constant BASE_MASK = (1 << BITS_PER_VOTE) - 1;
+
+  enum ProposalState {PrepayingGas, Started, Accepted, Rejected, InProbation, Completed}
 
   struct Proposal {
     address payable contributor;
@@ -107,13 +112,145 @@ contract KingAutomaton {
     string documentsLink;
     bytes documentsHash;
 
-    uint256 yesVotes;
-    uint256 noVotes;
+    ProposalState state;
+    uint256 probationEndDate;
+    uint256 probationPeriod;
+    uint256 approvalPercentage;
+
+    uint256 slots;
+    uint256 votesWords;
+    uint256 paidVotes;
+
+    mapping (uint256 => uint256) votes;
+    mapping (uint256 => uint256) voteCount;
+    mapping (uint256 => uint256) payGas1;
+    mapping (uint256 => uint256) payGas2;
   }
 
-  Proposal[] proposals;
+  mapping (uint256 => Proposal) public proposals;
 
-  function initTreasury() private {
+  function initTreasury() private {}
+
+  function msb(uint256 x) public pure returns (uint8 r) {
+    if (x >= 0x100000000000000000000000000000000) {x >>= 128; r += 128;}
+    if (x >= 0x10000000000000000) {x >>= 64; r += 64;}
+    if (x >= 0x100000000) {x >>= 32; r += 32;}
+    if (x >= 0x10000) {x >>= 16; r += 16;}
+    if (x >= 0x100) {x >>= 8; r += 8;}
+    if (x >= 0x10) {x >>= 4; r += 4;}
+    if (x >= 0x4) {x >>= 2; r += 2;}
+    if (x >= 0x2) r += 1; // No need to shift x anymore
+  }
+
+  function createProposal(
+      uint256 id,  // For test purposes until it's clear what will be used as id
+      address payable contributor,
+      string memory title,
+      string memory documents_link,
+      bytes memory documents_hash,
+      uint256 probation_period,
+      uint256 approval_percentage) public {
+    // require (?? proposals[id] == null)
+    proposals[id] = Proposal(contributor, title, documents_link, documents_hash, ProposalState.PrepayingGas,
+        MSB_SET, probation_period, approval_percentage, slots.length,
+        (slots.length + VOTES_PER_WORD - 1) / VOTES_PER_WORD, MSB_SET);
+    Proposal storage p = proposals[id];
+    for (uint i = 0; i <= NUM_CHOICES; i++) {
+      p.voteCount[i] = MSB_SET;
+    }
+  }
+
+  function unpaidSlots(uint256 proposal_id) public view returns (uint256) {
+    Proposal storage p = proposals[proposal_id];
+    require(p.paidVotes > 0, "Wrong proposal ID!");  // Check if proposal exists
+    if (p.paidVotes == MSB_SET) {
+      return p.slots;
+    }
+    return p.slots - p.paidVotes;
+  }
+
+  function setOwner(uint256 _slot, address new_owner) public {
+    slots[_slot].owner = new_owner;
+  }
+
+  // Pay for multiple slots at once, 32 seems to be a reasonable amount.
+  function payForGas(uint256 proposal_id, uint256 _slotsToPay) public {
+    Proposal storage p = proposals[proposal_id];
+    require(p.paidVotes > 0, "Wrong proposal ID!");  // Check if proposal exists
+    uint256 unpaid_slots = unpaidSlots(proposal_id);
+    require(unpaid_slots >= _slotsToPay, "Too many slots!");
+    uint _newLength = p.slots - unpaid_slots + _slotsToPay;
+    for (uint i = 1; i <= _slotsToPay; i++) {
+      uint idx = _newLength - i;
+      p.payGas1[idx] = p.payGas2[idx] = MSB_SET;
+      if (_newLength - i <= p.votesWords) {
+        p.votes[idx] = MSB_SET;
+      }
+    }
+    p.paidVotes = _newLength;
+    if (p.paidVotes == p.slots) {
+        p.state = ProposalState.Started;
+    }
+  }
+
+  // function setOwner(uint256 _slot) public
+
+  function findVoteDifference(uint256 proposal_id) view private returns (uint256) {
+    Proposal storage p = proposals[proposal_id];
+    uint256 yes = p.voteCount[1];
+    uint256 no = p.voteCount[2];
+    uint256 all = yes + no + p.voteCount[0];
+    if (yes > no) {
+      return (yes - no) / all;
+    }
+    return (no - yes) / all;
+  }
+
+  function castVote(uint256 proposal_id, uint256 _slot, uint8 _choice) public {
+    Proposal storage p = proposals[proposal_id];
+    require(p.paidVotes > 0, "Wrong proposal ID!");  // Check if proposal exists
+    require(msg.sender == slots[_slot].owner, "Invalid slot owner");
+    require(_choice <= 2, "Invalid choice");
+
+    // Calculate masks.
+    uint index = _slot / VOTES_PER_WORD;
+    uint offset = (_slot % VOTES_PER_WORD) * BITS_PER_VOTE;
+    uint mask = BASE_MASK << offset;
+
+    // Reduce the vote count.
+    uint vote = p.votes[index];
+    uint oldChoice = (vote & mask) >> offset;
+    if (oldChoice > 0) {
+      p.voteCount[oldChoice]--;
+    }
+
+    // Modify vote selection.
+    vote &= (mask ^ UINT256_MAX);   // get rid of current choice using a mask.
+    vote |= _choice << offset;      // replace current choice using a mask.
+    p.votes[index] = vote;          // actually update the storage slot.
+    p.voteCount[_choice]++;         // update the total vote count based on the choice.
+
+    // Incentivize voters by giving them a refund.
+    p.payGas1[_slot] = 0;
+    p.payGas2[_slot] = 0;
+  }
+
+  function getVote(uint256 proposal_id, uint256 _slot) public view returns (uint) {
+    Proposal storage p = proposals[proposal_id];
+    require(p.paidVotes > 0, "Wrong proposal ID!");  // Check if proposal exists
+    // Calculate masks.
+    uint index = _slot / VOTES_PER_WORD;
+    uint offset = (_slot % VOTES_PER_WORD) * BITS_PER_VOTE;
+    uint mask = BASE_MASK << offset;
+
+    // Get vote
+    return (p.votes[index] & mask) >> offset;
+  }
+
+  function getVoteCount(uint256 proposal_id, uint256 _choice) public view returns(uint256) {
+    Proposal storage p = proposals[proposal_id];
+    require(p.paidVotes > 0, "Wrong proposal ID!");  // Check if proposal exists
+    return p.voteCount[_choice] & ALL_BUT_MSB;
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////
