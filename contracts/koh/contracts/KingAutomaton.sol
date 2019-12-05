@@ -117,7 +117,7 @@ contract KingAutomaton {
   }
 
   enum BallotBoxState {Uninitialized, PrepayingGas, Active, Inactive}
-  enum ProposalState {Uninitialized, Accepted, Rejected, InProbation, Completed}
+  enum ProposalState {Uninitialized, Accepted, Rejected, Contested, Completed}
 
   struct BallotBox {
     BallotBoxState state;
