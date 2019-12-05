@@ -105,45 +105,6 @@ contract KingAutomaton {
   uint256 constant VOTES_PER_WORD = 127;
   uint256 constant BASE_MASK = (1 << BITS_PER_VOTE) - 1;
 
-  enum ProposalState {Uninitialized, PrepayingGas, Started, Accepted, Rejected, InProbation, Completed}
-
-  struct Proposal {
-    address payable contributor;
-    string title;
-    string documentsLink;
-    bytes documentsHash;
-
-    ProposalState state;
-    uint256 probationEndDate;
-    uint256 probationPeriod;
-    uint256 approvalPercentage;
-
-    uint256 votesWords;
-    uint256 paidSlots;
-
-    mapping (uint256 => uint256) votes;
-    mapping (uint256 => uint256) voteCount;
-    mapping (uint256 => uint256) payGas1;
-    mapping (uint256 => uint256) payGas2;
-  }
-
-  bool public debugging = false;
-
-  mapping (uint256 => Proposal) public proposals;
-
-  modifier validProposalID(uint256 id) {
-  ProposalState state = proposals[id].state;
-    require(state != ProposalState.Uninitialized, "Invalid proposal ID!");
-    _;
-  }
-
-  modifier debugOnly() {
-    require(debugging, "Available only in debug mode!");
-    _;
-  }
-
-  function initTreasury() private {}
-
   function msb(uint256 x) public pure returns (uint8 r) {
     if (x >= 0x100000000000000000000000000000000) {x >>= 128; r += 128;}
     if (x >= 0x10000000000000000) {x >>= 64; r += 64;}
@@ -155,27 +116,60 @@ contract KingAutomaton {
     if (x >= 0x2) r += 1; // No need to shift x anymore
   }
 
-  function createProposal(
-      uint256 id,  // For test purposes until it's clear what will be used as id
-      address payable contributor,
-      string memory title,
-      string memory documents_link,
-      bytes memory documents_hash,
-      uint256 probation_period,
-      uint256 approval_percentage) public {
-    require(proposals[id].state == ProposalState.Uninitialized);
-    Proposal storage p = proposals[id];
+  enum BallotBoxState {Uninitialized, PrepayingGas, Active, Inactive}
+  enum ProposalState {Uninitialized, Accepted, Rejected, InProbation, Completed}
 
-    p.contributor = contributor;
-    p.title = title;
-    p.documentsLink = documents_link;
-    p.documentsHash = documents_hash;
+  struct BallotBox {
+    BallotBoxState state;
 
-    p.state = ProposalState.PrepayingGas;
-    p.probationEndDate = MSB_SET;
-    p.probationPeriod = probation_period;
-    p.approvalPercentage = approval_percentage;
+    uint256 votesWords;
+    uint256 paidSlots;
 
+    mapping (uint256 => uint256) votes;
+    mapping (uint256 => uint256) voteCount;
+    mapping (uint256 => uint256) payGas1;
+    mapping (uint256 => uint256) payGas2;
+  }
+
+  struct Proposal {
+    address payable contributor;
+    string title;
+    string documentsLink;
+    bytes documentsHash;
+
+    ProposalState state;
+
+    uint256 probationEndDate;
+    uint256 probationPeriod;
+    uint256 approvalPercentage;
+  }
+
+  bool public debugging = false;
+
+  mapping (uint256 => BallotBox) public ballot_boxes;
+
+  modifier validBallotBoxID(uint256 id) {
+    require(ballot_boxes[id].state != BallotBoxState.Uninitialized, "Invalid ballot box ID!");
+    _;
+  }
+
+  modifier activeBallot(uint256 id) {
+    require(ballot_boxes[id].state == BallotBoxState.Active, "Ballot is not active!");
+    _;
+  }
+
+  modifier debugOnly() {
+    require(debugging, "Available only in debug mode!");
+    _;
+  }
+
+  function initTreasury() private {}
+
+  function createBallotBox(uint256 id) public {
+    require(ballot_boxes[id].state == BallotBoxState.Uninitialized);
+
+    BallotBox storage p = ballot_boxes[id];
+    p.state = BallotBoxState.PrepayingGas;
     p.votesWords = (slots.length + VOTES_PER_WORD - 1) / VOTES_PER_WORD;
 
     for (uint i = 0; i <= NUM_CHOICES; i++) {
@@ -185,8 +179,8 @@ contract KingAutomaton {
     payForGas(id, 1);
   }
 
-  function unpaidSlots(uint256 proposal_id) public view validProposalID(proposal_id) returns (uint256) {
-    return slots.length - proposals[proposal_id].paidSlots;
+  function unpaidSlots(uint256 ballot_box_id) public view validBallotBoxID(ballot_box_id) returns (uint256) {
+    return slots.length - ballot_boxes[ballot_box_id].paidSlots;
   }
 
   // FOR TEST PURPOSES, TO BE DELETED
@@ -195,8 +189,8 @@ contract KingAutomaton {
   }
 
   // Pay for multiple slots at once, 32 seems to be a reasonable amount.
-  function payForGas(uint256 proposal_id, uint256 _slotsToPay) public validProposalID(proposal_id) {
-    Proposal storage p = proposals[proposal_id];
+  function payForGas(uint256 ballot_box_id, uint256 _slotsToPay) public validBallotBoxID(ballot_box_id) {
+    BallotBox storage p = ballot_boxes[ballot_box_id];
     require((slots.length - p.paidSlots) >= _slotsToPay, "Too many slots!");
     uint _newLength = p.paidSlots + _slotsToPay;
     for (uint i = 1; i <= _slotsToPay; i++) {
@@ -208,12 +202,12 @@ contract KingAutomaton {
     }
     p.paidSlots = _newLength;
     if (p.paidSlots == slots.length) {
-        p.state = ProposalState.Started;
+        p.state = BallotBoxState.Active;
     }
   }
 
-  function calcVoteDifference(uint256 proposal_id) view private validProposalID(proposal_id) returns (uint256) {
-    Proposal storage p = proposals[proposal_id];
+  function calcVoteDifference(uint256 ballot_box_id) view private validBallotBoxID(ballot_box_id) returns (uint256) {
+    BallotBox storage p = ballot_boxes[ballot_box_id];
     uint256 yes = p.voteCount[1];
     uint256 no = p.voteCount[2];
     if (yes > no) {
@@ -222,8 +216,9 @@ contract KingAutomaton {
     return (no - yes) / slots.length;
   }
 
-  function castVote(uint256 proposal_id, uint256 _slot, uint8 _choice) public validProposalID(proposal_id) {
-    Proposal storage p = proposals[proposal_id];
+  function castVote(uint256 ballot_box_id, uint256 _slot, uint8 _choice)
+      public validBallotBoxID(ballot_box_id) activeBallot(ballot_box_id) {
+    BallotBox storage p = ballot_boxes[ballot_box_id];
     require(msg.sender == slots[_slot].owner, "Invalid slot owner");
     require(_choice <= 2, "Invalid choice");
 
@@ -250,8 +245,8 @@ contract KingAutomaton {
     p.payGas2[_slot] = 0;
   }
 
-  function getVote(uint256 proposal_id, uint256 _slot) public view validProposalID(proposal_id) returns (uint) {
-    Proposal storage p = proposals[proposal_id];
+  function getVote(uint256 ballot_box_id, uint256 _slot) public view validBallotBoxID(ballot_box_id) returns (uint) {
+    BallotBox storage p = ballot_boxes[ballot_box_id];
 
     // Calculate masks.
     uint index = _slot / VOTES_PER_WORD;
@@ -262,8 +257,8 @@ contract KingAutomaton {
     return (p.votes[index] & mask) >> offset;
   }
 
-  function getVoteCount(uint256 proposal_id, uint256 _choice) public view validProposalID(proposal_id) returns(uint256) {
-    return proposals[proposal_id].voteCount[_choice] & ALL_BUT_MSB;
+  function getVoteCount(uint256 ballot_box_id, uint256 _choice) public view validBallotBoxID(ballot_box_id) returns(uint256) {
+    return ballot_boxes[ballot_box_id].voteCount[_choice] & ALL_BUT_MSB;
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////
