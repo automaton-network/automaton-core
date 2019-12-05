@@ -13,6 +13,7 @@ contract KingAutomaton {
     // Check if we're on a testnet (We will not using predefined mask when going live)
     if (predefinedMask != 0) {
       // If so, fund the owner for debugging purposes.
+      debugging = true;
       mint(msg.sender, 1000000 ether);
     }
   }
@@ -92,13 +93,42 @@ contract KingAutomaton {
   // Treasury
   //////////////////////////////////////////////////////////////////////////////////////////////////
 
-  enum State {
-    Proposed,
-    Approved,
-    Rejected,
-    Accepted,
-    Terminated,
-    Completed
+  int256 constant INT256_MIN = int256(uint256(1) << 255);
+  int256 constant INT256_MAX = int256(~(uint256(1) << 255));
+  uint256 constant UINT256_MIN = 0;
+  uint256 constant UINT256_MAX = ~uint256(0);
+  uint256 constant MSB_SET = 1 << 255;
+  uint256 constant ALL_BUT_MSB = MSB_SET - 1;
+
+  uint256 constant NUM_CHOICES = 2;
+  uint256 constant BITS_PER_VOTE = 2;
+  uint256 constant VOTES_PER_WORD = 127;
+  uint256 constant BASE_MASK = (1 << BITS_PER_VOTE) - 1;
+
+  function msb(uint256 x) public pure returns (uint8 r) {
+    if (x >= 0x100000000000000000000000000000000) {x >>= 128; r += 128;}
+    if (x >= 0x10000000000000000) {x >>= 64; r += 64;}
+    if (x >= 0x100000000) {x >>= 32; r += 32;}
+    if (x >= 0x10000) {x >>= 16; r += 16;}
+    if (x >= 0x100) {x >>= 8; r += 8;}
+    if (x >= 0x10) {x >>= 4; r += 4;}
+    if (x >= 0x4) {x >>= 2; r += 2;}
+    if (x >= 0x2) r += 1; // No need to shift x anymore
+  }
+
+  enum BallotBoxState {Uninitialized, PrepayingGas, Active, Inactive}
+  enum ProposalState {Uninitialized, Accepted, Rejected, Contested, Completed}
+
+  struct BallotBox {
+    BallotBoxState state;
+
+    uint256 votesWords;
+    uint256 paidSlots;
+
+    mapping (uint256 => uint256) votes;
+    mapping (uint256 => uint256) voteCount;
+    mapping (uint256 => uint256) payGas1;
+    mapping (uint256 => uint256) payGas2;
   }
 
   struct Proposal {
@@ -107,13 +137,128 @@ contract KingAutomaton {
     string documentsLink;
     bytes documentsHash;
 
-    uint256 yesVotes;
-    uint256 noVotes;
+    ProposalState state;
+
+    uint256 probationEndDate;
+    uint256 probationPeriod;
+    uint256 approvalPercentage;
   }
 
-  Proposal[] proposals;
+  bool public debugging = false;
 
-  function initTreasury() private {
+  mapping (uint256 => BallotBox) public ballot_boxes;
+
+  modifier validBallotBoxID(uint256 id) {
+    require(ballot_boxes[id].state != BallotBoxState.Uninitialized, "Invalid ballot box ID!");
+    _;
+  }
+
+  modifier activeBallot(uint256 id) {
+    require(ballot_boxes[id].state == BallotBoxState.Active, "Ballot is not active!");
+    _;
+  }
+
+  modifier debugOnly() {
+    require(debugging, "Available only in debug mode!");
+    _;
+  }
+
+  function initTreasury() private {}
+
+  function createBallotBox(uint256 id) public {
+    require(ballot_boxes[id].state == BallotBoxState.Uninitialized);
+
+    BallotBox storage p = ballot_boxes[id];
+    p.state = BallotBoxState.PrepayingGas;
+    p.votesWords = (slots.length + VOTES_PER_WORD - 1) / VOTES_PER_WORD;
+
+    for (uint i = 0; i <= NUM_CHOICES; i++) {
+      p.voteCount[i] = MSB_SET;
+    }
+
+    payForGas(id, 1);
+  }
+
+  function unpaidSlots(uint256 ballot_box_id) public view validBallotBoxID(ballot_box_id) returns (uint256) {
+    return slots.length - ballot_boxes[ballot_box_id].paidSlots;
+  }
+
+  // FOR TEST PURPOSES, TO BE DELETED
+  function setOwner(uint256 _slot, address new_owner) public debugOnly {
+    slots[_slot].owner = new_owner;
+  }
+
+  // Pay for multiple slots at once, 32 seems to be a reasonable amount.
+  function payForGas(uint256 ballot_box_id, uint256 _slotsToPay) public validBallotBoxID(ballot_box_id) {
+    BallotBox storage p = ballot_boxes[ballot_box_id];
+    require((slots.length - p.paidSlots) >= _slotsToPay, "Too many slots!");
+    uint _newLength = p.paidSlots + _slotsToPay;
+    for (uint i = 1; i <= _slotsToPay; i++) {
+      uint idx = _newLength - i;
+      p.payGas1[idx] = p.payGas2[idx] = MSB_SET;
+      if (_newLength - i <= p.votesWords) {
+        p.votes[idx] = MSB_SET;
+      }
+    }
+    p.paidSlots = _newLength;
+    if (p.paidSlots == slots.length) {
+        p.state = BallotBoxState.Active;
+    }
+  }
+
+  function calcVoteDifference(uint256 ballot_box_id) view private validBallotBoxID(ballot_box_id) returns (uint256) {
+    BallotBox storage p = ballot_boxes[ballot_box_id];
+    uint256 yes = p.voteCount[1];
+    uint256 no = p.voteCount[2];
+    if (yes > no) {
+      return (yes - no) / slots.length;
+    }
+    return (no - yes) / slots.length;
+  }
+
+  function castVote(uint256 ballot_box_id, uint256 _slot, uint8 _choice)
+      public validBallotBoxID(ballot_box_id) activeBallot(ballot_box_id) {
+    BallotBox storage p = ballot_boxes[ballot_box_id];
+    require(msg.sender == slots[_slot].owner, "Invalid slot owner");
+    require(_choice <= 2, "Invalid choice");
+
+    // Calculate masks.
+    uint index = _slot / VOTES_PER_WORD;
+    uint offset = (_slot % VOTES_PER_WORD) * BITS_PER_VOTE;
+    uint mask = BASE_MASK << offset;
+
+    // Reduce the vote count.
+    uint vote = p.votes[index];
+    uint oldChoice = (vote & mask) >> offset;
+    if (oldChoice > 0) {
+      p.voteCount[oldChoice]--;
+    }
+
+    // Modify vote selection.
+    vote &= (mask ^ UINT256_MAX);   // get rid of current choice using a mask.
+    vote |= _choice << offset;      // replace current choice using a mask.
+    p.votes[index] = vote;          // actually update the storage slot.
+    p.voteCount[_choice]++;         // update the total vote count based on the choice.
+
+    // Incentivize voters by giving them a refund.
+    p.payGas1[_slot] = 0;
+    p.payGas2[_slot] = 0;
+  }
+
+  function getVote(uint256 ballot_box_id, uint256 _slot) public view validBallotBoxID(ballot_box_id) returns (uint) {
+    BallotBox storage p = ballot_boxes[ballot_box_id];
+
+    // Calculate masks.
+    uint index = _slot / VOTES_PER_WORD;
+    uint offset = (_slot % VOTES_PER_WORD) * BITS_PER_VOTE;
+    uint mask = BASE_MASK << offset;
+
+    // Get vote
+    return (p.votes[index] & mask) >> offset;
+  }
+
+  function getVoteCount(uint256 ballot_box_id, uint256 _choice) public view validBallotBoxID(ballot_box_id) returns(uint256) {
+    return ballot_boxes[ballot_box_id].voteCount[_choice] & ALL_BUT_MSB;
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////
