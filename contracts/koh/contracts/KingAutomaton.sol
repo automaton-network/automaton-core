@@ -137,7 +137,7 @@ contract KingAutomaton {
     _;
   }
 
-  modifier isDebug() {
+  modifier debugOnly() {
     require(debugging, "Available only in debug mode!");
     _;
   }
@@ -190,7 +190,7 @@ contract KingAutomaton {
   }
 
   // FOR TEST PURPOSES, TO BE DELETED
-  function setOwner(uint256 _slot, address new_owner) public isDebug {
+  function setOwner(uint256 _slot, address new_owner) public debugOnly {
     slots[_slot].owner = new_owner;
   }
 
