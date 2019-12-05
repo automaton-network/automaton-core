@@ -13,6 +13,7 @@ contract KingAutomaton {
     // Check if we're on a testnet (We will not using predefined mask when going live)
     if (predefinedMask != 0) {
       // If so, fund the owner for debugging purposes.
+      debugging = true;
       mint(msg.sender, 1000000 ether);
     }
   }
@@ -118,7 +119,7 @@ contract KingAutomaton {
     uint256 approvalPercentage;
 
     uint256 votesWords;
-    uint256 paidVotes;
+    uint256 paidSlots;
 
     mapping (uint256 => uint256) votes;
     mapping (uint256 => uint256) voteCount;
@@ -126,13 +127,18 @@ contract KingAutomaton {
     mapping (uint256 => uint256) payGas2;
   }
 
+  bool public debugging = false;
+
   mapping (uint256 => Proposal) public proposals;
 
   modifier validProposalID(uint256 id) {
   ProposalState state = proposals[id].state;
-    require(state == ProposalState.PrepayingGas || state == ProposalState.Started ||
-        state == ProposalState.Accepted || state == ProposalState.Rejected ||
-        state == ProposalState.InProbation || state == ProposalState.Completed, "Invalid proposal ID!");
+    require(state != ProposalState.Uninitialized, "Invalid proposal ID!");
+    _;
+  }
+
+  modifier isDebug() {
+    require(debugging, "Available only in debug mode!");
     _;
   }
 
@@ -171,32 +177,28 @@ contract KingAutomaton {
     p.approvalPercentage = approval_percentage;
 
     p.votesWords = (slots.length + VOTES_PER_WORD - 1) / VOTES_PER_WORD;
-    p.paidVotes = MSB_SET;
 
     for (uint i = 0; i <= NUM_CHOICES; i++) {
       p.voteCount[i] = MSB_SET;
     }
+
+    payForGas(id, 1);
   }
 
   function unpaidSlots(uint256 proposal_id) public view validProposalID(proposal_id) returns (uint256) {
-    Proposal storage p = proposals[proposal_id];
-    if (p.paidVotes == MSB_SET) {
-      return slots.length;
-    }
-    return slots.length - p.paidVotes;
+    return slots.length - proposals[proposal_id].paidSlots;
   }
 
   // FOR TEST PURPOSES, TO BE DELETED
-  function setOwner(uint256 _slot, address new_owner) public {
+  function setOwner(uint256 _slot, address new_owner) public isDebug {
     slots[_slot].owner = new_owner;
   }
 
   // Pay for multiple slots at once, 32 seems to be a reasonable amount.
   function payForGas(uint256 proposal_id, uint256 _slotsToPay) public validProposalID(proposal_id) {
     Proposal storage p = proposals[proposal_id];
-    uint256 unpaid_slots = unpaidSlots(proposal_id);
-    require(unpaid_slots >= _slotsToPay, "Too many slots!");
-    uint _newLength = slots.length - unpaid_slots + _slotsToPay;
+    require((slots.length - p.paidSlots) >= _slotsToPay, "Too many slots!");
+    uint _newLength = p.paidSlots + _slotsToPay;
     for (uint i = 1; i <= _slotsToPay; i++) {
       uint idx = _newLength - i;
       p.payGas1[idx] = p.payGas2[idx] = MSB_SET;
@@ -204,8 +206,8 @@ contract KingAutomaton {
         p.votes[idx] = MSB_SET;
       }
     }
-    p.paidVotes = _newLength;
-    if (p.paidVotes == slots.length) {
+    p.paidSlots = _newLength;
+    if (p.paidSlots == slots.length) {
         p.state = ProposalState.Started;
     }
   }
