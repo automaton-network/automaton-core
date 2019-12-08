@@ -44,7 +44,7 @@ module.exports = {
     //
     development: {
       host: "127.0.0.1",     // Localhost (default: none)
-      port: 9545,            // Standard Ethereum port (default: none)
+      port: 7545,            // Standard Ethereum port (default: none)
       network_id: "*",       // Any network (default: none)
       accounts: 10,
       defaultEtherBalance: 1000
@@ -82,7 +82,8 @@ module.exports = {
       host: "127.0.0.1",
       port: 7545,
       network_id: "*",
-      gasPrice: 3000000000,  // 3 gwei (in wei) (default: 100 gwei)
+      gas: 5500000,          // Ropsten has a lower block limit than mainnet
+      gasPrice: 1000000000,  // 3 gwei (in wei) (default: 100 gwei)
     },
 
     aws: {
@@ -108,7 +109,7 @@ module.exports = {
           enabled: true,
           runs: 200
         },
-        evmVersion: "byzantium"
+        evmVersion: "constantinople"
       }
     }
   }
