@@ -369,20 +369,29 @@ contract KingAutomaton {
     // Make sure the signature is valid.
     require(verifySignature(pubKeyX, pubKeyY, bytes32(uint256(msg.sender)), v, r, s), "Signature not valid");
 
+    require(totalSupply < maxSupply, "Cap reached");
 
+    /*
+      Test in python:
+
+      eth = 1000000000000000000.0
+      def f(timeHours, totalSupply):
+        rewardPerSlotPerSecond = 71716308593750000 # 64K slots, 406080000 reward per day
+        timeDelta = timeHours * 3600 # time in seconds
+        maxSupply = 1000000000000000000000000000000
+        k = (1 << 128) - (((totalSupply * totalSupply) / maxSupply) << 128) / maxSupply
+        reward = (timeDelta * rewardPerSlotPerSecond * k) >> 128
+        return reward
+    */
     // Kick out prior king if any and reward them.
     uint256 lastTime = slots[slot].last_claim_time;
     if (lastTime != 0) {
-      require (lastTime < now, "mining same slot in same block or clock is wrong");
+      require (lastTime < now, "mining same slot in same block not allowed!");
 
-      // TODO(asen): Implement reward decaying over time.
-      // r = t * d * (1 - (c / m) ^ 2)
-      // r - reward
-      // t - time slot owned by validator in seconds
-      // d - initial slot reward per second
-      // c, m - current, max supply
+      // Fixed integer math based on the following formula:
+      // reward = time * rewardRate * (1 - (totalSupply / maxSupply) ^ 2)
       uint256 timeDelta = now - lastTime;
-      uint256 k = 1 << 128;
+      uint256 k = (1 << 128 - k) - (((totalSupply * totalSupply) / maxSupply) << 128) / maxSupply;
       uint256 reward = (timeDelta * rewardPerSlotPerSecond * k) >> 128;
       mint(address(treasuryAddress), reward);
       mint(slots[slot].owner, reward);
