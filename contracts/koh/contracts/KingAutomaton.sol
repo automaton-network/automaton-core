@@ -24,12 +24,13 @@ contract KingAutomaton {
 
   // Special purpose community managed addresses.
   address treasuryAddress = address(1);
-  address exchangeAddress = address(2);
+  address DEXAddress = address(2);
 
   string public constant name = "Automaton Network Validator Bootstrap";
   string public constant symbol = "AUTO";
   uint8 public constant decimals = 18;
   uint256 public totalSupply = 0;
+  uint256 public maxSupply = 1000000000000 ether;
 
   // solhint-disable-next-line no-simple-event-func-name
   event Transfer(address indexed _from, address indexed _to, uint256 _value);
@@ -73,7 +74,7 @@ contract KingAutomaton {
     return allowed[_owner][_spender];
   }
 
-  // This is only to be used with special purpose community accounts like Treasury, Exchange.
+  // This is only to be used with special purpose community accounts like Treasury, DEX.
   // Those accounts help to represent the total supply correctly.
   function transferInternal(address _from, address _to, uint256 _value) private returns (bool success) {
     require(balances[_from] >= _value, "Insufficient balance");
@@ -368,15 +369,23 @@ contract KingAutomaton {
     // Make sure the signature is valid.
     require(verifySignature(pubKeyX, pubKeyY, bytes32(uint256(msg.sender)), v, r, s), "Signature not valid");
 
-    // TODO(asen): Implement reward decaying over time.
 
     // Kick out prior king if any and reward them.
-    uint256 last_time = slots[slot].last_claim_time;
-    if (last_time != 0) {
-      require (last_time < now, "mining same slot in same block or clock is wrong");
-      uint256 value = (now - last_time) * rewardPerSlotPerSecond;
-      mint(address(treasuryAddress), value);
-      mint(slots[slot].owner, value);
+    uint256 lastTime = slots[slot].last_claim_time;
+    if (lastTime != 0) {
+      require (lastTime < now, "mining same slot in same block or clock is wrong");
+
+      // TODO(asen): Implement reward decaying over time.
+      // r = t * d * (1 - (c / m) ^ 2)
+      // r - reward
+      // t - time slot owned by validator in seconds
+      // d - initial slot reward per second
+      // c, m - current, max supply
+      uint256 timeDelta = now - lastTime;
+      uint256 k = 1 << 128;
+      uint256 reward = (timeDelta * rewardPerSlotPerSecond * k) >> 128;
+      mint(address(treasuryAddress), reward);
+      mint(slots[slot].owner, reward);
     } else {
       // Reward first time validators as if they held the slot for 1 hour.
       uint256 value = (3600) * rewardPerSlotPerSecond;
@@ -408,6 +417,7 @@ contract KingAutomaton {
 
   function initNames() private {
     registerUserInternal(treasuryAddress, "Treasury", "");
+    registerUserInternal(DEXAddress, "DEX", "");
   }
 
   function getUserName(address addr) public view returns (string memory) {
@@ -421,7 +431,7 @@ contract KingAutomaton {
     mapUsersInfo[addr].info = info;
   }
 
-  function registerUser(string memory userName, string memory info) public {
+  function registerUser(string calldata userName, string calldata info) external {
     require(mapNameToUser[userName] == address(0));
     registerUserInternal(msg.sender, userName, info);
   }
@@ -444,8 +454,8 @@ contract KingAutomaton {
 
   Order[] public orders;
 
-  function getExchangeBalance() public view returns (uint256) {
-    return balanceOf(exchangeAddress);
+  function getDEXBalance() public view returns (uint256) {
+    return balanceOf(DEXAddress);
   }
 
   function removeOrder(uint256 _id) private {
@@ -478,7 +488,7 @@ contract KingAutomaton {
   function sell(uint256 _AUTO, uint256 _ETH) public returns (uint256 _id){
     require(_AUTO >= minOrderAUTO, "Minimum AUTO requirement not met");
     require(_ETH >= minOrderETH, "Minimum ETH requirement not met");
-    transfer(exchangeAddress, _AUTO);
+    transfer(DEXAddress, _AUTO);
     _id = orders.length;
     orders.push(Order(_AUTO, _ETH, msg.sender, OrderType.Sell));
   }
@@ -490,7 +500,7 @@ contract KingAutomaton {
     require(o.ETH == msg.value, "Order ETH does not match requested size");
     require(o.orderType == OrderType.Sell, "Invalid order type");
     o.owner.transfer(msg.value);
-    transferInternal(exchangeAddress, msg.sender, _AUTO);
+    transferInternal(DEXAddress, msg.sender, _AUTO);
     removeOrder(_id);
   }
 
@@ -503,7 +513,7 @@ contract KingAutomaton {
     }
 
     if (o.orderType == OrderType.Sell) {
-      transferInternal(exchangeAddress, msg.sender, o.AUTO);
+      transferInternal(DEXAddress, msg.sender, o.AUTO);
     }
 
     removeOrder(_id);
