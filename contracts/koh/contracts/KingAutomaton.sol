@@ -391,7 +391,7 @@ contract KingAutomaton {
       // Fixed integer math based on the following formula:
       // reward = time * rewardRate * (1 - (totalSupply / maxSupply) ^ 2)
       uint256 timeDelta = now - lastTime;
-      uint256 k = (1 << 128 - k) - (((totalSupply * totalSupply) / maxSupply) << 128) / maxSupply;
+      uint256 k = (1 << 128) - (((totalSupply * totalSupply) / maxSupply) << 128) / maxSupply;
       uint256 reward = (timeDelta * rewardPerSlotPerSecond * k) >> 128;
       mint(address(treasuryAddress), reward);
       mint(slots[slot].owner, reward);
