@@ -106,6 +106,9 @@ contract KingAutomaton {
   uint256 constant VOTES_PER_WORD = 127;
   uint256 constant BASE_MASK = (1 << BITS_PER_VOTE) - 1;
   uint256 constant PROPOSAL_START_PERIOD = 90 seconds; // 1 weeks;
+  uint256 constant CONTEST_PERIOD = 90 seconds;  //
+  int256 constant APPROVAL_PERCENTAGE = 50;
+  int256 constant CONTEST_PERCENTAGE = -10;
 
   uint256 private ballot_box_ids = 1;
 
@@ -145,9 +148,6 @@ contract KingAutomaton {
 
     uint256 initialEndDate;
     uint256 contestEndDate;
-    uint256 contestPeriod;
-    int256 approvalPercentage;
-    int256 contestPercentage;
   }
 
   bool public debugging = false;
@@ -160,10 +160,8 @@ contract KingAutomaton {
     _;
   }
 
-  modifier activeBallot(uint256 id) {
-    require(ballot_boxes[id].state != BallotBoxState.Uninitialized, "Invalid ballot box ID!");
-    updateProposalState(id);
-    require(ballot_boxes[id].state == BallotBoxState.Active, "Ballot is not active!");
+  modifier slotOwner(uint256 _slot) {
+    require(msg.sender == slots[_slot].owner, "Invalid slot owner");
     _;
   }
 
@@ -176,42 +174,35 @@ contract KingAutomaton {
 
   function createBallotBox() public returns (uint256) {
     uint256 id = ++ballot_box_ids;
-    BallotBox storage p = ballot_boxes[id];
-    p.state = BallotBoxState.PrepayingGas;
-    p.votesWords = (slots.length + VOTES_PER_WORD - 1) / VOTES_PER_WORD;
+    BallotBox storage b = ballot_boxes[id];
+    b.state = BallotBoxState.PrepayingGas;
+    b.votesWords = (slots.length + VOTES_PER_WORD - 1) / VOTES_PER_WORD;
 
     for (uint i = 0; i <= NUM_CHOICES; i++) {
-      p.voteCount[i] = MSB_SET;
+      b.voteCount[i] = MSB_SET;
     }
 
     payForGas(id, 1);
     return id;
   }
 
-  function createProposal(address payable contributor, string memory title, string memory documents_link,
-      bytes memory documents_hash, uint256 contest_period, int256 approval_percentage, int256 contest_percentage)
-      public returns (uint256) {
-    require(approval_percentage > contest_percentage, "Invalid percentages!");
+  function createProposal(address payable contributor, string calldata title, string calldata documents_link,
+      bytes calldata documents_hash) external returns (uint256) {
     uint256 id = createBallotBox();
     Proposal storage p = proposals[id];
     p.contributor = contributor;
     p.title = title;
     p.documentsLink = documents_link;
     p.documentsHash = documents_hash;
-
     p.state = ProposalState.Started;
-
     p.initialEndDate = now + PROPOSAL_START_PERIOD;
     p.contestEndDate = MSB_SET;
-    p.contestPeriod = contest_period;
-    p.approvalPercentage = approval_percentage;
-    p.contestPercentage = contest_percentage;
 
     return id;
   }
 
-  function unpaidSlots(uint256 ballot_box_id) public view validBallotBoxID(ballot_box_id) returns (uint256) {
-    return slots.length - ballot_boxes[ballot_box_id].paidSlots;
+  function unpaidSlots(uint256 _id) public view validBallotBoxID(_id) returns (uint256) {
+    return slots.length - ballot_boxes[_id].paidSlots;
   }
 
   // FOR TEST PURPOSES, TO BE DELETED
@@ -220,10 +211,12 @@ contract KingAutomaton {
   }
 
   // Pay for multiple slots at once, 32 seems to be a reasonable amount.
-  function payForGas(uint256 ballot_box_id, uint256 _slotsToPay) public validBallotBoxID(ballot_box_id) {
-    BallotBox storage b = ballot_boxes[ballot_box_id];
-    require((slots.length - b.paidSlots) >= _slotsToPay, "Too many slots!");
-    uint _newLength = b.paidSlots + _slotsToPay;
+  function payForGas(uint256 _id, uint256 _slotsToPay) public validBallotBoxID(_id) {
+    BallotBox storage b = ballot_boxes[_id];
+    uint256 _paidSlots = b.paidSlots;
+    uint256 _slotsLength = slots.length;
+    require((_slotsLength - _paidSlots) >= _slotsToPay, "Too many slots!");
+    uint _newLength = _paidSlots + _slotsToPay;
     for (uint i = 1; i <= _slotsToPay; i++) {
       uint idx = _newLength - i;
       b.payGas1[idx] = b.payGas2[idx] = MSB_SET;
@@ -232,22 +225,23 @@ contract KingAutomaton {
       }
     }
     b.paidSlots = _newLength;
-    if (b.paidSlots == slots.length) {
+    if (_newLength == _slotsLength) {
         b.state = BallotBoxState.Active;
     }
   }
 
-  function calcVoteDifference(uint256 ballot_box_id) view private validBallotBoxID(ballot_box_id) returns (int256) {
-    BallotBox storage p = ballot_boxes[ballot_box_id];
-    uint256 yes = p.voteCount[1];
-    uint256 no = p.voteCount[2];
-    return int256(yes - no) * 100 / int256(slots.length);
+  function calcVoteDifference(uint256 _id) view public validBallotBoxID(_id) returns (int256) {
+    BallotBox storage b = ballot_boxes[_id];
+    int256 yes = int256(b.voteCount[1]);
+    int256 no = int256(b.voteCount[2]);
+    return (yes - no) * 100 / int256(slots.length);
   }
 
-  function castVote(uint256 ballot_box_id, uint256 _slot, uint8 _choice) public activeBallot(ballot_box_id) {
-    BallotBox storage p = ballot_boxes[ballot_box_id];
-    require(msg.sender == slots[_slot].owner, "Invalid slot owner");
+  function castVote(uint256 _id, uint256 _slot, uint8 _choice) public slotOwner(_slot) validBallotBoxID(_id) {
+    updateProposalState(_id);
     require(_choice <= 2, "Invalid choice");
+    BallotBox storage b = ballot_boxes[_id];
+    require(b.state == BallotBoxState.Active, "Ballot is not active!");
 
     // Calculate masks.
     uint index = _slot / VOTES_PER_WORD;
@@ -255,83 +249,96 @@ contract KingAutomaton {
     uint mask = BASE_MASK << offset;
 
     // Reduce the vote count.
-    uint vote = p.votes[index];
+    uint vote = b.votes[index];
     uint oldChoice = (vote & mask) >> offset;
     if (oldChoice > 0) {
-      p.voteCount[oldChoice]--;
+      b.voteCount[oldChoice]--;
     }
 
     // Modify vote selection.
     vote &= (mask ^ UINT256_MAX);   // get rid of current choice using a mask.
     vote |= _choice << offset;      // replace current choice using a mask.
-    p.votes[index] = vote;          // actually update the storage slot.
-    p.voteCount[_choice]++;         // update the total vote count based on the choice.
+    b.votes[index] = vote;          // actually update the storage slot.
+    b.voteCount[_choice]++;         // update the total vote count based on the choice.
 
     // Incentivize voters by giving them a refund.
-    p.payGas1[_slot] = 0;
-    p.payGas2[_slot] = 0;
+    b.payGas1[_slot] = 0;
+    b.payGas2[_slot] = 0;
 
-    // updateProposalState(ballot_box_id);
+    // updateProposalState(_id);
   }
 
-  function getVote(uint256 ballot_box_id, uint256 _slot) public view validBallotBoxID(ballot_box_id) returns (uint) {
-    BallotBox storage p = ballot_boxes[ballot_box_id];
-
+  function getVote(uint256 _id, uint256 _slot) public view validBallotBoxID(_id) returns (uint) {
     // Calculate masks.
     uint index = _slot / VOTES_PER_WORD;
     uint offset = (_slot % VOTES_PER_WORD) * BITS_PER_VOTE;
     uint mask = BASE_MASK << offset;
 
     // Get vote
-    return (p.votes[index] & mask) >> offset;
+    return (ballot_boxes[_id].votes[index] & mask) >> offset;
   }
 
-  function getVoteCount(uint256 ballot_box_id, uint256 _choice) public view
-      validBallotBoxID(ballot_box_id) returns(uint256) {
-    return ballot_boxes[ballot_box_id].voteCount[_choice] & ALL_BUT_MSB;
+  function getVoteCount(uint256 _id, uint256 _choice) public view
+      validBallotBoxID(_id) returns(uint256) {
+    return ballot_boxes[_id].voteCount[_choice] & ALL_BUT_MSB;
   }
 
-  function completeProposal(uint256 id) private activeBallot(id) {
-    Proposal storage p = proposals[id];
-    require(p.state == ProposalState.Started || p.state == ProposalState.Contested, "Invalid proposal state!");
-    BallotBox storage b = ballot_boxes[id];
+  function completeProposal(uint256 _id) private {
+    updateProposalState(_id);
+    BallotBox storage b = ballot_boxes[_id];
+    require(b.state == BallotBoxState.Active, "Ballot is not active!");
+    Proposal storage p = proposals[_id];
+    ProposalState p_state = p.state;
+    require(p_state == ProposalState.Started || p_state == ProposalState.Contested, "Invalid proposal state!");
     p.state = ProposalState.Completed;
     b.state = BallotBoxState.Inactive;
   }
 
-  function updateProposalState(uint256 id) public validBallotBoxID(id) {
-    Proposal storage p = proposals[id];
-    if (p.state == ProposalState.Uninitialized) {  // There is no proposal linked to this ballot
+  function updateProposalState(uint256 _id) public validBallotBoxID(_id) {
+    Proposal storage p = proposals[_id];
+    ProposalState p_state = p.state;
+    if (p_state == ProposalState.Uninitialized) {  // There is no proposal linked to this ballot
       return;
     }
-
-    require(p.state == ProposalState.Started || p.state == ProposalState.Contested ||
-        p.state == ProposalState.Accepted, "Invalid proposal state!");
-
-    BallotBox storage b = ballot_boxes[id];
-    if (b.state == BallotBoxState.PrepayingGas && now > p.initialEndDate) {  // Gas was not paid
-      p.state = ProposalState.Rejected;
-      b.state = BallotBoxState.Inactive;
-      return;
-    }
-    require(b.state == BallotBoxState.Active, "Ballot is not active!");
-
-    int256 vote_diff = calcVoteDifference(id);
-    if (p.state == ProposalState.Accepted && vote_diff <= p.contestPercentage) {
-      p.state = ProposalState.Contested;
-      p.contestEndDate = now + p.contestPeriod;
-      return;
-    }
-
-    if ((p.state == ProposalState.Started && p.initialEndDate > now) ||
-        (p.state == ProposalState.Contested && p.contestEndDate > now) ) {
-      return;
-    }
-    if (vote_diff >= p.approvalPercentage) {
-      p.state = ProposalState.Accepted;
-    } else {
-      p.state = ProposalState.Rejected;
-      b.state = BallotBoxState.Inactive;
+    if (p_state == ProposalState.Started) {
+      if (p.initialEndDate > now) {
+        return;
+      } else {
+        BallotBox storage b = ballot_boxes[_id];
+        if (b.state != BallotBoxState.Active) {
+          p.state = ProposalState.Rejected;
+          b.state = BallotBoxState.Inactive;
+        } else {
+          int256 vote_diff = calcVoteDifference(_id);
+          if (vote_diff >= APPROVAL_PERCENTAGE) {
+            p.state = ProposalState.Accepted;
+          } else {
+            p.state = ProposalState.Rejected;
+            b.state = BallotBoxState.Inactive;
+          }
+        }
+      }
+    } else if (p_state == ProposalState.Accepted) {
+      // BallotBox storage b = ballot_boxes[_id];
+      // require(b.state == BallotBoxState.Active, "Ballot is not active!");
+      int256 vote_diff = calcVoteDifference(_id);
+      if (vote_diff <= CONTEST_PERCENTAGE) {
+        p.state = ProposalState.Contested;
+        p.contestEndDate = now + CONTEST_PERIOD;
+      }
+    } else if (p_state == ProposalState.Contested) {
+      // BallotBox storage b = ballot_boxes[_id];
+      // require(b.state == BallotBoxState.Active, "Ballot is not active!");
+      if (p.contestEndDate > now) {
+        return;
+      }
+      int256 vote_diff = calcVoteDifference(_id);
+      if (vote_diff >= APPROVAL_PERCENTAGE) {
+        p.state = ProposalState.Accepted;
+      } else {
+        p.state = ProposalState.Rejected;
+        ballot_boxes[_id].state = BallotBoxState.Inactive;
+      }
     }
   }
 
