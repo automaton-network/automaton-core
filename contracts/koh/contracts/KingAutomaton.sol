@@ -126,6 +126,28 @@ contract KingAutomaton {
   enum BallotBoxState {Uninitialized, PrepayingGas, Active, Inactive}
   enum ProposalState {Uninitialized, Started, Accepted, Rejected, Contested, Completed}
 
+  /*
+  ##################################
+  # BallotBoxState # ProposalState #
+  ##################################
+  # Uninitialized  # Uninitialized #
+  # -------------- # ------------- #
+  # Any state      # Uninitialized # -> there is no proposal connected to this ballot
+  # -------------- # ------------- #
+  # PrepayingGas   # Started       #
+  # -------------- # ------------- #
+  # Active         # Started       # -> first period of voting until initialEndDate
+  #                # ------------- #
+  #                # Accepted      # -> enough "yes" votes during the initial voting period
+  #                # ------------- #
+  #                # Contested     # -> too many "no" votes after the first approval ot the proposal
+  # -------------- # ------------- #
+  # Inactive       # Rejected      # -> not enough "yes" votes during the initial period or during a contest period
+  #                # ------------- #
+  #                # Completed     # -> the proposal was successfully implemented
+  ##################################
+  */
+
   struct BallotBox {
     BallotBoxState state;
 
@@ -195,8 +217,8 @@ contract KingAutomaton {
     p.documentsLink = documents_link;
     p.documentsHash = documents_hash;
     p.state = ProposalState.Started;
-    p.initialEndDate = now + PROPOSAL_START_PERIOD;
     p.contestEndDate = MSB_SET;
+    p.initialEndDate = MSB_SET;
 
     return id;
   }
@@ -297,24 +319,21 @@ contract KingAutomaton {
   function updateProposalState(uint256 _id) public validBallotBoxID(_id) {
     Proposal storage p = proposals[_id];
     ProposalState p_state = p.state;
-    if (p_state == ProposalState.Uninitialized) {  // There is no proposal linked to this ballot
-      return;
-    }
+    uint256 _initialEndDate = p.initialEndDate;
     if (p_state == ProposalState.Started) {
-      if (p.initialEndDate > now) {
-        return;
-      } else {
-        BallotBox storage b = ballot_boxes[_id];
-        if (b.state != BallotBoxState.Active) {
-          p.state = ProposalState.Rejected;
-          b.state = BallotBoxState.Inactive;
-        } else {
+      BallotBox storage b = ballot_boxes[_id];
+      if (b.state == BallotBoxState.Active) {  // Gas is paid
+        if (now >= _initialEndDate) {
           int256 vote_diff = calcVoteDifference(_id);
           if (vote_diff >= APPROVAL_PERCENTAGE) {
             p.state = ProposalState.Accepted;
           } else {
             p.state = ProposalState.Rejected;
             b.state = BallotBoxState.Inactive;
+          }
+        } else {  // Either gas has been just paid and time hasn't been set or the initial time hasn't passed
+          if (_initialEndDate == MSB_SET) {
+            p.initialEndDate = now + PROPOSAL_START_PERIOD;
           }
         }
       }
@@ -329,15 +348,14 @@ contract KingAutomaton {
     } else if (p_state == ProposalState.Contested) {
       // BallotBox storage b = ballot_boxes[_id];
       // require(b.state == BallotBoxState.Active, "Ballot is not active!");
-      if (p.contestEndDate > now) {
-        return;
-      }
-      int256 vote_diff = calcVoteDifference(_id);
-      if (vote_diff >= APPROVAL_PERCENTAGE) {
-        p.state = ProposalState.Accepted;
-      } else {
-        p.state = ProposalState.Rejected;
-        ballot_boxes[_id].state = BallotBoxState.Inactive;
+      if (now >= p.contestEndDate) {
+        int256 vote_diff = calcVoteDifference(_id);
+        if (vote_diff >= APPROVAL_PERCENTAGE) {
+          p.state = ProposalState.Accepted;
+        } else {
+          p.state = ProposalState.Rejected;
+          ballot_boxes[_id].state = BallotBoxState.Inactive;
+        }
       }
     }
   }
