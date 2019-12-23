@@ -6,6 +6,11 @@ let catchStackOverflow     = require("./exceptions.js").catchStackOverflow;
 let catchStackUnderflow    = require("./exceptions.js").catchStackUnderflow;
 let catchStaticStateChange = require("./exceptions.js").catchStaticStateChange;
 
+let utils = require('./utils.js');
+let increaseTime = utils.increaseTime;
+
+const VOTE_YES = 1;
+const VOTE_NO = 2;
 
 describe('TestKingAutomatonProposals1', async() => {
   const KingAutomaton = artifacts.require("KingAutomaton");
@@ -13,7 +18,7 @@ describe('TestKingAutomatonProposals1', async() => {
   beforeEach(async() => {
     accounts = await web3.eth.getAccounts();
     account = accounts[0];
-    koh = await KingAutomaton.new(4, 16, "0x010000", "406080000");
+    koh = await KingAutomaton.new(4, 16, "0x010000", "406080000", 10, -10);
     id = await koh.createProposal.call(account, "", "", "0x");
     await koh.createProposal(account, "", "", "0x");
     proposal_start_period = 90;
@@ -30,21 +35,25 @@ describe('TestKingAutomatonProposals1', async() => {
     let proposal = await koh.proposals(id)
     let proposal_state = proposal.state;
     assert.equal(proposal_state, 1, "Proposal state is not Started!");
+    let approval_percentage = await koh.approval_percentage();
+    assert.equal(approval_percentage, 10, "Approval % in incorrect!");
+    let contest_percentage = await koh.contest_percentage();
+    assert.equal(contest_percentage, -10, "Contest % in incorrect!");
   });
 
   it("cast vote invalid slot owner", async() => {
     await koh.payForGas(id, 3);
-    await catchRevert(koh.castVote(id, 0, 1), "Invalid slot owner!");
+    await catchRevert(koh.castVote(id, 0, VOTE_YES), "Invalid slot owner!");
   });
 
   it("cast vote invalid ballot box id", async() => {
     await koh.setOwnerAllSlots();
-    await catchRevert(koh.castVote(200, 0, 1), "Invalid ballot box ID!");
+    await catchRevert(koh.castVote(200, 0, VOTE_YES), "Invalid ballot box ID!");
   });
 
   it("cast vote before gas is paid", async() => {
     await koh.setOwnerAllSlots();
-    await catchRevert(koh.castVote(id, 0, 1), "Ballot is not active!");
+    await catchRevert(koh.castVote(id, 0, VOTE_YES), "Ballot is not active!");
   });
 
   it("pay gas for more slots", async() => {
@@ -62,13 +71,13 @@ describe('TestKingAutomatonProposals1', async() => {
     assert.equal(pos_vote_count, 0, "Incorrect initial positive vote count!");
     assert.equal(neg_vote_count, 0, "Incorrect initial negative vote count!");
     // Cast positive vote
-    await koh.castVote(id, 0, 1);
+    await koh.castVote(id, 0, VOTE_YES);
     vote = await koh.getVote(id, 0);
     pos_vote_count = await koh.getVoteCount(id, 1);
     assert.equal(vote, 1, "Incorrect vote!");
     assert.equal(pos_vote_count, 1, "Incorrect positive vote count!");
     // Change vote
-    await koh.castVote(id, 0, 2);
+    await koh.castVote(id, 0, VOTE_NO);
     vote = await koh.getVote(id, 0);
     assert.equal(vote, 2, "Incorrect vote change!");
   });
@@ -85,7 +94,7 @@ describe('TestKingAutomatonProposals1', async() => {
     let proposal_state = proposal.state;
     assert.equal(proposal_state, 1, "Proposal state is not Started!");
     // Cast negative vote
-    await koh.castVote(id, 0, 2);
+    await koh.castVote(id, 0, VOTE_NO);
     await koh.updateProposalState(id);
     // States shouldn't change during initial time
     ballot = await koh.ballot_boxes(id);
@@ -94,12 +103,7 @@ describe('TestKingAutomatonProposals1', async() => {
     proposal = await koh.proposals(id)
     proposal_state = proposal.state;
     assert.equal(proposal_state, 1, "Proposal state is not Started!");
-    await await web3.currentProvider.send(
-        {jsonrpc: "2.0", method: "evm_increaseTime", params: [proposal_start_period], id: 0}, (err, result) => {
-        if (err) {
-          console.log(err);
-        }
-      });
+    increaseTime(proposal_start_period);
     await koh.updateProposalState(id);
     ballot = await koh.ballot_boxes(id);
     ballot_state = ballot.state;
@@ -116,13 +120,7 @@ describe('TestKingAutomatonProposals1', async() => {
     await koh.setOwnerAllSlots();
     await koh.payForGas(id, 3);
     await koh.updateProposalState(id);
-
-    await await web3.currentProvider.send(
-        {jsonrpc: "2.0", method: "evm_increaseTime", params: [proposal_start_period], id: 0}, (err, result) => {
-        if (err) {
-          console.log(err);
-        }
-      });
+    increaseTime(proposal_start_period);
     await koh.updateProposalState(id);
     let ballot = await koh.ballot_boxes(id);
     let ballot_state = ballot.state;
@@ -134,23 +132,14 @@ describe('TestKingAutomatonProposals1', async() => {
     assert.equal(vote_difference, 0, "Vote difference is incorrect!");
   });
 
-  // 2 positive 1 negative // 25% approval
-  it("approval then refection during initial voting", async() => {
+  it("approval then rejection during initial voting", async() => {
     await koh.setOwnerAllSlots();
     await koh.payForGas(id, 3);
 
-    // Cast 2 positive votes
-    await koh.castVote(id, 0, 1);
-    await koh.castVote(id, 1, 1);
-    // Cast negative vote
-    await koh.castVote(id, 2, 2);
+    await koh.castVotesForApproval(id);
+    await koh.castVotesForRejection(id);
 
-    await await web3.currentProvider.send(
-        {jsonrpc: "2.0", method: "evm_increaseTime", params: [proposal_start_period], id: 0}, (err, result) => {
-        if (err) {
-          console.log(err);
-        }
-      });
+    increaseTime(proposal_start_period);
     await koh.updateProposalState(id);
     let ballot = await koh.ballot_boxes(id);
     let ballot_state = ballot.state;
@@ -159,7 +148,6 @@ describe('TestKingAutomatonProposals1', async() => {
     let proposal_state = proposal.state;
     assert.equal(proposal_state, 3, "Proposal state is not Rejected!");
     let vote_difference = await koh.calcVoteDifference(id);
-    assert.equal(vote_difference, 25, "Vote difference is incorrect!");
   });
 
   it("contested then rejection", async() => {
@@ -167,14 +155,9 @@ describe('TestKingAutomatonProposals1', async() => {
     await koh.payForGas(id, 3);
 
     // Cast 2 positive votes
-    await koh.castVote(id, 0, 1);
-    await koh.castVote(id, 1, 1);
-    await await web3.currentProvider.send(
-        {jsonrpc: "2.0", method: "evm_increaseTime", params: [proposal_start_period], id: 0}, (err, result) => {
-        if (err) {
-          console.log(err);
-        }
-      });
+    await koh.castVote(id, 0, VOTE_YES);
+    await koh.castVote(id, 1, VOTE_YES);
+    increaseTime(proposal_start_period);
     await koh.updateProposalState(id);
     let ballot = await koh.ballot_boxes(id);
     let ballot_state = ballot.state;
@@ -194,12 +177,7 @@ describe('TestKingAutomatonProposals1', async() => {
     assert.equal(proposal_state, 4, "Proposal state is not Contested!");
 
     // Wait for contest to end
-    await await web3.currentProvider.send(
-        {jsonrpc: "2.0", method: "evm_increaseTime", params: [contest_period], id: 0}, (err, result) => {
-        if (err) {
-          console.log(err);
-        }
-      });
+    increaseTime(contest_period);
     await koh.updateProposalState(id);
     ballot = await koh.ballot_boxes(id);
     ballot_state = ballot.state;
@@ -214,15 +192,10 @@ describe('TestKingAutomatonProposals1', async() => {
     await koh.payForGas(id, 3);
 
     // Cast 2 positive votes
-    await koh.castVote(id, 0, 1);
-    await koh.castVote(id, 1, 1);
+    await koh.castVote(id, 0, VOTE_YES);
+    await koh.castVote(id, 1, VOTE_YES);
     await koh.updateProposalState(id);
-    await await web3.currentProvider.send(
-        {jsonrpc: "2.0", method: "evm_increaseTime", params: [proposal_start_period], id: 0}, (err, result) => {
-        if (err) {
-          console.log(err);
-        }
-      });
+    increaseTime(proposal_start_period);
     await koh.updateProposalState(id);
     let ballot = await koh.ballot_boxes(id);
     let ballot_state = ballot.state;
@@ -252,14 +225,8 @@ describe('TestKingAutomatonProposals1', async() => {
     proposal_state = proposal.state;
     assert.equal(proposal_state, 4, "Proposal state is not Contested!");
 
-
     // Wait for contest to end
-    await await web3.currentProvider.send(
-        {jsonrpc: "2.0", method: "evm_increaseTime", params: [contest_period], id: 0}, (err, result) => {
-        if (err) {
-          console.log(err);
-        }
-      });
+    increaseTime(contest_period);
     await koh.updateProposalState(id);
     ballot = await koh.ballot_boxes(id);
     ballot_state = ballot.state;

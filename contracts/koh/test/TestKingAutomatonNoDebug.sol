@@ -9,7 +9,7 @@ contract TestKingAutomatonNoDebug {
 
   function beforeEach() public {
     // Set mask to 0 as it should be in the live contract.
-    koh = new KingAutomaton(16, 4, 0, 406080000);
+    koh = new KingAutomaton(16, 4, 0, 406080000, 10, -10);
   }
 
   function afterEach() public {

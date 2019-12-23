@@ -5,11 +5,14 @@ contract KingAutomaton {
   // Initialization
   //////////////////////////////////////////////////////////////////////////////////////////////////
 
-  constructor(uint256 numSlots, uint8 minDifficultyBits, uint256 predefinedMask, uint256 initialDailySupply) public {
+  constructor(uint256 numSlots, uint8 minDifficultyBits, uint256 predefinedMask, uint256 initialDailySupply,
+    int256 approval_perc, int256 contest_perc) public {
     initMining(numSlots, minDifficultyBits, predefinedMask, initialDailySupply);
     initNames();
     initTreasury();
 
+    approval_percentage = approval_perc;
+    contest_percentage = contest_perc;
     // Check if we're on a testnet (We will not using predefined mask when going live)
     if (predefinedMask != 0) {
       // If so, fund the owner for debugging purposes.
@@ -105,10 +108,11 @@ contract KingAutomaton {
   uint256 constant BITS_PER_VOTE = 2;
   uint256 constant VOTES_PER_WORD = 127;
   uint256 constant BASE_MASK = (1 << BITS_PER_VOTE) - 1;
-  uint256 constant PROPOSAL_START_PERIOD = 90 seconds; // 1 weeks;
-  uint256 constant CONTEST_PERIOD = 90 seconds;  //
-  int256 constant APPROVAL_PERCENTAGE = 50;
-  int256 constant CONTEST_PERCENTAGE = -10;
+  uint256 public constant PROPOSAL_START_PERIOD = 90 seconds; // 1 weeks;
+  uint256 public constant CONTEST_PERIOD = 90 seconds;  //
+
+  int256 public approval_percentage;
+  int256 public contest_percentage;
 
   uint256 private ballot_box_ids = 1;
 
@@ -323,7 +327,7 @@ contract KingAutomaton {
         if (_initialEndDate != 0) {
           if (now >= _initialEndDate) {
             int256 vote_diff = calcVoteDifference(_id);
-            if (vote_diff >= APPROVAL_PERCENTAGE) {
+            if (vote_diff >= approval_percentage) {
               p.state = ProposalState.Accepted;
             } else {
               p.state = ProposalState.Rejected;
@@ -338,7 +342,7 @@ contract KingAutomaton {
       // BallotBox storage b = ballot_boxes[_id];
       // require(b.state == BallotBoxState.Active, "Ballot is not active!");
       int256 vote_diff = calcVoteDifference(_id);
-      if (vote_diff <= CONTEST_PERCENTAGE) {
+      if (vote_diff <= contest_percentage) {
         p.state = ProposalState.Contested;
         p.contestEndDate = now + CONTEST_PERIOD;
       }
@@ -347,7 +351,7 @@ contract KingAutomaton {
       // require(b.state == BallotBoxState.Active, "Ballot is not active!");
       if (now >= p.contestEndDate) {
         int256 vote_diff = calcVoteDifference(_id);
-        if (vote_diff >= APPROVAL_PERCENTAGE) {
+        if (vote_diff >= approval_percentage) {
           p.state = ProposalState.Accepted;
         } else {
           p.state = ProposalState.Rejected;
@@ -370,14 +374,14 @@ contract KingAutomaton {
   }
 
   function castVotesForApproval(uint256 _id) public debugOnly {
-    uint256 minNumYesVotes = uint256((int256(slots.length) * (APPROVAL_PERCENTAGE + 100) + 199) / 200);
+    uint256 minNumYesVotes = uint256((int256(slots.length) * (approval_percentage + 100) + 199) / 200);
     for (uint256 i = 0; i < minNumYesVotes; ++i) {
       castVote(_id, i, 1);
     }
   }
 
   function castVotesForRejection(uint256 _id) public debugOnly {
-    uint256 minNumNoVotes = uint256((int256(slots.length) * (100 - CONTEST_PERCENTAGE) + 199) / 200);
+    uint256 minNumNoVotes = uint256((int256(slots.length) * (100 - contest_percentage) + 199) / 200);
     for (uint256 i = 0; i < minNumNoVotes; ++i) {
       castVote(_id, i, 2);
     }
