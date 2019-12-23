@@ -9,7 +9,7 @@ contract TestKingAutomatonDebug {
 
   function beforeEach() public {
     // Set mask to 0x10000 to trigger debug mode.
-    koh = new KingAutomaton(16, 4, 0x10000, 406080000);
+    koh = new KingAutomaton(16, 4, 0x10000, 406080000, 10, -10);
   }
 
   function afterEach() public {

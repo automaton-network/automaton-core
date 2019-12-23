@@ -5,5 +5,8 @@ module.exports = function(deployer) {
   difficultyBits = 16;
   mask = "0";
   initialDailySupply ="406080000";
-  deployer.deploy(KingAutomaton, numSlots, difficultyBits, mask, initialDailySupply);
+  approval_percentage = 10;
+  contest_percentage = -10;
+  deployer.deploy(KingAutomaton, numSlots, difficultyBits, mask, initialDailySupply,
+      approval_percentage, contest_percentage);
 };
