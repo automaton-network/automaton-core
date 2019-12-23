@@ -126,6 +126,8 @@ contract KingAutomaton {
   enum BallotBoxState {Uninitialized, PrepayingGas, Active, Inactive}
   enum ProposalState {Uninitialized, Started, Accepted, Rejected, Contested, Completed}
 
+  // event ProposalCreated(address from, uint256 id);
+
   /*
   ##################################
   # BallotBoxState # ProposalState #
@@ -183,7 +185,7 @@ contract KingAutomaton {
   }
 
   modifier slotOwner(uint256 _slot) {
-    require(msg.sender == slots[_slot].owner, "Invalid slot owner");
+    require(msg.sender == slots[_slot].owner, "Invalid slot owner!");
     _;
   }
 
@@ -217,19 +219,14 @@ contract KingAutomaton {
     p.documentsLink = documents_link;
     p.documentsHash = documents_hash;
     p.state = ProposalState.Started;
-    p.contestEndDate = MSB_SET;
-    p.initialEndDate = MSB_SET;
-
+    // p.contestEndDate = MSB_SET;
+    // p.initialEndDate = MSB_SET;
+    // emit ProposalCreated(msg.sender, id);
     return id;
   }
 
   function unpaidSlots(uint256 _id) public view validBallotBoxID(_id) returns (uint256) {
     return slots.length - ballot_boxes[_id].paidSlots;
-  }
-
-  // FOR TEST PURPOSES, TO BE DELETED
-  function setOwner(uint256 _slot, address new_owner) public debugOnly {
-    slots[_slot].owner = new_owner;
   }
 
   // Pay for multiple slots at once, 32 seems to be a reasonable amount.
@@ -323,18 +320,18 @@ contract KingAutomaton {
     if (p_state == ProposalState.Started) {
       BallotBox storage b = ballot_boxes[_id];
       if (b.state == BallotBoxState.Active) {  // Gas is paid
-        if (now >= _initialEndDate) {
-          int256 vote_diff = calcVoteDifference(_id);
-          if (vote_diff >= APPROVAL_PERCENTAGE) {
-            p.state = ProposalState.Accepted;
-          } else {
-            p.state = ProposalState.Rejected;
-            b.state = BallotBoxState.Inactive;
+        if (_initialEndDate != 0) {
+          if (now >= _initialEndDate) {
+            int256 vote_diff = calcVoteDifference(_id);
+            if (vote_diff >= APPROVAL_PERCENTAGE) {
+              p.state = ProposalState.Accepted;
+            } else {
+              p.state = ProposalState.Rejected;
+              b.state = BallotBoxState.Inactive;
+            }
           }
         } else {  // Either gas has been just paid and time hasn't been set or the initial time hasn't passed
-          if (_initialEndDate == MSB_SET) {
-            p.initialEndDate = now + PROPOSAL_START_PERIOD;
-          }
+          p.initialEndDate = now + PROPOSAL_START_PERIOD;
         }
       }
     } else if (p_state == ProposalState.Accepted) {
@@ -357,6 +354,32 @@ contract KingAutomaton {
           ballot_boxes[_id].state = BallotBoxState.Inactive;
         }
       }
+    }
+  }
+
+  // Test functions, to be deleted
+
+  function setOwner(uint256 _slot, address new_owner) public debugOnly {
+    slots[_slot].owner = new_owner;
+  }
+
+  function setOwnerAllSlots() public debugOnly {
+    for (uint256 i = 0; i < slots.length; ++i) {
+      slots[i].owner = msg.sender;
+    }
+  }
+
+  function castVotesForApproval(uint256 _id) public debugOnly {
+    uint256 minNumYesVotes = uint256((int256(slots.length) * (APPROVAL_PERCENTAGE + 100) + 199) / 200);
+    for (uint256 i = 0; i < minNumYesVotes; ++i) {
+      castVote(_id, i, 1);
+    }
+  }
+
+  function castVotesForRejection(uint256 _id) public debugOnly {
+    uint256 minNumNoVotes = uint256((int256(slots.length) * (100 - CONTEST_PERCENTAGE) + 199) / 200);
+    for (uint256 i = 0; i < minNumNoVotes; ++i) {
+      castVote(_id, i, 2);
     }
   }
 
