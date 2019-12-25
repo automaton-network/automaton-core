@@ -6,13 +6,14 @@ contract KingAutomaton {
   //////////////////////////////////////////////////////////////////////////////////////////////////
 
   constructor(uint256 numSlots, uint8 minDifficultyBits, uint256 predefinedMask, uint256 initialDailySupply,
-    int256 approval_perc, int256 contest_perc) public {
+    int256 approval_pct, int256 contest_pct) public {
     initMining(numSlots, minDifficultyBits, predefinedMask, initialDailySupply);
     initNames();
     initTreasury();
 
-    approval_percentage = approval_perc;
-    contest_percentage = contest_perc;
+    require(approval_pct > contest_pct, "Approval percentage must be bigger than contest percentage!");
+    approval_percentage = approval_pct;
+    contest_percentage = contest_pct;
     // Check if we're on a testnet (We will not using predefined mask when going live)
     if (predefinedMask != 0) {
       // If so, fund the owner for debugging purposes.
@@ -262,7 +263,7 @@ contract KingAutomaton {
 
   function castVote(uint256 _id, uint256 _slot, uint8 _choice) public slotOwner(_slot) validBallotBoxID(_id) {
     updateProposalState(_id);
-    require(_choice <= 2, "Invalid choice");
+    require(_choice <= NUM_CHOICES, "Invalid choice");
     BallotBox storage b = ballot_boxes[_id];
     require(b.state == BallotBoxState.Active, "Ballot is not active!");
 
@@ -279,10 +280,10 @@ contract KingAutomaton {
     }
 
     // Modify vote selection.
-    vote &= (mask ^ UINT256_MAX);   // get rid of current choice using a mask.
-    vote |= _choice << offset;      // replace current choice using a mask.
-    b.votes[index] = vote;          // actually update the storage slot.
-    b.voteCount[_choice]++;         // update the total vote count based on the choice.
+    vote &= (mask ^ UINT256_MAX);        // get rid of current choice using a mask.
+    vote |= uint256(_choice) << offset;  // replace current choice using a mask.
+    b.votes[index] = vote;               // actually update the storage slot.
+    b.voteCount[_choice]++;              // update the total vote count based on the choice.
 
     // Incentivize voters by giving them a refund.
     b.payGas1[_slot] = 0;
@@ -373,18 +374,24 @@ contract KingAutomaton {
     }
   }
 
-  function castVotesForApproval(uint256 _id) public debugOnly {
+  function castVotesForApproval(uint256 _id) public debugOnly returns(uint256){
     uint256 minNumYesVotes = uint256((int256(slots.length) * (approval_percentage + 100) + 199) / 200);
     for (uint256 i = 0; i < minNumYesVotes; ++i) {
       castVote(_id, i, 1);
     }
+    return minNumYesVotes;
   }
 
-  function castVotesForRejection(uint256 _id) public debugOnly {
+  function castVotesForRejection(uint256 _id) public debugOnly returns(uint256){
     uint256 minNumNoVotes = uint256((int256(slots.length) * (100 - contest_percentage) + 199) / 200);
     for (uint256 i = 0; i < minNumNoVotes; ++i) {
       castVote(_id, i, 2);
     }
+    return minNumNoVotes;
+  }
+
+  function getVoteWord(uint256 _id, uint256 _idx) public view returns(uint256) {
+    return ballot_boxes[_id].votes[_idx] & ALL_BUT_MSB;
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -405,7 +412,7 @@ contract KingAutomaton {
   uint256 public numTakeOvers;           // Number of times a slot was taken over by a new king.
   uint256 public rewardPerSlotPerSecond; // Validator reward per slot per second.
 
-  function initMining(uint256 numSlots, uint8 minDifficultyBits, uint256 predefinedMask, uint256 initialDailySupply) private {
+  function initMining(uint256 numSlots, uint256 minDifficultyBits, uint256 predefinedMask, uint256 initialDailySupply) private {
     require(numSlots > 0);
     require(minDifficultyBits > 0);
 
