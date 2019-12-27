@@ -18,7 +18,8 @@ describe('TestKingAutomatonProposals1', async() => {
   beforeEach(async() => {
     accounts = await web3.eth.getAccounts();
     account = accounts[0];
-    koh = await KingAutomaton.new(4, 16, "0x010000", "406080000", 10, -10);
+    slots = 4;
+    koh = await KingAutomaton.new(slots, 16, "0x010000", "406080000", 10, -10);
     id = await koh.createProposal.call(account, "", "", "0x");
     await koh.createProposal(account, "", "", "0x");
     proposal_start_period = 90;
@@ -42,7 +43,7 @@ describe('TestKingAutomatonProposals1', async() => {
   });
 
   it("cast vote invalid slot owner", async() => {
-    await koh.payForGas(id, 3);
+    await koh.payForGas(id, slots - 1);
     await catchRevert(koh.castVote(id, 0, VOTE_YES), "Invalid slot owner!");
   });
 
@@ -62,7 +63,7 @@ describe('TestKingAutomatonProposals1', async() => {
 
   it("vote change", async() => {
     await koh.setOwnerAllSlots();
-    await koh.payForGas(id, 3);
+    await koh.payForGas(id, slots - 1);
     // Test initial vote values
     let vote = await koh.getVote(id, 0);
     let pos_vote_count = await koh.getVoteCount(id, 1);
@@ -85,7 +86,7 @@ describe('TestKingAutomatonProposals1', async() => {
   // 1 negative 0 positive / -25% approval < rejection %
   it("rejection during initial voting", async() => {
     await koh.setOwnerAllSlots();
-    await koh.payForGas(id, 3);
+    await koh.payForGas(id, slots - 1);
     // Check if states are correct
     let ballot = await koh.ballot_boxes(id);
     let ballot_state = ballot.state;
@@ -118,7 +119,7 @@ describe('TestKingAutomatonProposals1', async() => {
   // 0 votes / 0% approval < approval %
   it("no voting rejection during initial voting", async() => {
     await koh.setOwnerAllSlots();
-    await koh.payForGas(id, 3);
+    await koh.payForGas(id, slots - 1);
     await koh.updateProposalState(id);
     increaseTime(proposal_start_period);
     await koh.updateProposalState(id);
@@ -134,7 +135,7 @@ describe('TestKingAutomatonProposals1', async() => {
 
   it("approval then rejection during initial voting", async() => {
     await koh.setOwnerAllSlots();
-    await koh.payForGas(id, 3);
+    await koh.payForGas(id, slots - 1);
 
     await koh.castVotesForApproval(id);
     await koh.castVotesForRejection(id);
@@ -147,16 +148,13 @@ describe('TestKingAutomatonProposals1', async() => {
     let proposal = await koh.proposals(id)
     let proposal_state = proposal.state;
     assert.equal(proposal_state, 3, "Proposal state is not Rejected!");
-    let vote_difference = await koh.calcVoteDifference(id);
   });
 
   it("contested then rejection", async() => {
     await koh.setOwnerAllSlots();
-    await koh.payForGas(id, 3);
+    await koh.payForGas(id, slots - 1);
 
-    // Cast 2 positive votes
-    await koh.castVote(id, 0, VOTE_YES);
-    await koh.castVote(id, 1, VOTE_YES);
+    await koh.castVotesForApproval(id);
     increaseTime(proposal_start_period);
     await koh.updateProposalState(id);
     let ballot = await koh.ballot_boxes(id);
@@ -189,11 +187,10 @@ describe('TestKingAutomatonProposals1', async() => {
 
   it("contested then approval", async() => {
     await koh.setOwnerAllSlots();
-    await koh.payForGas(id, 3);
+    await koh.payForGas(id, slots - 1);
 
-    // Cast 2 positive votes
-    await koh.castVote(id, 0, VOTE_YES);
-    await koh.castVote(id, 1, VOTE_YES);
+    // Vote positive for approval
+    await koh.castVotesForApproval(id);
     await koh.updateProposalState(id);
     increaseTime(proposal_start_period);
     await koh.updateProposalState(id);
@@ -224,6 +221,228 @@ describe('TestKingAutomatonProposals1', async() => {
     proposal = await koh.proposals(id)
     proposal_state = proposal.state;
     assert.equal(proposal_state, 4, "Proposal state is not Contested!");
+
+    // Wait for contest to end
+    increaseTime(contest_period);
+    await koh.updateProposalState(id);
+    ballot = await koh.ballot_boxes(id);
+    ballot_state = ballot.state;
+    assert.equal(ballot_state, 2, "Ballot box state is not Active!");
+    proposal = await koh.proposals(id)
+    proposal_state = proposal.state;
+    assert.equal(proposal_state, 2, "Proposal state is not Accepted!");
+  });
+});
+
+
+describe('TestKingAutomatonProposals2', async() => {
+  const KingAutomaton = artifacts.require("KingAutomaton");
+
+  beforeEach(async() => {
+    accounts = await web3.eth.getAccounts();
+    account = accounts[0];
+    slots = 256;
+    koh = await KingAutomaton.new(slots, 16, "0x010000", "406080000", 10, -10);
+    id = await koh.createProposal.call(account, "", "", "0x");
+    await koh.createProposal(account, "", "", "0x");
+    proposal_start_period = 90;
+    contest_period = 90;
+  });
+
+  it("rejection during initial voting", async() => {
+    await koh.setOwnerAllSlots();
+
+    let slots_to_pay = await koh.unpaidSlots(id);
+    while (slots_to_pay >= 64) {
+      await koh.payForGas(id, 64);
+      slots_to_pay = await koh.unpaidSlots(id);
+    }
+    if (slots_to_pay > 0) {
+      await koh.payForGas(id, slots_to_pay);
+    }
+    // Check if states are correct
+    let ballot = await koh.ballot_boxes(id);
+    let ballot_state = ballot.state;
+    assert.equal(ballot_state, 2, "Ballot box state is not Active!");
+    let proposal = await koh.proposals(id)
+    let proposal_state = proposal.state;
+    assert.equal(proposal_state, 1, "Proposal state is not Started!");
+
+    await koh.castVotesForRejection(id);
+    await koh.updateProposalState(id);
+    // States shouldn't change during initial time
+    ballot = await koh.ballot_boxes(id);
+    ballot_state = ballot.state;
+    assert.equal(ballot_state, 2, "Ballot box state is not Active!");
+    proposal = await koh.proposals(id)
+    proposal_state = proposal.state;
+    assert.equal(proposal_state, 1, "Proposal state is not Started!");
+    increaseTime(proposal_start_period);
+    await koh.updateProposalState(id);
+    ballot = await koh.ballot_boxes(id);
+    ballot_state = ballot.state;
+    assert.equal(ballot_state, 3, "Ballot box state is not Inactive!");
+    proposal = await koh.proposals(id)
+    proposal_state = proposal.state;
+    assert.equal(proposal_state, 3, "Proposal state is not Rejected!");
+  });
+
+  it("no voting rejection during initial voting", async() => {
+    await koh.setOwnerAllSlots();
+    let slots_to_pay = await koh.unpaidSlots(id);
+    while (slots_to_pay >= 64) {
+      await koh.payForGas(id, 64);
+      slots_to_pay = await koh.unpaidSlots(id);
+    }
+    if (slots_to_pay > 0) {
+      await koh.payForGas(id, slots_to_pay);
+    }
+    await koh.updateProposalState(id);
+    increaseTime(proposal_start_period);
+    await koh.updateProposalState(id);
+    let ballot = await koh.ballot_boxes(id);
+    let ballot_state = ballot.state;
+    assert.equal(ballot_state, 3, "Ballot box state is not Inactive!");
+    let proposal = await koh.proposals(id)
+    let proposal_state = proposal.state;
+    assert.equal(proposal_state, 3, "Proposal state is not Rejected!");
+  });
+
+  it("approval then rejection during initial voting", async() => {
+    await koh.setOwnerAllSlots();
+    let slots_to_pay = await koh.unpaidSlots(id);
+    while (slots_to_pay >= 64) {
+      await koh.payForGas(id, 64);
+      slots_to_pay = await koh.unpaidSlots(id);
+    }
+    if (slots_to_pay > 0) {
+      await koh.payForGas(id, slots_to_pay);
+    }
+    await koh.castVotesForApproval(id);
+    await koh.castVotesForRejection(id);
+
+    increaseTime(proposal_start_period);
+    await koh.updateProposalState(id);
+    let ballot = await koh.ballot_boxes(id);
+    let ballot_state = ballot.state;
+    assert.equal(ballot_state, 3, "Ballot box state is not Inactive!");
+    let proposal = await koh.proposals(id)
+    let proposal_state = proposal.state;
+    assert.equal(proposal_state, 3, "Proposal state is not Rejected!");
+  });
+
+  it("correct voting", async() => {
+    await koh.setOwnerAllSlots();
+    let slots_to_pay = await koh.unpaidSlots(id);
+    while (slots_to_pay >= 64) {
+      await koh.payForGas(id, 64);
+      slots_to_pay = await koh.unpaidSlots(id);
+    }
+    if (slots_to_pay > 0) {
+      await koh.payForGas(id, slots_to_pay);
+    }
+
+    let votes_num = await koh.castVotesForApproval.call(id);
+    await koh.castVotesForApproval(id);
+    for (i = 0; i < votes_num; ++i) {
+      let vote = await koh.getVote(id, i);
+      assert.equal(vote, VOTE_YES, "Incorrect vote! Vote must be positive");
+    }
+
+    votes_num = await koh.castVotesForRejection.call(id);
+    await koh.castVotesForRejection(id);
+    for (i = 0; i < votes_num; ++i) {
+      let vote = await koh.getVote(id, i);
+      assert.equal(vote, VOTE_NO, "Incorrect vote! Vote must be negative");
+    }
+  });
+
+  it("contested then rejection", async() => {
+    await koh.setOwnerAllSlots();
+    let slots_to_pay = await koh.unpaidSlots(id);
+    while (slots_to_pay >= 64) {
+      await koh.payForGas(id, 64);
+      slots_to_pay = await koh.unpaidSlots(id);
+    }
+    if (slots_to_pay > 0) {
+      await koh.payForGas(id, slots_to_pay);
+    }
+
+    await koh.castVotesForApproval(id);
+    increaseTime(proposal_start_period);
+    await koh.updateProposalState(id);
+    let ballot = await koh.ballot_boxes(id);
+    let ballot_state = ballot.state;
+    assert.equal(ballot_state, 2, "Ballot box state is not Active!");
+    let proposal = await koh.proposals(id)
+    let proposal_state = proposal.state;
+    assert.equal(proposal_state, 2, "Proposal state is not Accepted!");
+
+    // Vote negative to enter contested state
+    await koh.castVotesForRejection(id);
+
+    await koh.updateProposalState(id);
+    ballot = await koh.ballot_boxes(id);
+    ballot_state = ballot.state;
+    assert.equal(ballot_state, 2, "Ballot box state is not Active!");
+    proposal = await koh.proposals(id)
+    proposal_state = proposal.state;
+    assert.equal(proposal_state, 4, "Proposal state is not Contested!");
+
+    // Wait for contest to end
+    increaseTime(contest_period);
+    await koh.updateProposalState(id);
+    ballot = await koh.ballot_boxes(id);
+    ballot_state = ballot.state;
+    assert.equal(ballot_state, 3, "Ballot box state is not Inactive!");
+    proposal = await koh.proposals(id)
+    proposal_state = proposal.state;
+    assert.equal(proposal_state, 3, "Proposal state is not Rejected!");
+  });
+
+  it("contested then approval", async() => {
+    await koh.setOwnerAllSlots();
+    let slots_to_pay = await koh.unpaidSlots(id);
+    while (slots_to_pay >= 64) {
+      await koh.payForGas(id, 64);
+      slots_to_pay = await koh.unpaidSlots(id);
+    }
+    if (slots_to_pay > 0) {
+      await koh.payForGas(id, slots_to_pay);
+    }
+
+    await koh.castVotesForApproval(id);
+    await koh.updateProposalState(id);
+    increaseTime(proposal_start_period);
+    await koh.updateProposalState(id);
+    let ballot = await koh.ballot_boxes(id);
+    let ballot_state = ballot.state;
+    assert.equal(ballot_state, 2, "Ballot box state is not Active!");
+    let proposal = await koh.proposals(id)
+    let proposal_state = proposal.state;
+    assert.equal(proposal_state, 2, "Proposal state is not Accepted!");
+
+    // Vote negative to enter contested state
+    await koh.castVotesForRejection(id);
+    await koh.updateProposalState(id);
+    ballot = await koh.ballot_boxes(id);
+    ballot_state = ballot.state;
+    assert.equal(ballot_state, 2, "Ballot box state is not Active!");
+    proposal = await koh.proposals(id)
+    proposal_state = proposal.state;
+    assert.equal(proposal_state, 4, "Proposal state is not Contested!");
+
+    // Vote positive
+    await koh.castVotesForApproval(id);
+    await koh.updateProposalState(id);
+    // States shouldn't change until the end of contest
+    ballot = await koh.ballot_boxes(id);
+    ballot_state = ballot.state;
+    assert.equal(ballot_state, 2, "Ballot box state is not Active!");
+    proposal = await koh.proposals(id)
+    proposal_state = proposal.state;
+    assert.equal(proposal_state, 4, "Proposal state is not Contested!");
+    vote_difference = await koh.calcVoteDifference(id);
 
     // Wait for contest to end
     increaseTime(contest_period);
