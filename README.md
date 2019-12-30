@@ -4,6 +4,9 @@
 
 <img src="https://ci.appveyor.com/api/projects/status/5euy83253gjqdasg/branch/master?svg=true">
 
+[![Build Status Travis](https://travis-ci.org/automaton-network/automaton.svg?branch=master)](https://travis-ci.org/automaton-network/automaton)
+
+
 Table of Contents
 =================
 
