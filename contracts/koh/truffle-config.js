@@ -18,12 +18,14 @@
  *
  */
 
-// Only necessary when launching outside Ganache.
-// const HDWalletProvider = require('truffle-hdwallet-provider');
-
 const fs = require('fs');
+
+// Only necessary when launching outside Ganache.
+/*
+const HDWalletProvider = require('truffle-hdwallet-provider');
 const mnemonic = fs.readFileSync("mnemonic.secret").toString().trim();
 const infuraKey = fs.readFileSync("infuraKey.secret").toString().trim();
+*/
 
 module.exports = {
   /**
