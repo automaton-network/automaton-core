@@ -105,10 +105,6 @@ contract KingAutomaton {
   uint256 constant MSB_SET = 1 << 255;
   uint256 constant ALL_BUT_MSB = MSB_SET - 1;
 
-  uint256 constant NUM_CHOICES = 2;
-  uint256 constant BITS_PER_VOTE = 2;
-  uint256 constant VOTES_PER_WORD = 127;
-  uint256 constant BASE_MASK = (1 << BITS_PER_VOTE) - 1;
   uint256 public constant PROPOSAL_START_PERIOD = 90 seconds; // 1 weeks;
   uint256 public constant CONTEST_PERIOD = 90 seconds;  //
 
@@ -158,6 +154,8 @@ contract KingAutomaton {
   struct BallotBox {
     BallotBoxState state;
 
+    uint256 num_choices;
+
     uint256 votesWords;
     uint256 paidSlots;
 
@@ -201,13 +199,18 @@ contract KingAutomaton {
 
   function initTreasury() private {}
 
-  function createBallotBox() public returns (uint256) {
+  function createBallotBox(uint256 _choices) public returns (uint256) {
+    require (_choices > 1, "Number of choices must be bigger than 1!");
     uint256 id = ++ballot_box_ids;
     BallotBox storage b = ballot_boxes[id];
-    b.state = BallotBoxState.PrepayingGas;
-    b.votesWords = (slots.length + VOTES_PER_WORD - 1) / VOTES_PER_WORD;
+    uint256 bits_per_vote = msb(_choices) + 1;
+    uint256 votes_per_word = 255 / bits_per_vote;
 
-    for (uint i = 0; i <= NUM_CHOICES; i++) {
+    b.num_choices = _choices;
+    b.state = BallotBoxState.PrepayingGas;
+    b.votesWords = (slots.length + votes_per_word - 1) / votes_per_word;
+
+    for (uint256 i = 0; i <= _choices; i++) {
       b.voteCount[i] = MSB_SET;
     }
 
@@ -217,7 +220,7 @@ contract KingAutomaton {
 
   function createProposal(address payable contributor, string calldata title, string calldata documents_link,
       bytes calldata documents_hash) external returns (uint256) {
-    uint256 id = createBallotBox();
+    uint256 id = createBallotBox(2);
     Proposal storage p = proposals[id];
     p.contributor = contributor;
     p.title = title;
@@ -240,9 +243,9 @@ contract KingAutomaton {
     uint256 _paidSlots = b.paidSlots;
     uint256 _slotsLength = slots.length;
     require((_slotsLength - _paidSlots) >= _slotsToPay, "Too many slots!");
-    uint _newLength = _paidSlots + _slotsToPay;
-    for (uint i = 1; i <= _slotsToPay; i++) {
-      uint idx = _newLength - i;
+    uint256 _newLength = _paidSlots + _slotsToPay;
+    for (uint256 i = 1; i <= _slotsToPay; i++) {
+      uint256 idx = _newLength - i;
       b.payGas1[idx] = b.payGas2[idx] = MSB_SET;
       if (_newLength - i <= b.votesWords) {
         b.votes[idx] = MSB_SET;
@@ -250,7 +253,7 @@ contract KingAutomaton {
     }
     b.paidSlots = _newLength;
     if (_newLength == _slotsLength) {
-        b.state = BallotBoxState.Active;
+      b.state = BallotBoxState.Active;
     }
   }
 
@@ -263,18 +266,22 @@ contract KingAutomaton {
 
   function castVote(uint256 _id, uint256 _slot, uint8 _choice) public slotOwner(_slot) validBallotBoxID(_id) {
     updateProposalState(_id);
-    require(_choice <= NUM_CHOICES, "Invalid choice");
     BallotBox storage b = ballot_boxes[_id];
+    uint256 num_choices = b.num_choices;
+    require(_choice <= num_choices, "Invalid choice");
     require(b.state == BallotBoxState.Active, "Ballot is not active!");
 
+    uint256 bits_per_vote = msb(num_choices) + 1;
+    uint256 votes_per_word = 255 / bits_per_vote;
+
     // Calculate masks.
-    uint index = _slot / VOTES_PER_WORD;
-    uint offset = (_slot % VOTES_PER_WORD) * BITS_PER_VOTE;
-    uint mask = BASE_MASK << offset;
+    uint256 index = _slot / votes_per_word;
+    uint256 offset = (_slot % votes_per_word) * bits_per_vote;
+    uint256 mask = ((1 << bits_per_vote) - 1) << offset;
 
     // Reduce the vote count.
-    uint vote = b.votes[index];
-    uint oldChoice = (vote & mask) >> offset;
+    uint256 vote = b.votes[index];
+    uint256 oldChoice = (vote & mask) >> offset;
     if (oldChoice > 0) {
       b.voteCount[oldChoice]--;
     }
@@ -293,10 +300,14 @@ contract KingAutomaton {
   }
 
   function getVote(uint256 _id, uint256 _slot) public view validBallotBoxID(_id) returns (uint) {
+    BallotBox storage b = ballot_boxes[_id];
+    uint256 bits_per_vote = msb(b.num_choices) + 1;
+    uint256 votes_per_word = 255 / bits_per_vote;
+
     // Calculate masks.
-    uint index = _slot / VOTES_PER_WORD;
-    uint offset = (_slot % VOTES_PER_WORD) * BITS_PER_VOTE;
-    uint mask = BASE_MASK << offset;
+    uint256 index = _slot / votes_per_word;
+    uint256 offset = (_slot % votes_per_word) * bits_per_vote;
+    uint256 mask = ((1 << bits_per_vote) - 1) << offset;
 
     // Get vote
     return (ballot_boxes[_id].votes[index] & mask) >> offset;
