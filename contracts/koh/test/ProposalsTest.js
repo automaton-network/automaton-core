@@ -30,15 +30,15 @@ describe('TestKingAutomatonProposals1', async() => {
     assert.equal(id, 2, "Incorrect ID!");
     assert.exists(account, "Account doesn't exist!");
     assert.exists(koh.address, "Contract wasn't deployed!");
-    let ballot = await koh.ballot_boxes(id);
+    let ballot = await koh.ballotBoxes(id);
     let ballot_state = ballot.state;
     assert.equal(ballot_state, 1, "Ballot box state is not PrepayingGas!");
     let proposal = await koh.proposals(id)
     let proposal_state = proposal.state;
     assert.equal(proposal_state, 1, "Proposal state is not Started!");
-    let approval_percentage = await koh.approval_percentage();
+    let approval_percentage = await koh.approvalPercentage();
     assert.equal(approval_percentage, 10, "Approval % in incorrect!");
-    let contest_percentage = await koh.contest_percentage();
+    let contest_percentage = await koh.contestPercentage();
     assert.equal(contest_percentage, -10, "Contest % in incorrect!");
   });
 
@@ -74,13 +74,13 @@ describe('TestKingAutomatonProposals1', async() => {
     // Cast positive vote
     await koh.castVote(id, 0, VOTE_YES);
     vote = await koh.getVote(id, 0);
-    pos_vote_count = await koh.getVoteCount(id, VOTE_YES);
-    assert.equal(vote, VOTE_YES, "Incorrect vote!");
+    pos_vote_count = await koh.getVoteCount(id, 1);
+    assert.equal(vote, 1, "Incorrect vote!");
     assert.equal(pos_vote_count, 1, "Incorrect positive vote count!");
     // Change vote
     await koh.castVote(id, 0, VOTE_NO);
     vote = await koh.getVote(id, 0);
-    assert.equal(vote, VOTE_NO, "Incorrect vote change!");
+    assert.equal(vote, 2, "Incorrect vote change!");
   });
 
   // 1 negative 0 positive / -25% approval < rejection %
@@ -88,30 +88,30 @@ describe('TestKingAutomatonProposals1', async() => {
     await koh.setOwnerAllSlots();
     await koh.payForGas(id, slots - 1);
     // Check if states are correct
-    let ballot = await koh.ballot_boxes(id);
+    let ballot = await koh.ballotBoxes(id);
     let ballot_state = ballot.state;
-    assert.equal(ballot_state, 2, "Ballot box state is not Active! (0)");
+    assert.equal(ballot_state, 2, "Ballot box state is not Active!");
     let proposal = await koh.proposals(id)
     let proposal_state = proposal.state;
-    assert.equal(proposal_state, 1, "Proposal state is not Started! (0)");
+    assert.equal(proposal_state, 1, "Proposal state is not Started!");
     // Cast negative vote
     await koh.castVote(id, 0, VOTE_NO);
     await koh.updateProposalState(id);
     // States shouldn't change during initial time
-    ballot = await koh.ballot_boxes(id);
+    ballot = await koh.ballotBoxes(id);
     ballot_state = ballot.state;
-    assert.equal(ballot_state, 2, "Ballot box state is not Active! (1)");
+    assert.equal(ballot_state, 2, "Ballot box state is not Active!");
     proposal = await koh.proposals(id)
     proposal_state = proposal.state;
-    assert.equal(proposal_state, 1, "Proposal state is not Started! (1)");
+    assert.equal(proposal_state, 1, "Proposal state is not Started!");
     increaseTime(proposal_start_period);
     await koh.updateProposalState(id);
-    ballot = await koh.ballot_boxes(id);
+    ballot = await koh.ballotBoxes(id);
     ballot_state = ballot.state;
-    assert.equal(ballot_state, 3, "Ballot box state is not Inactive! (2)");
+    assert.equal(ballot_state, 3, "Ballot box state is not Inactive!");
     proposal = await koh.proposals(id)
     proposal_state = proposal.state;
-    assert.equal(proposal_state, 3, "Proposal state is not Rejected! (2)");
+    assert.equal(proposal_state, 3, "Proposal state is not Rejected!");
     let vote_difference = await koh.calcVoteDifference(id);
     assert.equal(vote_difference, -25, "Vote difference is incorrect!");
   });
@@ -123,7 +123,7 @@ describe('TestKingAutomatonProposals1', async() => {
     await koh.updateProposalState(id);
     increaseTime(proposal_start_period);
     await koh.updateProposalState(id);
-    let ballot = await koh.ballot_boxes(id);
+    let ballot = await koh.ballotBoxes(id);
     let ballot_state = ballot.state;
     assert.equal(ballot_state, 3, "Ballot box state is not Inactive!");
     let proposal = await koh.proposals(id)
@@ -142,7 +142,7 @@ describe('TestKingAutomatonProposals1', async() => {
 
     increaseTime(proposal_start_period);
     await koh.updateProposalState(id);
-    let ballot = await koh.ballot_boxes(id);
+    let ballot = await koh.ballotBoxes(id);
     let ballot_state = ballot.state;
     assert.equal(ballot_state, 3, "Ballot box state is not Inactive!");
     let proposal = await koh.proposals(id)
@@ -157,32 +157,32 @@ describe('TestKingAutomatonProposals1', async() => {
     await koh.castVotesForApproval(id);
     increaseTime(proposal_start_period);
     await koh.updateProposalState(id);
-    let ballot = await koh.ballot_boxes(id);
+    let ballot = await koh.ballotBoxes(id);
     let ballot_state = ballot.state;
-    assert.equal(ballot_state, 2, "Ballot box state is not Active! (0)");
+    assert.equal(ballot_state, 2, "Ballot box state is not Active!");
     let proposal = await koh.proposals(id)
     let proposal_state = proposal.state;
-    assert.equal(proposal_state, 2, "Proposal state is not Accepted! (0)");
+    assert.equal(proposal_state, 2, "Proposal state is not Accepted!");
 
     // Vote negative to enter contested state
     await koh.castVotesForRejection(id);
     await koh.updateProposalState(id);
-    ballot = await koh.ballot_boxes(id);
+    ballot = await koh.ballotBoxes(id);
     ballot_state = ballot.state;
-    assert.equal(ballot_state, 2, "Ballot box state is not Active! (1)");
+    assert.equal(ballot_state, 2, "Ballot box state is not Active!");
     proposal = await koh.proposals(id)
     proposal_state = proposal.state;
-    assert.equal(proposal_state, 4, "Proposal state is not Contested! (1)");
+    assert.equal(proposal_state, 4, "Proposal state is not Contested!");
 
     // Wait for contest to end
     increaseTime(contest_period);
     await koh.updateProposalState(id);
-    ballot = await koh.ballot_boxes(id);
+    ballot = await koh.ballotBoxes(id);
     ballot_state = ballot.state;
-    assert.equal(ballot_state, 3, "Ballot box state is not Inactive! (2)");
+    assert.equal(ballot_state, 3, "Ballot box state is not Inactive!");
     proposal = await koh.proposals(id)
     proposal_state = proposal.state;
-    assert.equal(proposal_state, 3, "Proposal state is not Rejected! (2)");
+    assert.equal(proposal_state, 3, "Proposal state is not Rejected!");
   });
 
   it("contested then approval", async() => {
@@ -194,43 +194,43 @@ describe('TestKingAutomatonProposals1', async() => {
     await koh.updateProposalState(id);
     increaseTime(proposal_start_period);
     await koh.updateProposalState(id);
-    let ballot = await koh.ballot_boxes(id);
+    let ballot = await koh.ballotBoxes(id);
     let ballot_state = ballot.state;
-    assert.equal(ballot_state, 2, "Ballot box state is not Active! (0)");
+    assert.equal(ballot_state, 2, "Ballot box state is not Active!");
     let proposal = await koh.proposals(id)
     let proposal_state = proposal.state;
-    assert.equal(proposal_state, 2, "Proposal state is not Accepted! (0)");
+    assert.equal(proposal_state, 2, "Proposal state is not Accepted!");
 
     // Vote negative to enter contested state
     await koh.castVotesForRejection(id);
     await koh.updateProposalState(id);
-    ballot = await koh.ballot_boxes(id);
+    ballot = await koh.ballotBoxes(id);
     ballot_state = ballot.state;
-    assert.equal(ballot_state, 2, "Ballot box state is not Active! (1)");
+    assert.equal(ballot_state, 2, "Ballot box state is not Active!");
     proposal = await koh.proposals(id)
     proposal_state = proposal.state;
-    assert.equal(proposal_state, 4, "Proposal state is not Contested! (1)");
+    assert.equal(proposal_state, 4, "Proposal state is not Contested!");
 
     // Vote positive
     await koh.castVotesForApproval(id);
     await koh.updateProposalState(id);
     // States shouldn't change until the end of contest
-    ballot = await koh.ballot_boxes(id);
+    ballot = await koh.ballotBoxes(id);
     ballot_state = ballot.state;
-    assert.equal(ballot_state, 2, "Ballot box state is not Active! (2)");
+    assert.equal(ballot_state, 2, "Ballot box state is not Active!");
     proposal = await koh.proposals(id)
     proposal_state = proposal.state;
-    assert.equal(proposal_state, 4, "Proposal state is not Contested! (2)");
+    assert.equal(proposal_state, 4, "Proposal state is not Contested!");
 
     // Wait for contest to end
     increaseTime(contest_period);
     await koh.updateProposalState(id);
-    ballot = await koh.ballot_boxes(id);
+    ballot = await koh.ballotBoxes(id);
     ballot_state = ballot.state;
-    assert.equal(ballot_state, 2, "Ballot box state is not Active! (3)");
+    assert.equal(ballot_state, 2, "Ballot box state is not Active!");
     proposal = await koh.proposals(id)
     proposal_state = proposal.state;
-    assert.equal(proposal_state, 2, "Proposal state is not Accepted! (3)");
+    assert.equal(proposal_state, 2, "Proposal state is not Accepted!");
   });
 });
 
@@ -261,30 +261,30 @@ describe('TestKingAutomatonProposals2', async() => {
       await koh.payForGas(id, slots_to_pay);
     }
     // Check if states are correct
-    let ballot = await koh.ballot_boxes(id);
+    let ballot = await koh.ballotBoxes(id);
     let ballot_state = ballot.state;
-    assert.equal(ballot_state, 2, "Ballot box state is not Active! (0)");
+    assert.equal(ballot_state, 2, "Ballot box state is not Active!");
     let proposal = await koh.proposals(id)
     let proposal_state = proposal.state;
-    assert.equal(proposal_state, 1, "Proposal state is not Started! (0)");
+    assert.equal(proposal_state, 1, "Proposal state is not Started!");
 
     await koh.castVotesForRejection(id);
     await koh.updateProposalState(id);
     // States shouldn't change during initial time
-    ballot = await koh.ballot_boxes(id);
+    ballot = await koh.ballotBoxes(id);
     ballot_state = ballot.state;
-    assert.equal(ballot_state, 2, "Ballot box state is not Active! (1)");
+    assert.equal(ballot_state, 2, "Ballot box state is not Active!");
     proposal = await koh.proposals(id)
     proposal_state = proposal.state;
-    assert.equal(proposal_state, 1, "Proposal state is not Started! (1)");
+    assert.equal(proposal_state, 1, "Proposal state is not Started!");
     increaseTime(proposal_start_period);
     await koh.updateProposalState(id);
-    ballot = await koh.ballot_boxes(id);
+    ballot = await koh.ballotBoxes(id);
     ballot_state = ballot.state;
-    assert.equal(ballot_state, 3, "Ballot box state is not Inactive! (2)");
+    assert.equal(ballot_state, 3, "Ballot box state is not Inactive!");
     proposal = await koh.proposals(id)
     proposal_state = proposal.state;
-    assert.equal(proposal_state, 3, "Proposal state is not Rejected! (2)");
+    assert.equal(proposal_state, 3, "Proposal state is not Rejected!");
   });
 
   it("no voting rejection during initial voting", async() => {
@@ -300,7 +300,7 @@ describe('TestKingAutomatonProposals2', async() => {
     await koh.updateProposalState(id);
     increaseTime(proposal_start_period);
     await koh.updateProposalState(id);
-    let ballot = await koh.ballot_boxes(id);
+    let ballot = await koh.ballotBoxes(id);
     let ballot_state = ballot.state;
     assert.equal(ballot_state, 3, "Ballot box state is not Inactive!");
     let proposal = await koh.proposals(id)
@@ -323,7 +323,7 @@ describe('TestKingAutomatonProposals2', async() => {
 
     increaseTime(proposal_start_period);
     await koh.updateProposalState(id);
-    let ballot = await koh.ballot_boxes(id);
+    let ballot = await koh.ballotBoxes(id);
     let ballot_state = ballot.state;
     assert.equal(ballot_state, 3, "Ballot box state is not Inactive!");
     let proposal = await koh.proposals(id)
@@ -371,33 +371,33 @@ describe('TestKingAutomatonProposals2', async() => {
     await koh.castVotesForApproval(id);
     increaseTime(proposal_start_period);
     await koh.updateProposalState(id);
-    let ballot = await koh.ballot_boxes(id);
+    let ballot = await koh.ballotBoxes(id);
     let ballot_state = ballot.state;
-    assert.equal(ballot_state, 2, "Ballot box state is not Active! (0)");
+    assert.equal(ballot_state, 2, "Ballot box state is not Active!");
     let proposal = await koh.proposals(id)
     let proposal_state = proposal.state;
-    assert.equal(proposal_state, 2, "Proposal state is not Accepted! (0)");
+    assert.equal(proposal_state, 2, "Proposal state is not Accepted!");
 
     // Vote negative to enter contested state
     await koh.castVotesForRejection(id);
 
     await koh.updateProposalState(id);
-    ballot = await koh.ballot_boxes(id);
+    ballot = await koh.ballotBoxes(id);
     ballot_state = ballot.state;
-    assert.equal(ballot_state, 2, "Ballot box state is not Active! (1)");
+    assert.equal(ballot_state, 2, "Ballot box state is not Active!");
     proposal = await koh.proposals(id)
     proposal_state = proposal.state;
-    assert.equal(proposal_state, 4, "Proposal state is not Contested! (1)");
+    assert.equal(proposal_state, 4, "Proposal state is not Contested!");
 
     // Wait for contest to end
     increaseTime(contest_period);
     await koh.updateProposalState(id);
-    ballot = await koh.ballot_boxes(id);
+    ballot = await koh.ballotBoxes(id);
     ballot_state = ballot.state;
-    assert.equal(ballot_state, 3, "Ballot box state is not Inactive! (2)");
+    assert.equal(ballot_state, 3, "Ballot box state is not Inactive!");
     proposal = await koh.proposals(id)
     proposal_state = proposal.state;
-    assert.equal(proposal_state, 3, "Proposal state is not Rejected! (2)");
+    assert.equal(proposal_state, 3, "Proposal state is not Rejected!");
   });
 
   it("contested then approval", async() => {
@@ -415,43 +415,43 @@ describe('TestKingAutomatonProposals2', async() => {
     await koh.updateProposalState(id);
     increaseTime(proposal_start_period);
     await koh.updateProposalState(id);
-    let ballot = await koh.ballot_boxes(id);
+    let ballot = await koh.ballotBoxes(id);
     let ballot_state = ballot.state;
-    assert.equal(ballot_state, 2, "Ballot box state is not Active! (0)");
+    assert.equal(ballot_state, 2, "Ballot box state is not Active!");
     let proposal = await koh.proposals(id)
     let proposal_state = proposal.state;
-    assert.equal(proposal_state, 2, "Proposal state is not Accepted! (0)");
+    assert.equal(proposal_state, 2, "Proposal state is not Accepted!");
 
     // Vote negative to enter contested state
     await koh.castVotesForRejection(id);
     await koh.updateProposalState(id);
-    ballot = await koh.ballot_boxes(id);
+    ballot = await koh.ballotBoxes(id);
     ballot_state = ballot.state;
-    assert.equal(ballot_state, 2, "Ballot box state is not Active! (1)");
+    assert.equal(ballot_state, 2, "Ballot box state is not Active!");
     proposal = await koh.proposals(id)
     proposal_state = proposal.state;
-    assert.equal(proposal_state, 4, "Proposal state is not Contested! (1)");
+    assert.equal(proposal_state, 4, "Proposal state is not Contested!");
 
     // Vote positive
     await koh.castVotesForApproval(id);
     await koh.updateProposalState(id);
     // States shouldn't change until the end of contest
-    ballot = await koh.ballot_boxes(id);
+    ballot = await koh.ballotBoxes(id);
     ballot_state = ballot.state;
-    assert.equal(ballot_state, 2, "Ballot box state is not Active! (2)");
+    assert.equal(ballot_state, 2, "Ballot box state is not Active!");
     proposal = await koh.proposals(id)
     proposal_state = proposal.state;
-    assert.equal(proposal_state, 4, "Proposal state is not Contested! (2)");
+    assert.equal(proposal_state, 4, "Proposal state is not Contested!");
     vote_difference = await koh.calcVoteDifference(id);
 
     // Wait for contest to end
     increaseTime(contest_period);
     await koh.updateProposalState(id);
-    ballot = await koh.ballot_boxes(id);
+    ballot = await koh.ballotBoxes(id);
     ballot_state = ballot.state;
-    assert.equal(ballot_state, 2, "Ballot box state is not Active! (3)");
+    assert.equal(ballot_state, 2, "Ballot box state is not Active!");
     proposal = await koh.proposals(id)
     proposal_state = proposal.state;
-    assert.equal(proposal_state, 2, "Proposal state is not Accepted! (3)");
+    assert.equal(proposal_state, 2, "Proposal state is not Accepted!");
   });
 });
