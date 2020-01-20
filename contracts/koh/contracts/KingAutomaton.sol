@@ -221,6 +221,7 @@ contract KingAutomaton {
   function createProposal(address payable contributor, string calldata title,
       string calldata documents_link, bytes calldata documents_hash,
       uint256 budget_period_len, uint256 num_periods, uint256 budget_per_period) external returns (uint256) {
+    // TODO(kari): Make SOME_LIMIT constructor argument, % of the whole treasury
     // require(num_periods * budget_per_period <= SOME_LIMIT);
     uint256 id = createBallotBox(2);
     Proposal storage p = proposals[id];
@@ -382,9 +383,12 @@ contract KingAutomaton {
   }
 
   function claimReward(uint256 _id, uint256 _budget) public validBallotBoxID(_id) {
+    // TODO(kari): return to treasury if not claimed during some period, also handle situation where contributor is no
+    // more active and the whole budget is locked and could not be spent
+    updateProposalState(_id);
     Proposal storage p = proposals[_id];
     require(p.contributor == msg.sender, "Invalid contributor!");
-    require(p.state == ProposalState.Accepted, "Proposal state is not accepted!");
+    require(p.state == ProposalState.Accepted || p.state == ProposalState.Contested, "Incorrect proposal state!");
     require(p.budgetPerPeriod <= _budget);
     uint256 paymentDate = p.nextPaymentDate;
     uint256 remainingPeriods = p.remainingPeriods;
