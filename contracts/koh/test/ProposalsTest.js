@@ -12,7 +12,7 @@ let increaseTime = utils.increaseTime;
 const VOTE_YES = 1;
 const VOTE_NO = 2;
 
-describe('TestKingAutomatonProposals1', async() => {
+describe('TestKingAutomatonProposals 4 slots', async() => {
   const KingAutomaton = artifacts.require("KingAutomaton");
 
   beforeEach(async() => {
@@ -20,8 +20,8 @@ describe('TestKingAutomatonProposals1', async() => {
     account = accounts[0];
     slots = 4;
     koh = await KingAutomaton.new(slots, 16, "0x010000", "406080000", 10, -10);
-    id = await koh.createProposal.call(account, "", "", "0x");
-    await koh.createProposal(account, "", "", "0x");
+    id = await koh.createProposal.call(account, "", "", "0x", 30, 3, 20);
+    await koh.createProposal(account, "", "", "0x", 30, 3, 20);
     proposal_start_period = 90;
     contest_period = 90;
   });
@@ -234,8 +234,7 @@ describe('TestKingAutomatonProposals1', async() => {
   });
 });
 
-
-describe('TestKingAutomatonProposals2', async() => {
+describe('TestKingAutomatonProposals 256 slots', async() => {
   const KingAutomaton = artifacts.require("KingAutomaton");
 
   beforeEach(async() => {
@@ -243,8 +242,8 @@ describe('TestKingAutomatonProposals2', async() => {
     account = accounts[0];
     slots = 256;
     koh = await KingAutomaton.new(slots, 16, "0x010000", "406080000", 10, -10);
-    id = await koh.createProposal.call(account, "", "", "0x");
-    await koh.createProposal(account, "", "", "0x");
+    id = await koh.createProposal.call(account, "", "", "0x", 30, 3, 20);
+    await koh.createProposal(account, "", "", "0x", 30, 3, 20);
     proposal_start_period = 90;
     contest_period = 90;
   });
