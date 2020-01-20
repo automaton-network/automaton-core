@@ -19,6 +19,7 @@ contract KingAutomaton {
       // If so, fund the owner for debugging purposes.
       debugging = true;
       mint(msg.sender, 1000000 ether);
+      balances[treasuryAddress] = 1000000 ether;
     }
   }
 
@@ -168,6 +169,11 @@ contract KingAutomaton {
     string documentsLink;
     bytes documentsHash;
 
+    uint256 budgetPeriodLen;
+    uint256 remainingPeriods;
+    uint256 budgetPerPeriod;
+    uint256 nextPaymentDate;
+
     ProposalState state;
 
     uint256 initialEndDate;
@@ -212,8 +218,10 @@ contract KingAutomaton {
     return id;
   }
 
-  function createProposal(address payable contributor, string calldata title, string calldata documents_link,
-      bytes calldata documents_hash) external returns (uint256) {
+  function createProposal(address payable contributor, string calldata title,
+      string calldata documents_link, bytes calldata documents_hash,
+      uint256 budget_period_len, uint256 num_periods, uint256 budget_per_period) external returns (uint256) {
+    // require(num_periods * budget_per_period <= SOME_LIMIT);
     uint256 id = createBallotBox(2);
     Proposal storage p = proposals[id];
     p.contributor = contributor;
@@ -221,9 +229,12 @@ contract KingAutomaton {
     p.documentsLink = documents_link;
     p.documentsHash = documents_hash;
     p.state = ProposalState.Started;
-    // p.contestEndDate = MSB_SET;
-    // p.initialEndDate = MSB_SET;
-    // emit ProposalCreated(msg.sender, id);
+
+    p.budgetPeriodLen = budget_period_len;
+    p.remainingPeriods = num_periods;
+    p.budgetPerPeriod = budget_per_period;
+
+    transferInternal(treasuryAddress, address(id), num_periods * budget_per_period);
     return id;
   }
 
@@ -337,6 +348,7 @@ contract KingAutomaton {
             int256 vote_diff = calcVoteDifference(_id);
             if (vote_diff >= approvalPercentage) {
               p.state = ProposalState.Accepted;
+              p.nextPaymentDate = now;
             } else {
               p.state = ProposalState.Rejected;
               b.state = BallotBoxState.Inactive;
@@ -364,6 +376,34 @@ contract KingAutomaton {
         } else {
           p.state = ProposalState.Rejected;
           ballotBoxes[_id].state = BallotBoxState.Inactive;
+        }
+      }
+    }
+  }
+
+  function claimReward(uint256 _id, uint256 _budget) public validBallotBoxID(_id) {
+    Proposal storage p = proposals[_id];
+    require(p.contributor == msg.sender, "Invalid contributor!");
+    require(p.state == ProposalState.Accepted, "Proposal state is not accepted!");
+    require(p.budgetPerPeriod <= _budget);
+    uint256 paymentDate = p.nextPaymentDate;
+    uint256 remainingPeriods = p.remainingPeriods;
+    address proposal_address = address(_id);
+    if (paymentDate > 0) {
+      if (paymentDate <= now) {
+        transferInternal(proposal_address, p.contributor, _budget);
+        if (remainingPeriods > 1) {
+          p.nextPaymentDate += p.budgetPeriodLen;
+          p.remainingPeriods--;
+        } else if (remainingPeriods == 1) {  // This was the last claim
+          p.nextPaymentDate = 0;
+          p.remainingPeriods = 0;
+          p.state = ProposalState.Completed;
+          ballotBoxes[_id].state = BallotBoxState.Inactive;
+          uint256 unused_budget = balances[proposal_address];
+          if (unused_budget > 0) {
+            transferInternal(proposal_address, treasuryAddress, unused_budget);
+          }
         }
       }
     }
