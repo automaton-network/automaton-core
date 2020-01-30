@@ -18,7 +18,7 @@ describe('TestKingAutomatonDEX', async (accounts) => {
   beforeEach(async () => {
     accounts = await web3.eth.getAccounts();
     mainAcct = accounts[0];
-    koh = await KingAutomaton.new(4, 16, "0x010000", "406080000", 10, -10);
+    koh = await KingAutomaton.new(4, 16, "0x010000", "406080000", 10, -10, 2);
     minOrderAUTO = await koh.minOrderAUTO();
     minOrderETH = await koh.minOrderETH();
   });

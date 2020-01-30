@@ -6,7 +6,7 @@ contract KingAutomaton {
   //////////////////////////////////////////////////////////////////////////////////////////////////
 
   constructor(uint256 numSlots, uint8 minDifficultyBits, uint256 predefinedMask, uint256 initialDailySupply,
-    int256 approval_pct, int256 contest_pct) public {
+    int256 approval_pct, int256 contest_pct, uint256 treasury_limit_pct) public {
     initMining(numSlots, minDifficultyBits, predefinedMask, initialDailySupply);
     initNames();
     initTreasury();
@@ -14,11 +14,13 @@ contract KingAutomaton {
     require(approval_pct > contest_pct, "Approval percentage must be bigger than contest percentage!");
     approvalPercentage = approval_pct;
     contestPercentage = contest_pct;
+    treasuryLimitPercentage = treasury_limit_pct;
     // Check if we're on a testnet (We will not using predefined mask when going live)
     if (predefinedMask != 0) {
       // If so, fund the owner for debugging purposes.
       debugging = true;
       mint(msg.sender, 1000000 ether);
+      balances[treasuryAddress] = 1000000 ether;
     }
   }
 
@@ -110,8 +112,9 @@ contract KingAutomaton {
 
   int256 public approvalPercentage;
   int256 public contestPercentage;
+  uint256 public treasuryLimitPercentage;
 
-  uint256 private ballotBoxIDs = 1;
+  uint256 private ballotBoxIDs = 99;  // Ensure special addresses are not already used
 
   function msb(uint256 x) public pure returns (uint8 r) {
     if (x >= 0x100000000000000000000000000000000) {x >>= 128; r += 128;}
@@ -126,6 +129,8 @@ contract KingAutomaton {
 
   enum BallotBoxState {Uninitialized, PrepayingGas, Active, Inactive}
   enum ProposalState {Uninitialized, Started, Accepted, Rejected, Contested, Completed}
+
+  // TODO(kari): Check warnings !!!
 
   // event ProposalCreated(address from, uint256 id);
 
@@ -167,6 +172,11 @@ contract KingAutomaton {
     string title;
     string documentsLink;
     bytes documentsHash;
+
+    uint256 budgetPeriodLen;
+    uint256 remainingPeriods;
+    uint256 budgetPerPeriod;
+    uint256 nextPaymentDate;
 
     ProposalState state;
 
@@ -212,8 +222,10 @@ contract KingAutomaton {
     return id;
   }
 
-  function createProposal(address payable contributor, string calldata title, string calldata documents_link,
-      bytes calldata documents_hash) external returns (uint256) {
+  function createProposal(address payable contributor, string calldata title,
+      string calldata documents_link, bytes calldata documents_hash,
+      uint256 budget_period_len, uint256 num_periods, uint256 budget_per_period) external returns (uint256) {
+    require(num_periods * budget_per_period <= treasuryLimitPercentage * balances[treasuryAddress] / 100);
     uint256 id = createBallotBox(2);
     Proposal storage p = proposals[id];
     p.contributor = contributor;
@@ -221,9 +233,12 @@ contract KingAutomaton {
     p.documentsLink = documents_link;
     p.documentsHash = documents_hash;
     p.state = ProposalState.Started;
-    // p.contestEndDate = MSB_SET;
-    // p.initialEndDate = MSB_SET;
-    // emit ProposalCreated(msg.sender, id);
+
+    p.budgetPeriodLen = budget_period_len;
+    p.remainingPeriods = num_periods;
+    p.budgetPerPeriod = budget_per_period;
+
+    transferInternal(treasuryAddress, address(id), num_periods * budget_per_period);
     return id;
   }
 
@@ -337,9 +352,11 @@ contract KingAutomaton {
             int256 vote_diff = calcVoteDifference(_id);
             if (vote_diff >= approvalPercentage) {
               p.state = ProposalState.Accepted;
+              p.nextPaymentDate = now;
             } else {
               p.state = ProposalState.Rejected;
               b.state = BallotBoxState.Inactive;
+              transferInternal(address(_id), treasuryAddress, balances[address(_id)]);
             }
           }
         } else {  // Either gas has been just paid and time hasn't been set or the initial time hasn't passed
@@ -364,7 +381,58 @@ contract KingAutomaton {
         } else {
           p.state = ProposalState.Rejected;
           ballotBoxes[_id].state = BallotBoxState.Inactive;
+          transferInternal(address(_id), treasuryAddress, balances[address(_id)]);
         }
+      }
+    }
+  }
+
+  // In case the contributor is inactive anyone could call the function AFTER all periods are passed and the funds locked
+  // in the proposal address will be returned to treasury. Rejecting the proposal will have the same effect.
+
+  function claimReward(uint256 _id, uint256 _budget) public validBallotBoxID(_id) {
+    updateProposalState(_id);
+    Proposal storage p = proposals[_id];
+    require(p.state == ProposalState.Accepted || p.state == ProposalState.Contested, "Incorrect proposal state!");
+    uint256 paymentDate = p.nextPaymentDate;
+    uint256 remainingPeriods = p.remainingPeriods;
+    uint256 periodLen = p.budgetPeriodLen;
+    uint256 budgetPerPeriod = p.budgetPerPeriod;
+    address proposalAddress = address(_id);
+
+    require(_budget <= budgetPerPeriod, "Budget exceeded!");
+
+    if (paymentDate > 0) {
+      if (paymentDate <= now) {
+        if (paymentDate + periodLen < now) {
+          uint256 missedPeriods = (now - paymentDate) / periodLen;
+          transferInternal(proposalAddress, treasuryAddress, missedPeriods * p.budgetPerPeriod);
+          remainingPeriods -= missedPeriods;
+          paymentDate += periodLen * missedPeriods;
+        }
+        if (remainingPeriods > 1) {
+          require(p.contributor == msg.sender, "Invalid contributor!");
+          transferInternal(proposalAddress, p.contributor, _budget);
+          if (budgetPerPeriod > _budget) {
+            transferInternal(proposalAddress, treasuryAddress, budgetPerPeriod - _budget);
+          }
+          paymentDate += periodLen;
+          remainingPeriods--;
+        } else {
+          if (remainingPeriods == 1) {
+            require(p.contributor == msg.sender, "Invalid contributor!");
+            transferInternal(proposalAddress, p.contributor, _budget);
+            if (budgetPerPeriod > _budget) {
+              transferInternal(proposalAddress, treasuryAddress, budgetPerPeriod - _budget);
+            }
+          }
+          p.nextPaymentDate = 0;
+          remainingPeriods = 0;
+          p.state = ProposalState.Completed;
+          ballotBoxes[_id].state = BallotBoxState.Inactive;
+        }
+        p.remainingPeriods = remainingPeriods;
+        p.nextPaymentDate = paymentDate;
       }
     }
   }

@@ -7,6 +7,7 @@ module.exports = function(deployer) {
   initialDailySupply ="406080000";
   approval_percentage = 10;
   contest_percentage = -10;
+  treasury_limit_percentage = 2;
   deployer.deploy(KingAutomaton, numSlots, difficultyBits, mask, initialDailySupply,
-      approval_percentage, contest_percentage);
+      approval_percentage, contest_percentage, treasury_limit_percentage);
 };
