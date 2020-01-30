@@ -19,7 +19,7 @@ describe('TestKingAutomatonProposals 4 slots', async() => {
     accounts = await web3.eth.getAccounts();
     account = accounts[0];
     slots = 4;
-    koh = await KingAutomaton.new(slots, 16, "0x010000", "406080000", 10, -10);
+    koh = await KingAutomaton.new(slots, 16, "0x010000", "406080000", 10, -10, 2);
     id = await koh.createProposal.call(account, "", "", "0x", 30, 3, 20);
     await koh.createProposal(account, "", "", "0x", 30, 3, 20);
     proposal_start_period = 90;
@@ -241,7 +241,7 @@ describe('TestKingAutomatonProposals 256 slots', async() => {
     accounts = await web3.eth.getAccounts();
     account = accounts[0];
     slots = 256;
-    koh = await KingAutomaton.new(slots, 16, "0x010000", "406080000", 10, -10);
+    koh = await KingAutomaton.new(slots, 16, "0x010000", "406080000", 10, -10, 2);
     id = await koh.createProposal.call(account, "", "", "0x", 30, 3, 20);
     await koh.createProposal(account, "", "", "0x", 30, 3, 20);
     proposal_start_period = 90;
