@@ -1,6 +1,6 @@
 # <img title="Automaton" width="231" height="39" src="media/automaton-logo-black-on-white-8x8.svg">
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-6-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-7-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 ## Build Status
@@ -104,6 +104,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
     <td align="center"><a href="https://github.com/Plazmock"><img src="https://avatars2.githubusercontent.com/u/7255538?v=4" width="100px;" alt=""/><br /><sub><b>Samir Muradov</b></sub></a><br /><a href="https://github.com/automaton-network/automaton/commits?author=Plazmock" title="Code">💻</a></td>
     <td align="center"><a href="https://github.com/zorancvetkov"><img src="https://avatars0.githubusercontent.com/u/5655655?v=4" width="100px;" alt=""/><br /><sub><b>zorancvetkov</b></sub></a><br /><a href="#ideas-zorancvetkov" title="Ideas, Planning, & Feedback">🤔</a></td>
     <td align="center"><a href="http://iohk.io"><img src="https://avatars0.githubusercontent.com/u/6830638?v=4" width="100px;" alt=""/><br /><sub><b>Richard Wild</b></sub></a><br /><a href="#design-RichardWild001" title="Design">🎨</a> <a href="#ideas-RichardWild001" title="Ideas, Planning, & Feedback">🤔</a> <a href="#content-RichardWild001" title="Content">🖋</a></td>
+    <td align="center"><a href="https://github.com/MartinPenkov"><img src="https://avatars2.githubusercontent.com/u/26440634?v=4" width="100px;" alt=""/><br /><sub><b>MartinPenkov</b></sub></a><br /><a href="https://github.com/automaton-network/automaton/commits?author=MartinPenkov" title="Code">💻</a></td>
   </tr>
 </table>
 
