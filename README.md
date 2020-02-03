@@ -1,6 +1,6 @@
 # <img title="Automaton" width="231" height="39" src="media/automaton-logo-black-on-white-8x8.svg">
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-2-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-3-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 ## Build Status
@@ -100,6 +100,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
   <tr>
     <td align="center"><a href="https://github.com/akovachev"><img src="https://avatars1.githubusercontent.com/u/3320144?v=4" width="100px;" alt=""/><br /><sub><b>Asen Kovachev</b></sub></a><br /><a href="https://github.com/automaton-network/automaton/commits?author=akovachev" title="Code">💻</a> <a href="#projectManagement-akovachev" title="Project Management">📆</a></td>
     <td align="center"><a href="https://github.com/karonka"><img src="https://avatars1.githubusercontent.com/u/7265999?v=4" width="100px;" alt=""/><br /><sub><b>karonka</b></sub></a><br /><a href="https://github.com/automaton-network/automaton/commits?author=karonka" title="Code">💻</a></td>
+    <td align="center"><a href="https://github.com/Plazmock"><img src="https://avatars2.githubusercontent.com/u/7255538?v=4" width="100px;" alt=""/><br /><sub><b>Samir Muradov</b></sub></a><br /><a href="https://github.com/automaton-network/automaton/commits?author=Plazmock" title="Code">💻</a></td>
   </tr>
 </table>
 
