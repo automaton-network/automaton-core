@@ -12,7 +12,23 @@
       "profile": "https://github.com/akovachev",
       "contributions": [
         "code",
-        "projectManagement"
+        "projectManagement",
+        "business",
+        "content",
+        "financial",
+        "ideas"
+      ]
+    },
+    {
+      "login": "ElCampeon",
+      "name": "ElCampeon",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/26015813?v=4",
+      "profile": "https://github.com/ElCampeon",
+      "contributions": [
+        "business",
+        "ideas",
+        "content",
+        "financial"
       ]
     },
     {
@@ -31,18 +47,6 @@
       "profile": "https://github.com/Plazmock",
       "contributions": [
         "code"
-      ]
-    },
-    {
-      "login": "ElCampeon",
-      "name": "ElCampeon",
-      "avatar_url": "https://avatars1.githubusercontent.com/u/26015813?v=4",
-      "profile": "https://github.com/ElCampeon",
-      "contributions": [
-        "business",
-        "ideas",
-        "content",
-        "financial"
       ]
     }
   ],
