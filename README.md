@@ -1,4 +1,7 @@
 # <img title="Automaton" width="231" height="39" src="media/automaton-logo-black-on-white-8x8.svg">
+<!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
+[![All Contributors](https://img.shields.io/badge/all_contributors-1-orange.svg?style=flat-square)](#contributors-)
+<!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 ## Build Status
 
@@ -85,3 +88,22 @@ Once you have bazel you can run the following to build and run Automaton Core
 *COMING SOON!*
 
 We're getting our step-by-step tutorials ready.
+
+## Contributors ✨
+
+Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
+
+<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
+<!-- prettier-ignore-start -->
+<!-- markdownlint-disable -->
+<table>
+  <tr>
+    <td align="center"><a href="https://github.com/akovachev"><img src="https://avatars1.githubusercontent.com/u/3320144?v=4" width="100px;" alt=""/><br /><sub><b>Asen Kovachev</b></sub></a><br /><a href="https://github.com/automaton-network/automaton/commits?author=akovachev" title="Code">💻</a> <a href="#projectManagement-akovachev" title="Project Management">📆</a></td>
+  </tr>
+</table>
+
+<!-- markdownlint-enable -->
+<!-- prettier-ignore-end -->
+<!-- ALL-CONTRIBUTORS-LIST:END -->
+
+This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind welcome!
