@@ -57,6 +57,17 @@
       "contributions": [
         "ideas"
       ]
+    },
+    {
+      "login": "RichardWild001",
+      "name": "Richard Wild",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/6830638?v=4",
+      "profile": "http://iohk.io",
+      "contributions": [
+        "design",
+        "ideas",
+        "content"
+      ]
     }
   ],
   "contributorsPerLine": 7,
