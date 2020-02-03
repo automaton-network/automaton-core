@@ -68,6 +68,15 @@
         "ideas",
         "content"
       ]
+    },
+    {
+      "login": "MartinPenkov",
+      "name": "MartinPenkov",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/26440634?v=4",
+      "profile": "https://github.com/MartinPenkov",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
