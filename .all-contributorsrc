@@ -1,0 +1,25 @@
+{
+  "files": [
+    "README.md"
+  ],
+  "imageSize": 100,
+  "commit": false,
+  "contributors": [
+    {
+      "login": "akovachev",
+      "name": "Asen Kovachev",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/3320144?v=4",
+      "profile": "https://github.com/akovachev",
+      "contributions": [
+        "code",
+        "projectManagement"
+      ]
+    }
+  ],
+  "contributorsPerLine": 7,
+  "projectName": "automaton",
+  "projectOwner": "automaton-network",
+  "repoType": "github",
+  "repoHost": "https://github.com",
+  "skipCi": true
+}
