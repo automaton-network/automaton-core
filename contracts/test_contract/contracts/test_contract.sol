@@ -1,4 +1,4 @@
-pragma solidity ^0.5.11;
+pragma solidity ^0.6.2;
 pragma experimental ABIEncoderV2;
 
 contract test_contract {

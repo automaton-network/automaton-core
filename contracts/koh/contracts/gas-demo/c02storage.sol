@@ -1,4 +1,4 @@
-pragma solidity ^0.5.11;
+pragma solidity ^0.6.2;
 
 contract OptimusPrime02a {
   uint256 public s;
