@@ -482,7 +482,7 @@ contract KingAutomaton {
     uint256 last_claim_time;
   }
   mapping (uint256 => ValidatorSlot) public slots;
-  uint256 numSlots;
+  uint256 public numSlots;
 
   uint256 public minDifficulty;          // Minimum difficulty
   uint256 public mask;                   // Prevents premine
@@ -503,10 +503,6 @@ contract KingAutomaton {
     }
 
     rewardPerSlotPerSecond = (1 ether * initialDailySupply) / 1 days / nSlots;
-  }
-
-  function getSlotsNumber() public view returns(uint256) {
-    return numSlots;
   }
 
   function getSlotOwner(uint256 slot) public view returns(address) {
