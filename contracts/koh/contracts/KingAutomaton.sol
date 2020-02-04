@@ -1,13 +1,14 @@
-pragma solidity ^0.5.11;
+pragma solidity ^0.6.2;
 
 contract KingAutomaton {
   //////////////////////////////////////////////////////////////////////////////////////////////////
   // Initialization
   //////////////////////////////////////////////////////////////////////////////////////////////////
 
-  constructor(uint256 numSlots, uint8 minDifficultyBits, uint256 predefinedMask, uint256 initialDailySupply,
+  constructor(uint256 nSlots, uint8 minDifficultyBits, uint256 predefinedMask, uint256 initialDailySupply,
     int256 approval_pct, int256 contest_pct, uint256 treasury_limit_pct) public {
-    initMining(numSlots, minDifficultyBits, predefinedMask, initialDailySupply);
+    numSlots = nSlots;
+    initMining(nSlots, minDifficultyBits, predefinedMask, initialDailySupply);
     initNames();
     initTreasury();
 
@@ -243,18 +244,18 @@ contract KingAutomaton {
   }
 
   function unpaidSlots(uint256 _id) public view validBallotBoxID(_id) returns (uint256) {
-    return slots.length - ballotBoxes[_id].paidSlots;
+    return numSlots - ballotBoxes[_id].paidSlots;
   }
 
   // Pay for multiple slots at once, 32 seems to be a reasonable amount.
   function payForGas(uint256 _id, uint256 _slotsToPay) public validBallotBoxID(_id) {
     BallotBox storage b = ballotBoxes[_id];
     uint256 _paidSlots = b.paidSlots;
-    uint256 _slotsLength = slots.length;
+    uint256 _slotsLength = numSlots;
     require((_slotsLength - _paidSlots) >= _slotsToPay, "Too many slots!");
     uint256 _newLength = _paidSlots + _slotsToPay;
     uint256 votesPerWord = 255 / (msb(b.numChoices) + 1);
-    uint256 votesWords = (slots.length + votesPerWord - 1) / votesPerWord;
+    uint256 votesWords = (_slotsLength + votesPerWord - 1) / votesPerWord;
     for (uint256 i = 1; i <= _slotsToPay; i++) {
       uint256 idx = _newLength - i;
       b.payGas1[idx] = b.payGas2[idx] = MSB_SET;
@@ -272,7 +273,7 @@ contract KingAutomaton {
     BallotBox storage b = ballotBoxes[_id];
     int256 yes = int256(b.voteCount[1]);
     int256 no = int256(b.voteCount[2]);
-    return (yes - no) * 100 / int256(slots.length);
+    return (yes - no) * 100 / int256(numSlots);
   }
 
   function castVote(uint256 _id, uint256 _slot, uint8 _choice) public slotOwner(_slot) validBallotBoxID(_id) {
@@ -444,13 +445,13 @@ contract KingAutomaton {
   }
 
   function setOwnerAllSlots() public debugOnly {
-    for (uint256 i = 0; i < slots.length; ++i) {
+    for (uint256 i = 0; i < numSlots; ++i) {
       slots[i].owner = msg.sender;
     }
   }
 
   function castVotesForApproval(uint256 _id) public debugOnly returns(uint256){
-    uint256 minNumYesVotes = uint256((int256(slots.length) * (approvalPercentage + 100) + 199) / 200);
+    uint256 minNumYesVotes = uint256((int256(numSlots) * (approvalPercentage + 100) + 199) / 200);
     for (uint256 i = 0; i < minNumYesVotes; ++i) {
       castVote(_id, i, 1);
     }
@@ -458,7 +459,7 @@ contract KingAutomaton {
   }
 
   function castVotesForRejection(uint256 _id) public debugOnly returns(uint256){
-    uint256 minNumNoVotes = uint256((int256(slots.length) * (100 - contestPercentage) + 199) / 200);
+    uint256 minNumNoVotes = uint256((int256(numSlots) * (100 - contestPercentage) + 199) / 200);
     for (uint256 i = 0; i < minNumNoVotes; ++i) {
       castVote(_id, i, 2);
     }
@@ -480,18 +481,18 @@ contract KingAutomaton {
     uint256 difficulty;
     uint256 last_claim_time;
   }
-  ValidatorSlot[] public slots;
+  mapping (uint256 => ValidatorSlot) public slots;
+  uint256 public numSlots;
 
   uint256 public minDifficulty;          // Minimum difficulty
   uint256 public mask;                   // Prevents premine
   uint256 public numTakeOvers;           // Number of times a slot was taken over by a new king.
   uint256 public rewardPerSlotPerSecond; // Validator reward per slot per second.
 
-  function initMining(uint256 numSlots, uint256 minDifficultyBits, uint256 predefinedMask, uint256 initialDailySupply) private {
-    require(numSlots > 0);
+  function initMining(uint256 nSlots, uint256 minDifficultyBits, uint256 predefinedMask, uint256 initialDailySupply) private {
+    require(nSlots > 0);
     require(minDifficultyBits > 0);
 
-    slots.length = numSlots;
     minDifficulty = (2 ** uint256(minDifficultyBits) - 1) << (256 - minDifficultyBits);
     if (predefinedMask == 0) {
       // Prevents premining with a known predefined mask.
@@ -501,11 +502,7 @@ contract KingAutomaton {
       mask = predefinedMask;
     }
 
-    rewardPerSlotPerSecond = (1 ether * initialDailySupply) / 1 days / numSlots;
-  }
-
-  function getSlotsNumber() public view returns(uint256) {
-    return slots.length;
+    rewardPerSlotPerSecond = (1 ether * initialDailySupply) / 1 days / nSlots;
   }
 
   function getSlotOwner(uint256 slot) public view returns(address) {
@@ -567,7 +564,7 @@ contract KingAutomaton {
     bytes32 r,
     bytes32 s
   ) public {
-    uint256 slot = uint256(pubKeyX) % slots.length;
+    uint256 slot = uint256(pubKeyX) % numSlots;
     uint256 key = uint256(pubKeyX) ^ mask;
 
     // Check if the key can take over the slot and become the new king.
@@ -676,7 +673,7 @@ contract KingAutomaton {
 
   function removeOrder(uint256 _id) private {
     orders[_id] = orders[orders.length - 1];
-    orders.length--;
+    orders.pop();
   }
 
   function getOrdersLength() public view returns (uint256) {

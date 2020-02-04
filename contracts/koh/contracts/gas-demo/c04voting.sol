@@ -1,75 +1,75 @@
-pragma solidity ^0.5.11;
+pragma solidity ^0.6.2;
 
-contract OptimusPrime04a {
-  address[] public owners;
-  bytes public votes;
-  uint256[] public voteCount;
-
-  constructor(uint256 _slots, uint256 _numChoices) public {
-    owners.length = _slots;
-    votes.length = _slots;
-    voteCount.length = _numChoices + 1;
-  }
-
-  function setOwner(uint256 _slot) public {
-    owners[_slot] = msg.sender;
-  }
-
-  function castVote(uint256 _slot, uint8 _choice) public {
-    require(msg.sender == owners[_slot], "Invalid slot owner");
-
-    // Modify vote selection.
-    byte oldVote = votes[_slot];
-    if (oldVote > 0) {
-      voteCount[uint8(oldVote)]--;
-    }
-
-    votes[_slot] = byte(_choice);
-    if (_choice != 0x00) {
-      voteCount[_choice]++;
-    }
-  }
-
-  function getVote(uint256 _slot) public view returns (byte) {
-    return votes[_slot];
-  }
-}
-
-contract OptimusPrime04b {
-  address[] public owners;
-
-  uint256[] public votes;
-  uint256[] public voteCount;
-
-  constructor(uint256 _slots, uint256 _numChoices) public {
-    owners.length = _slots;
-    votes.length = _slots;
-    voteCount.length = _numChoices + 1;
-  }
-
-  function setOwner(uint256 _slot) public {
-    owners[_slot] = msg.sender;
-  }
-
-  function castVote(uint256 _slot, uint8 _choice) public {
-    require(msg.sender == owners[_slot], "Invalid slot owner");
-
-    // Modify vote selection.
-    uint256 oldVote = votes[_slot];
-    if (oldVote > 0) {
-      voteCount[oldVote]--;
-    }
-
-    votes[_slot] = _choice;
-    if (_choice != 0x00) {
-      voteCount[_choice]++;
-    }
-  }
-
-  function getVote(uint256 _slot) public view returns (uint256) {
-    return votes[_slot];
-  }
-}
+// contract OptimusPrime04a {
+//   address[] public owners;
+//   bytes public votes;
+//   uint256[] public voteCount;
+//
+//   constructor(uint256 _slots, uint256 _numChoices) public {
+//     owners.length = _slots;
+//     votes.length = _slots;
+//     voteCount.length = _numChoices + 1;
+//   }
+//
+//   function setOwner(uint256 _slot) public {
+//     owners[_slot] = msg.sender;
+//   }
+//
+//   function castVote(uint256 _slot, uint8 _choice) public {
+//     require(msg.sender == owners[_slot], "Invalid slot owner");
+//
+//     // Modify vote selection.
+//     byte oldVote = votes[_slot];
+//     if (oldVote > 0) {
+//       voteCount[uint8(oldVote)]--;
+//     }
+//
+//     votes[_slot] = byte(_choice);
+//     if (_choice != 0x00) {
+//       voteCount[_choice]++;
+//     }
+//   }
+//
+//   function getVote(uint256 _slot) public view returns (byte) {
+//     return votes[_slot];
+//   }
+// }
+//
+// contract OptimusPrime04b {
+//   address[] public owners;
+//
+//   uint256[] public votes;
+//   uint256[] public voteCount;
+//
+//   constructor(uint256 _slots, uint256 _numChoices) public {
+//     owners.length = _slots;
+//     votes.length = _slots;
+//     voteCount.length = _numChoices + 1;
+//   }
+//
+//   function setOwner(uint256 _slot) public {
+//     owners[_slot] = msg.sender;
+//   }
+//
+//   function castVote(uint256 _slot, uint8 _choice) public {
+//     require(msg.sender == owners[_slot], "Invalid slot owner");
+//
+//     // Modify vote selection.
+//     uint256 oldVote = votes[_slot];
+//     if (oldVote > 0) {
+//       voteCount[oldVote]--;
+//     }
+//
+//     votes[_slot] = _choice;
+//     if (_choice != 0x00) {
+//       voteCount[_choice]++;
+//     }
+//   }
+//
+//   function getVote(uint256 _slot) public view returns (uint256) {
+//     return votes[_slot];
+//   }
+// }
 
 contract OptimusPrime04c {
   address[65536] public owners;
