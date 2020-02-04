@@ -12,11 +12,16 @@
       "profile": "https://github.com/akovachev",
       "contributions": [
         "code",
+        "review",
         "projectManagement",
         "business",
         "content",
         "financial",
-        "ideas"
+        "ideas",
+        "infra",
+        "platform",
+        "talk",
+        "design"
       ]
     },
     {
@@ -28,7 +33,9 @@
         "business",
         "ideas",
         "content",
-        "financial"
+        "financial",
+        "design",
+        "fundingFinding"
       ]
     },
     {
