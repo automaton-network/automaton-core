@@ -5,6 +5,8 @@ contract KingAutomaton {
   // Initialization
   //////////////////////////////////////////////////////////////////////////////////////////////////
 
+  // TODO(kari): write withdraw() function to replace .transfer
+
   constructor(uint256 nSlots, uint8 minDifficultyBits, uint256 predefinedMask, uint256 initialDailySupply,
     int256 approval_pct, int256 contest_pct, uint256 treasury_limit_pct) public {
     numSlots = nSlots;
@@ -693,9 +695,9 @@ contract KingAutomaton {
     require(o.AUTO == _AUTO, "Order AUTO does not match requested size");
     require(o.ETH == _ETH, "Order ETH does not match requested size");
     require(o.orderType == OrderType.Buy, "Invalid order type");
+    removeOrder(_id);
     transfer(o.owner, _AUTO);
     msg.sender.transfer(_ETH);
-    removeOrder(_id);
   }
 
   function sell(uint256 _AUTO, uint256 _ETH) public returns (uint256 _id){
@@ -712,24 +714,21 @@ contract KingAutomaton {
     require(o.AUTO == _AUTO, "Order AUTO does not match requested size");
     require(o.ETH == msg.value, "Order ETH does not match requested size");
     require(o.orderType == OrderType.Sell, "Invalid order type");
-    o.owner.transfer(msg.value);
-    transferInternal(DEXAddress, msg.sender, _AUTO);
     removeOrder(_id);
+    transferInternal(DEXAddress, msg.sender, _AUTO);
+    o.owner.transfer(msg.value);
   }
 
   function cancelOrder(uint256 _id) public {
     Order memory o = orders[_id];
     require(o.owner == msg.sender);
+    removeOrder(_id);
 
     if (o.orderType == OrderType.Buy) {
       msg.sender.transfer(o.ETH);
-    }
-
-    if (o.orderType == OrderType.Sell) {
+    } else if (o.orderType == OrderType.Sell) {
       transferInternal(DEXAddress, msg.sender, o.AUTO);
     }
-
-    removeOrder(_id);
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////
