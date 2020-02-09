@@ -84,6 +84,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "sept",
+      "name": "sept",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/920587?v=4",
+      "profile": "https://github.com/sept",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
