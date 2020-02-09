@@ -64,10 +64,11 @@ void eth_contract::parse_abi(json json_abi) {
       } else {
         LOG(FATAL) << "Function doesn't have \"name\" !";
       }
-      if (jobj.find("constant") != jobj.end()) {
-        is_transaction = !jobj["constant"].get<bool>();
+      if (jobj.find("stateMutability") != jobj.end()) {
+        std::string stateMutability = jobj["stateMutability"].get<std::string>();
+        is_transaction = (stateMutability == "pure" || stateMutability == "view") ? false : true;
       } else {
-        LOG(FATAL) << "Function doesn't have \"constant\" !";
+        LOG(FATAL) << "Function doesn't have \"stateMutability\" !";
       }
       inputs << '[';
       if (jobj.find("inputs") != jobj.end()) {
