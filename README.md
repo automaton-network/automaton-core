@@ -107,7 +107,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
     <td align="center"><a href="https://github.com/MartinPenkov"><img src="https://avatars2.githubusercontent.com/u/26440634?v=4" width="100px;" alt=""/><br /><sub><b>MartinPenkov</b></sub></a><br /><a href="https://github.com/automaton-network/automaton/commits?author=MartinPenkov" title="Code">💻</a></td>
   </tr>
   <tr>
-    <td align="center"><a href="https://github.com/sept"><img src="https://avatars1.githubusercontent.com/u/920587?v=4" width="100px;" alt=""/><br /><sub><b>sept</b></sub></a><br /><a href="https://github.com/automaton-network/automaton/commits?author=sept" title="Code">💻</a></td>
+    <td align="center"><a href="https://github.com/sept-en"><img src="https://avatars1.githubusercontent.com/u/920587?v=4" width="100px;" alt=""/><br /><sub><b>Kirill</b></sub></a><br /><a href="https://github.com/automaton-network/automaton/commits?author=sept-en" title="Code">💻</a></td>
   </tr>
 </table>
 
