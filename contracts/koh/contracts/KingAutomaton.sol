@@ -1,17 +1,6 @@
 pragma solidity ^0.6.2;
 
 library Helpers {
-  function msb(uint256 x) public pure returns (uint8 r) {
-    if (x >= 0x100000000000000000000000000000000) {x >>= 128; r += 128;}
-    if (x >= 0x10000000000000000) {x >>= 64; r += 64;}
-    if (x >= 0x100000000) {x >>= 32; r += 32;}
-    if (x >= 0x10000) {x >>= 16; r += 16;}
-    if (x >= 0x100) {x >>= 8; r += 8;}
-    if (x >= 0x10) {x >>= 4; r += 4;}
-    if (x >= 0x4) {x >>= 2; r += 2;}
-    if (x >= 0x2) r += 1; // No need to shift x anymore
-  }
-
   // Returns the Ethereum address corresponding to the input public key.
   function getAddressFromPubKey(bytes32 pubkeyX, bytes32 pubkeyY) public pure returns (uint256) {
     return uint256(keccak256(abi.encodePacked(pubkeyX, pubkeyY))) & 0x00FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
@@ -37,7 +26,7 @@ library DEX {
 
   struct Data {
     mapping(uint256 => Order) orders;
-    mapping(address => uint256) withdraws;
+    mapping(address => uint256) balanceETH;
     uint256 ids;
   }
 
@@ -63,9 +52,9 @@ library DEX {
     require(o.AUTO == _AUTO, "Order AUTO does not match requested size");
     require(o.ETH == _ETH, "Order ETH does not match requested size");
     require(o.orderType == OrderType.Buy, "Invalid order type");
-    uint256 withdraw = self.withdraws[msg.sender];
+    uint256 withdraw = self.balanceETH[msg.sender];
     require(withdraw + _ETH > withdraw);
-    self.withdraws[msg.sender] += _ETH;
+    self.balanceETH[msg.sender] += _ETH;
   }
 
   function buyNow(Data storage self, uint256 _id, uint256 _AUTO, uint256 _value) public {
@@ -74,9 +63,9 @@ library DEX {
     require(o.AUTO == _AUTO, "Order AUTO does not match requested size");
     require(o.ETH == _value, "Order ETH does not match requested size");
     require(o.orderType == OrderType.Sell, "Invalid order type");
-    uint256 withdraw = self.withdraws[o.owner];
+    uint256 withdraw = self.balanceETH[o.owner];
     require(withdraw + _value > withdraw);
-    self.withdraws[o.owner] += _value;
+    self.balanceETH[o.owner] += _value;
   }
 }
 
@@ -139,6 +128,9 @@ library Miner {
 library Proposals {
   enum BallotBoxState {Uninitialized, PrepayingGas, Active, Inactive}
   enum ProposalState {Uninitialized, Started, Accepted, Rejected, Contested, Completed}
+
+  uint256 public constant PROPOSAL_START_PERIOD = 90 seconds; // 1 weeks;
+  uint256 public constant CONTEST_PERIOD = 90 seconds;  //
 
   uint256 constant MSB_SET = 1 << 255;
   uint256 constant UINT256_MAX = ~uint256(0);
@@ -206,8 +198,19 @@ library Proposals {
     _;
   }
 
+  function msb(uint256 x) public pure returns (uint8 r) {
+    if (x >= 0x100000000000000000000000000000000) {x >>= 128; r += 128;}
+    if (x >= 0x10000000000000000) {x >>= 64; r += 64;}
+    if (x >= 0x100000000) {x >>= 32; r += 32;}
+    if (x >= 0x10000) {x >>= 16; r += 16;}
+    if (x >= 0x100) {x >>= 8; r += 8;}
+    if (x >= 0x10) {x >>= 4; r += 4;}
+    if (x >= 0x4) {x >>= 2; r += 2;}
+    if (x >= 0x2) r += 1; // No need to shift x anymore
+  }
+
   function createBallotBox(Data storage self, uint256 _choices, uint256 _id) public {
-    require (_choices > 1, "Number of choices must be bigger than 1!");
+    require(_choices > 1, "Number of choices must be bigger than 1!");
     BallotBox storage b = self.ballotBoxes[_id];
     b.numChoices = _choices;
     b.state = BallotBoxState.PrepayingGas;
@@ -236,7 +239,7 @@ library Proposals {
     uint256 _paidSlots = b.paidSlots;
     require((_slotsLength - _paidSlots) >= _slotsToPay, "Too many slots!");
     uint256 _newLength = _paidSlots + _slotsToPay;
-    uint256 votesPerWord = 255 / (Helpers.msb(b.numChoices) + 1);
+    uint256 votesPerWord = 255 / (msb(b.numChoices) + 1);
     uint256 votesWords = (_slotsLength + votesPerWord - 1) / votesPerWord;
     for (uint256 i = 1; i <= _slotsToPay; i++) {
       uint256 idx = _newLength - i;
@@ -264,7 +267,7 @@ library Proposals {
     require(_choice <= numChoices, "Invalid choice");
     require(box.state == BallotBoxState.Active, "Ballot is not active!");
 
-    uint256 bitsPerVote = Helpers.msb(numChoices) + 1;
+    uint256 bitsPerVote = msb(numChoices) + 1;
     uint256 votesPerWord = 255 / bitsPerVote;
 
     // Calculate masks.
@@ -292,7 +295,7 @@ library Proposals {
 
   function getVote(Data storage self, uint256 _id, uint256 _slot) public view validBallotBoxID(self, _id) returns (uint256) {
     uint256 numChoices =  self.ballotBoxes[_id].numChoices;
-    uint256 bitsPerVote = Helpers.msb(numChoices) + 1;
+    uint256 bitsPerVote = msb(numChoices) + 1;
     uint256 votesPerWord = 255 / bitsPerVote;
 
     // Calculate masks.
@@ -302,6 +305,97 @@ library Proposals {
 
     // Get vote
     return (self.ballotBoxes[_id].votes[index] & mask) >> offset;
+  }
+
+  function updateProposalState(Data storage self, uint256 _id, uint256 _numSlots) public validBallotBoxID(self, _id) returns (bool _transfer) {
+    Proposal storage p = self.proposals[_id];
+    ProposalState p_state = p.state;
+    uint256 _initialEndDate = p.initialEndDate;
+    if (p_state == ProposalState.Started) {
+      BallotBox storage b = self.ballotBoxes[_id];
+      if (b.state == BallotBoxState.Active) {  // Gas is paid
+        if (_initialEndDate != 0) {
+          if (now >= _initialEndDate) {
+            int256 vote_diff = calcVoteDifference(self, _id, _numSlots);
+            if (vote_diff >= self.approvalPercentage) {
+              p.state = ProposalState.Accepted;
+              p.nextPaymentDate = now;
+            } else {
+              p.state = ProposalState.Rejected;
+              b.state = BallotBoxState.Inactive;
+              _transfer = true;
+            }
+          }
+        } else {  // Either gas has been just paid and time hasn't been set or the initial time hasn't passed
+          p.initialEndDate = now + PROPOSAL_START_PERIOD;
+        }
+      }
+    } else if (p_state == ProposalState.Accepted) {
+      int256 vote_diff = calcVoteDifference(self, _id, _numSlots);
+      if (vote_diff <= self.contestPercentage) {
+        p.state = ProposalState.Contested;
+        p.contestEndDate = now + CONTEST_PERIOD;
+      }
+    } else if (p_state == ProposalState.Contested) {
+      if (now >= p.contestEndDate) {
+        int256 vote_diff = calcVoteDifference(self, _id, _numSlots);
+        if (vote_diff >= self.approvalPercentage) {
+          p.state = ProposalState.Accepted;
+        } else {
+          p.state = ProposalState.Rejected;
+          self.ballotBoxes[_id].state = BallotBoxState.Inactive;
+          _transfer = true;
+        }
+      }
+    }
+  }
+
+  // In case the contributor is inactive anyone could call the function AFTER all periods are passed and the funds locked
+  // in the proposal address will be returned to treasury. Rejecting the proposal will have the same effect.
+  function claimReward(Data storage self, uint256 _id, uint256 _budget) public validBallotBoxID(self, _id)
+      returns (bool _is_sender_transfer_allowed, uint256 _return_to_treasury) {
+    Proposal storage p = self.proposals[_id];
+    require(p.state == ProposalState.Accepted || p.state == ProposalState.Contested, "Incorrect proposal state!");
+    uint256 paymentDate = p.nextPaymentDate;
+    uint256 remainingPeriods = p.remainingPeriods;
+    uint256 periodLen = p.budgetPeriodLen;
+    uint256 budgetPerPeriod = p.budgetPerPeriod;
+
+    require(_budget <= budgetPerPeriod, "Budget exceeded!");
+
+    if (paymentDate > 0) {
+      if (paymentDate <= now) {
+        if (paymentDate + periodLen < now) {
+          uint256 missedPeriods = (now - paymentDate) / periodLen;
+          _return_to_treasury += missedPeriods * p.budgetPerPeriod;
+          remainingPeriods -= missedPeriods;
+          paymentDate += periodLen * missedPeriods;
+        }
+        if (remainingPeriods > 1) {
+          require(p.contributor == msg.sender, "Invalid contributor!");
+          _is_sender_transfer_allowed = true;
+          if (budgetPerPeriod > _budget) {
+            _return_to_treasury +=  budgetPerPeriod - _budget;
+          }
+          paymentDate += periodLen;
+          remainingPeriods--;
+        } else {
+          if (remainingPeriods == 1) {
+            require(p.contributor == msg.sender, "Invalid contributor!");
+            _is_sender_transfer_allowed = true;
+            if (budgetPerPeriod > _budget) {
+              _return_to_treasury +=  budgetPerPeriod - _budget;
+            }
+          }
+          p.nextPaymentDate = 0;
+          remainingPeriods = 0;
+          p.state = ProposalState.Completed;
+          self.ballotBoxes[_id].state = BallotBoxState.Inactive;
+        }
+        p.remainingPeriods = remainingPeriods;
+        p.nextPaymentDate = paymentDate;
+      }
+    }
   }
 
   function completeProposal(Data storage self, uint256 _id) public {
@@ -426,8 +520,7 @@ contract KingAutomaton {
   // Treasury
   //////////////////////////////////////////////////////////////////////////////////////////////////
 
-  uint256 public constant PROPOSAL_START_PERIOD = 90 seconds; // 1 weeks;
-  uint256 public constant CONTEST_PERIOD = 90 seconds;  //
+  uint256 public constant MIN_PERIOD_LEN = 3 days;
 
   bool public debugging = false;
 
@@ -450,6 +543,33 @@ contract KingAutomaton {
     _;
   }
 
+  function getBallotBox(uint256 _id) public view
+      returns (Proposals.BallotBoxState state, uint256 numChoices, uint256 paidSlots) {
+    Proposals.BallotBox memory b = proposals_data.ballotBoxes[_id];
+    state = b.state;
+    numChoices = b.numChoices;
+    paidSlots = b.paidSlots;
+  }
+
+  function getProposal(uint256 _id) public view returns (address contributor, string memory title,
+      string memory documentsLink, bytes memory documentsHash, uint256 budgetPeriodLen, uint256 remainingPeriods,
+      uint256 budgetPerPeriod, uint256 nextPaymentDate, Proposals.ProposalState state, uint256 initialEndDate,
+      uint256 contestEndDate) {
+    Proposals.Proposal memory p = proposals_data.proposals[_id];
+
+    contributor = p.contributor;
+    title = p.title;
+    documentsLink = p.documentsLink;
+    documentsHash = p.documentsHash;
+    budgetPeriodLen = p.budgetPeriodLen;
+    remainingPeriods = p.remainingPeriods;
+    budgetPerPeriod = p.budgetPerPeriod;
+    nextPaymentDate = p.nextPaymentDate;
+    state = p.state;
+    initialEndDate = p.initialEndDate;
+    contestEndDate = p.contestEndDate;
+  }
+
   function createBallotBox(uint256 _choices) public returns (uint256 id) {
     id = ++ballotBoxIDs;
     proposals_data.createBallotBox(_choices, id);
@@ -459,6 +579,7 @@ contract KingAutomaton {
   function createProposal(address payable contributor, string calldata title, string calldata documents_link,
       bytes calldata documents_hash, uint256 budget_period_len, uint256 num_periods, uint256 budget_per_period)
       external returns (uint256 _id) {
+    require(budget_period_len <= MIN_PERIOD_LEN);
     require(num_periods * budget_per_period <= proposals_data.treasuryLimitPercentage * balances[treasuryAddress] / 100);
     _id = createBallotBox(2);
     proposals_data.createProposal(_id, contributor, title, documents_link, documents_hash, budget_period_len, num_periods, budget_per_period);
@@ -488,7 +609,7 @@ contract KingAutomaton {
   function getVote(uint256 _id, uint256 _slot) public view returns (uint) {
     Proposals.BallotBox storage b = proposals_data.ballotBoxes[_id];
     require(b.state != Proposals.BallotBoxState.Uninitialized, "Invalid ballot box ID!");
-    uint256 bitsPerVote = Helpers.msb(b.numChoices) + 1;
+    uint256 bitsPerVote = Proposals.msb(b.numChoices) + 1;
     uint256 votesPerWord = 255 / bitsPerVote;
     uint256 index = _slot / votesPerWord;
     uint256 offset = (_slot % votesPerWord) * bitsPerVote;
@@ -506,96 +627,24 @@ contract KingAutomaton {
   }
 
   function updateProposalState(uint256 _id) public validBallotBoxID(_id) {
-    Proposals.Proposal storage p = proposals_data.proposals[_id];
-    Proposals.ProposalState p_state = p.state;
-    uint256 _initialEndDate = p.initialEndDate;
-    if (p_state == Proposals.ProposalState.Started) {
-      Proposals.BallotBox storage b = proposals_data.ballotBoxes[_id];
-      if (b.state == Proposals.BallotBoxState.Active) {  // Gas is paid
-        if (_initialEndDate != 0) {
-          if (now >= _initialEndDate) {
-            int256 vote_diff = calcVoteDifference(_id);
-            if (vote_diff >= proposals_data.approvalPercentage) {
-              p.state = Proposals.ProposalState.Accepted;
-              p.nextPaymentDate = now;
-            } else {
-              p.state = Proposals.ProposalState.Rejected;
-              b.state = Proposals.BallotBoxState.Inactive;
-              transferInternal(address(_id), treasuryAddress, balances[address(_id)]);
-            }
-          }
-        } else {  // Either gas has been just paid and time hasn't been set or the initial time hasn't passed
-          p.initialEndDate = now + PROPOSAL_START_PERIOD;
-        }
-      }
-    } else if (p_state == Proposals.ProposalState.Accepted) {
-      int256 vote_diff = calcVoteDifference(_id);
-      if (vote_diff <= proposals_data.contestPercentage) {
-        p.state = Proposals.ProposalState.Contested;
-        p.contestEndDate = now + CONTEST_PERIOD;
-      }
-    } else if (p_state == Proposals.ProposalState.Contested) {
-      if (now >= p.contestEndDate) {
-        int256 vote_diff = calcVoteDifference(_id);
-        if (vote_diff >= proposals_data.approvalPercentage) {
-          p.state = Proposals.ProposalState.Accepted;
-        } else {
-          p.state = Proposals.ProposalState.Rejected;
-          proposals_data.ballotBoxes[_id].state = Proposals.BallotBoxState.Inactive;
-          transferInternal(address(_id), treasuryAddress, balances[address(_id)]);
-        }
-      }
+    bool _transfer = proposals_data.updateProposalState(_id, numSlots);
+    if (_transfer) {
+      transferInternal(address(_id), treasuryAddress, balances[address(_id)]);
     }
   }
 
   // In case the contributor is inactive anyone could call the function AFTER all periods are passed and the funds locked
   // in the proposal address will be returned to treasury. Rejecting the proposal will have the same effect.
-function claimReward(uint256 _id, uint256 _budget) public validBallotBoxID(_id) {
-  updateProposalState(_id);
-  Proposals.Proposal storage p = proposals_data.proposals[_id];
-  require(p.state == Proposals.ProposalState.Accepted || p.state == Proposals.ProposalState.Contested, "Incorrect proposal state!");
-  uint256 paymentDate = p.nextPaymentDate;
-  uint256 remainingPeriods = p.remainingPeriods;
-  uint256 periodLen = p.budgetPeriodLen;
-  uint256 budgetPerPeriod = p.budgetPerPeriod;
-  address proposalAddress = address(_id);
-
-  require(_budget <= budgetPerPeriod, "Budget exceeded!");
-
-  if (paymentDate > 0) {
-    if (paymentDate <= now) {
-      if (paymentDate + periodLen < now) {
-        uint256 missedPeriods = (now - paymentDate) / periodLen;
-        transferInternal(proposalAddress, treasuryAddress, missedPeriods * p.budgetPerPeriod);
-        remainingPeriods -= missedPeriods;
-        paymentDate += periodLen * missedPeriods;
-      }
-      if (remainingPeriods > 1) {
-        require(p.contributor == msg.sender, "Invalid contributor!");
-        transferInternal(proposalAddress, p.contributor, _budget);
-        if (budgetPerPeriod > _budget) {
-          transferInternal(proposalAddress, treasuryAddress, budgetPerPeriod - _budget);
-        }
-        paymentDate += periodLen;
-        remainingPeriods--;
-      } else {
-        if (remainingPeriods == 1) {
-          require(p.contributor == msg.sender, "Invalid contributor!");
-          transferInternal(proposalAddress, p.contributor, _budget);
-          if (budgetPerPeriod > _budget) {
-            transferInternal(proposalAddress, treasuryAddress, budgetPerPeriod - _budget);
-          }
-        }
-        p.nextPaymentDate = 0;
-        remainingPeriods = 0;
-        p.state = Proposals.ProposalState.Completed;
-        proposals_data.ballotBoxes[_id].state = Proposals.BallotBoxState.Inactive;
-      }
-      p.remainingPeriods = remainingPeriods;
-      p.nextPaymentDate = paymentDate;
+  function claimReward(uint256 _id, uint256 _budget) public validBallotBoxID(_id) {
+    updateProposalState(_id);
+    (bool _is_transfer_allowed, uint256 _return_to_treasury) = proposals_data.claimReward(_id, _budget);
+    if (_is_transfer_allowed) {
+      transferInternal(address(_id), proposals_data.proposals[_id].contributor, _budget);
+    }
+    if (_return_to_treasury > 0) {
+      transferInternal(address(_id), treasuryAddress, _return_to_treasury);
     }
   }
-}
 
   // Test functions, to be deleted
 
@@ -637,6 +686,13 @@ function claimReward(uint256 _id, uint256 _budget) public validBallotBoxID(_id) 
 
   Miner.Data public miner_data;
   uint256 numSlots;
+
+  function getSlot(uint256 slot) public view returns (address owner, uint256 difficulty, uint256 last_claim_time) {
+    Miner.ValidatorSlot memory s = miner_data.slots[slot];
+    owner = s.owner;
+    difficulty = s.difficulty;
+    last_claim_time = s.last_claim_time;
+  }
 
   function getSlotOwner(uint256 slot) public view returns(address) {
     return miner_data.slots[slot].owner;
@@ -747,14 +803,27 @@ function claimReward(uint256 _id, uint256 _budget) public validBallotBoxID(_id) 
   uint256 public constant minOrderAUTO = 1000 ether;
 
   function withdraw(uint256 _value) external {
-    require(_value <= dex_data.withdraws[msg.sender]);
-    dex_data.withdraws[msg.sender] -= _value;
+    require(_value <= dex_data.balanceETH[msg.sender]);
+    dex_data.balanceETH[msg.sender] -= _value;
     (bool success, ) = msg.sender.call.value(_value)("");
     require(success);
   }
 
+  function getBalanceETH(address _user) public view returns (uint256) {
+    return dex_data.balanceETH[_user];
+  }
+
   function getOrdersLength() public view returns (uint256) {
     return dex_data.ids;
+  }
+
+  function getOrder(uint256 _id) public view
+      returns (uint256 AUTO, uint256 ETH, address owner, DEX.OrderType orderType) {
+    DEX.Order memory o = dex_data.orders[_id];
+    AUTO = o.AUTO;
+    ETH = o.ETH;
+    owner = o.owner;
+    orderType = o.orderType;
   }
 
   function buy(uint256 _AUTO) public payable returns (uint256) {
@@ -788,8 +857,8 @@ function claimReward(uint256 _id, uint256 _budget) public validBallotBoxID(_id) 
     dex_data.removeOrder(_id);
 
     if (o.orderType == DEX.OrderType.Buy) {
-      require(dex_data.withdraws[msg.sender] + o.ETH > dex_data.withdraws[msg.sender]);
-      dex_data.withdraws[msg.sender] += o.ETH;
+      require(dex_data.balanceETH[msg.sender] + o.ETH > dex_data.balanceETH[msg.sender]);
+      dex_data.balanceETH[msg.sender] += o.ETH;
     } else if (o.orderType == DEX.OrderType.Sell) {
       transferInternal(DEXAddress, msg.sender, o.AUTO);
     }
