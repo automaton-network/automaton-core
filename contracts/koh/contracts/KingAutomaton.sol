@@ -55,6 +55,7 @@ library DEX {
     uint256 withdraw = self.balanceETH[msg.sender];
     require(withdraw + _ETH > withdraw);
     self.balanceETH[msg.sender] += _ETH;
+    removeOrder(self, _id);
   }
 
   function buyNow(Data storage self, uint256 _id, uint256 _AUTO, uint256 _value) public {
@@ -66,6 +67,7 @@ library DEX {
     uint256 withdraw = self.balanceETH[o.owner];
     require(withdraw + _value > withdraw);
     self.balanceETH[o.owner] += _value;
+    removeOrder(self, _id);
   }
 }
 
@@ -524,7 +526,7 @@ contract KingAutomaton {
 
   bool public debugging = false;
 
-  uint256 private ballotBoxIDs = 99;  // Ensure special addresses are not already used
+  uint256 public ballotBoxIDs = 99;  // Ensure special addresses are not already used
 
   Proposals.Data public proposals_data;
 
@@ -834,7 +836,6 @@ contract KingAutomaton {
 
   function sellNow(uint256 _id, uint256 _AUTO, uint256 _ETH) public {
     dex_data.sellNow(_id, _AUTO, _ETH);
-    dex_data.removeOrder(_id);
     transfer(dex_data.orders[_id].owner, _AUTO);
   }
 
@@ -847,7 +848,6 @@ contract KingAutomaton {
 
   function buyNow(uint256 _id, uint256 _AUTO) public payable {
     dex_data.buyNow(_id, _AUTO, msg.value);
-    dex_data.removeOrder(_id);
     transferInternal(DEXAddress, msg.sender, _AUTO);
   }
 
@@ -857,7 +857,8 @@ contract KingAutomaton {
     dex_data.removeOrder(_id);
 
     if (o.orderType == DEX.OrderType.Buy) {
-      require(dex_data.balanceETH[msg.sender] + o.ETH > dex_data.balanceETH[msg.sender]);
+      uint256 balance = dex_data.balanceETH[msg.sender];
+      require(balance + o.ETH > balance);
       dex_data.balanceETH[msg.sender] += o.ETH;
     } else if (o.orderType == DEX.OrderType.Sell) {
       transferInternal(DEXAddress, msg.sender, o.AUTO);
