@@ -52,8 +52,8 @@ library DEX {
     require(o.AUTO == _AUTO, "Order AUTO does not match requested size");
     require(o.ETH == _ETH, "Order ETH does not match requested size");
     require(o.orderType == OrderType.Buy, "Invalid order type");
-    uint256 withdraw = self.balanceETH[msg.sender];
-    require(withdraw + _ETH > withdraw);
+    uint256 balance = self.balanceETH[msg.sender];
+    require(balance + _ETH > balance);
     self.balanceETH[msg.sender] += _ETH;
     removeOrder(self, _id);
   }
@@ -64,8 +64,8 @@ library DEX {
     require(o.AUTO == _AUTO, "Order AUTO does not match requested size");
     require(o.ETH == _value, "Order ETH does not match requested size");
     require(o.orderType == OrderType.Sell, "Invalid order type");
-    uint256 withdraw = self.balanceETH[o.owner];
-    require(withdraw + _value > withdraw);
+    uint256 balance = self.balanceETH[o.owner];
+    require(balance + _value > balance);
     self.balanceETH[o.owner] += _value;
     removeOrder(self, _id);
   }
@@ -429,13 +429,13 @@ contract KingAutomaton {
   constructor(uint256 nSlots, uint256 minDifficultyBits, uint256 predefinedMask, uint256 initialDailySupply,
       int256 approval_pct, int256 contest_pct, uint256 treasury_limit_pct) public {
     numSlots = nSlots;
-    miner_data.initMining(nSlots, minDifficultyBits, predefinedMask, initialDailySupply);
+    minerData.initMining(nSlots, minDifficultyBits, predefinedMask, initialDailySupply);
     initNames();
 
     require(approval_pct > contest_pct, "Approval percentage must be bigger than contest percentage!");
-    proposals_data.approvalPercentage = approval_pct;
-    proposals_data.contestPercentage = contest_pct;
-    proposals_data.treasuryLimitPercentage = treasury_limit_pct;
+    proposalsData.approvalPercentage = approval_pct;
+    proposalsData.contestPercentage = contest_pct;
+    proposalsData.treasuryLimitPercentage = treasury_limit_pct;
     // Check if we're on a testnet (We will not using predefined mask when going live)
     if (predefinedMask != 0) {
       // If so, fund the owner for debugging purposes.
@@ -528,15 +528,15 @@ contract KingAutomaton {
 
   uint256 public ballotBoxIDs = 99;  // Ensure special addresses are not already used
 
-  Proposals.Data public proposals_data;
+  Proposals.Data public proposalsData;
 
   modifier validBallotBoxID(uint256 id) {
-    require(proposals_data.ballotBoxes[id].state != Proposals.BallotBoxState.Uninitialized, "Invalid ballot box ID!");
+    require(proposalsData.ballotBoxes[id].state != Proposals.BallotBoxState.Uninitialized, "Invalid ballot box ID!");
     _;
   }
 
   modifier slotOwner(uint256 _slot) {
-    require(msg.sender == miner_data.slots[_slot].owner, "Invalid slot owner!");
+    require(msg.sender == minerData.slots[_slot].owner, "Invalid slot owner!");
     _;
   }
 
@@ -547,7 +547,7 @@ contract KingAutomaton {
 
   function getBallotBox(uint256 _id) public view
       returns (Proposals.BallotBoxState state, uint256 numChoices, uint256 paidSlots) {
-    Proposals.BallotBox memory b = proposals_data.ballotBoxes[_id];
+    Proposals.BallotBox memory b = proposalsData.ballotBoxes[_id];
     state = b.state;
     numChoices = b.numChoices;
     paidSlots = b.paidSlots;
@@ -557,7 +557,7 @@ contract KingAutomaton {
       string memory documentsLink, bytes memory documentsHash, uint256 budgetPeriodLen, uint256 remainingPeriods,
       uint256 budgetPerPeriod, uint256 nextPaymentDate, Proposals.ProposalState state, uint256 initialEndDate,
       uint256 contestEndDate) {
-    Proposals.Proposal memory p = proposals_data.proposals[_id];
+    Proposals.Proposal memory p = proposalsData.proposals[_id];
 
     contributor = p.contributor;
     title = p.title;
@@ -574,7 +574,7 @@ contract KingAutomaton {
 
   function createBallotBox(uint256 _choices) public returns (uint256 id) {
     id = ++ballotBoxIDs;
-    proposals_data.createBallotBox(_choices, id);
+    proposalsData.createBallotBox(_choices, id);
     payForGas(id, 1);
   }
 
@@ -582,34 +582,34 @@ contract KingAutomaton {
       bytes calldata documents_hash, uint256 budget_period_len, uint256 num_periods, uint256 budget_per_period)
       external returns (uint256 _id) {
     require(budget_period_len <= MIN_PERIOD_LEN);
-    require(num_periods * budget_per_period <= proposals_data.treasuryLimitPercentage * balances[treasuryAddress] / 100);
+    require(num_periods * budget_per_period <= proposalsData.treasuryLimitPercentage * balances[treasuryAddress] / 100);
     _id = createBallotBox(2);
-    proposals_data.createProposal(_id, contributor, title, documents_link, documents_hash, budget_period_len, num_periods, budget_per_period);
+    proposalsData.createProposal(_id, contributor, title, documents_link, documents_hash, budget_period_len, num_periods, budget_per_period);
     transferInternal(treasuryAddress, address(_id), num_periods * budget_per_period);
   }
 
   function unpaidSlots(uint256 _id) public view returns (uint256) {
-    Proposals.BallotBox memory b = proposals_data.ballotBoxes[_id];
+    Proposals.BallotBox memory b = proposalsData.ballotBoxes[_id];
     require(b.state != Proposals.BallotBoxState.Uninitialized, "Invalid ballot box ID!");
     return numSlots - b.paidSlots;
   }
 
   // Pay for multiple slots at once, 32 seems to be a reasonable amount.
   function payForGas(uint256 _id, uint256 _slotsToPay) public {
-    proposals_data.payForGas(_id, _slotsToPay, numSlots);
+    proposalsData.payForGas(_id, _slotsToPay, numSlots);
   }
 
   function calcVoteDifference(uint256 _id) view public returns (int256) {
-    return proposals_data.calcVoteDifference(_id, numSlots);
+    return proposalsData.calcVoteDifference(_id, numSlots);
   }
 
   function castVote(uint256 _id, uint256 _slot, uint8 _choice) public slotOwner(_slot) {
     updateProposalState(_id);
-    proposals_data.castVote(_id, _slot, _choice);
+    proposalsData.castVote(_id, _slot, _choice);
   }
 
   function getVote(uint256 _id, uint256 _slot) public view returns (uint) {
-    Proposals.BallotBox storage b = proposals_data.ballotBoxes[_id];
+    Proposals.BallotBox storage b = proposalsData.ballotBoxes[_id];
     require(b.state != Proposals.BallotBoxState.Uninitialized, "Invalid ballot box ID!");
     uint256 bitsPerVote = Proposals.msb(b.numChoices) + 1;
     uint256 votesPerWord = 255 / bitsPerVote;
@@ -620,16 +620,16 @@ contract KingAutomaton {
   }
 
   function getVoteCount(uint256 _id, uint256 _choice) public view validBallotBoxID(_id) returns(uint256) {
-    return proposals_data.ballotBoxes[_id].voteCount[_choice] & ALL_BUT_MSB;
+    return proposalsData.ballotBoxes[_id].voteCount[_choice] & ALL_BUT_MSB;
   }
 
   function completeProposal(uint256 _id) private {
     updateProposalState(_id);
-    proposals_data.completeProposal(_id);
+    proposalsData.completeProposal(_id);
   }
 
   function updateProposalState(uint256 _id) public validBallotBoxID(_id) {
-    bool _transfer = proposals_data.updateProposalState(_id, numSlots);
+    bool _transfer = proposalsData.updateProposalState(_id, numSlots);
     if (_transfer) {
       transferInternal(address(_id), treasuryAddress, balances[address(_id)]);
     }
@@ -639,9 +639,9 @@ contract KingAutomaton {
   // in the proposal address will be returned to treasury. Rejecting the proposal will have the same effect.
   function claimReward(uint256 _id, uint256 _budget) public validBallotBoxID(_id) {
     updateProposalState(_id);
-    (bool _is_transfer_allowed, uint256 _return_to_treasury) = proposals_data.claimReward(_id, _budget);
+    (bool _is_transfer_allowed, uint256 _return_to_treasury) = proposalsData.claimReward(_id, _budget);
     if (_is_transfer_allowed) {
-      transferInternal(address(_id), proposals_data.proposals[_id].contributor, _budget);
+      transferInternal(address(_id), proposalsData.proposals[_id].contributor, _budget);
     }
     if (_return_to_treasury > 0) {
       transferInternal(address(_id), treasuryAddress, _return_to_treasury);
@@ -651,17 +651,17 @@ contract KingAutomaton {
   // Test functions, to be deleted
 
   function setOwner(uint256 _slot, address new_owner) public debugOnly {
-    miner_data.slots[_slot].owner = new_owner;
+    minerData.slots[_slot].owner = new_owner;
   }
 
   function setOwnerAllSlots() public debugOnly {
     for (uint256 i = 0; i < numSlots; ++i) {
-      miner_data.slots[i].owner = msg.sender;
+      minerData.slots[i].owner = msg.sender;
     }
   }
 
   function castVotesForApproval(uint256 _id) public debugOnly returns(uint256){
-    uint256 minNumYesVotes = uint256((int256(numSlots) * (proposals_data.approvalPercentage + 100) + 199) / 200);
+    uint256 minNumYesVotes = uint256((int256(numSlots) * (proposalsData.approvalPercentage + 100) + 199) / 200);
     for (uint256 i = 0; i < minNumYesVotes; ++i) {
       castVote(_id, i, 1);
     }
@@ -669,7 +669,7 @@ contract KingAutomaton {
   }
 
   function castVotesForRejection(uint256 _id) public debugOnly returns(uint256){
-    uint256 minNumNoVotes = uint256((int256(numSlots) * (100 - proposals_data.contestPercentage) + 199) / 200);
+    uint256 minNumNoVotes = uint256((int256(numSlots) * (100 - proposalsData.contestPercentage) + 199) / 200);
     for (uint256 i = 0; i < minNumNoVotes; ++i) {
       castVote(_id, i, 2);
     }
@@ -677,7 +677,7 @@ contract KingAutomaton {
   }
 
   function getVoteWord(uint256 _id, uint256 _idx) public view returns(uint256) {
-    return proposals_data.ballotBoxes[_id].votes[_idx] & ALL_BUT_MSB;
+    return proposalsData.ballotBoxes[_id].votes[_idx] & ALL_BUT_MSB;
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -686,59 +686,59 @@ contract KingAutomaton {
 
   event NewSlotKing(uint256 slot, address newOwner);
 
-  Miner.Data public miner_data;
+  Miner.Data public minerData;
   uint256 numSlots;
 
   function getSlot(uint256 slot) public view returns (address owner, uint256 difficulty, uint256 last_claim_time) {
-    Miner.ValidatorSlot memory s = miner_data.slots[slot];
+    Miner.ValidatorSlot memory s = minerData.slots[slot];
     owner = s.owner;
     difficulty = s.difficulty;
     last_claim_time = s.last_claim_time;
   }
 
   function getSlotOwner(uint256 slot) public view returns(address) {
-    return miner_data.slots[slot].owner;
+    return minerData.slots[slot].owner;
   }
 
   function getSlotDifficulty(uint256 slot) public view returns(uint256) {
-    return miner_data.slots[slot].difficulty;
+    return minerData.slots[slot].difficulty;
   }
 
   function getSlotLastClaimTime(uint256 slot) public view returns(uint256) {
-    return miner_data.slots[slot].last_claim_time;
+    return minerData.slots[slot].last_claim_time;
   }
 
   function getOwners(uint256 start, uint256 len) public view returns(address[] memory result) {
     result = new address[](len);
     for(uint256 i = 0; i < len; i++) {
-      result[i] = miner_data.slots[start + i].owner;
+      result[i] = minerData.slots[start + i].owner;
     }
   }
 
   function getDifficulties(uint256 start, uint256 len) public view returns(uint256[] memory result) {
     result = new uint256[](len);
     for(uint256 i = 0; i < len; i++) {
-      result[i] = miner_data.slots[start + i].difficulty;
+      result[i] = minerData.slots[start + i].difficulty;
     }
   }
 
   function getLastClaimTimes(uint256 start, uint256 len) public view returns(uint256[] memory result) {
     result = new uint256[](len);
     for(uint256 i = 0; i < len; i++) {
-      result[i] = miner_data.slots[start + i].last_claim_time;
+      result[i] = minerData.slots[start + i].last_claim_time;
     }
   }
 
   function getMask() public view returns(uint256) {
-    return miner_data.mask;
+    return minerData.mask;
   }
 
   function getMinDifficulty() public view returns(uint256) {
-    return miner_data.minDifficulty;
+    return minerData.minDifficulty;
   }
 
   function getClaimed() public view returns(uint256) {
-    return miner_data.numTakeOvers;
+    return minerData.numTakeOvers;
   }
 
   /** Claims slot based on a signature.
@@ -752,11 +752,11 @@ contract KingAutomaton {
     require(Helpers.verifySignature(pubKeyX, pubKeyY, bytes32(uint256(msg.sender)), v, r, s), "Signature not valid");
     require(totalSupply < maxSupply, "Cap reached");
     uint256 slot = uint256(pubKeyX) % numSlots;
-    uint256 key = uint256(pubKeyX) ^ miner_data.mask;
+    uint256 key = uint256(pubKeyX) ^ minerData.mask;
     // Fixed integer math based on the following formula:
     // reward = time * rewardRate * (1 - (totalSupply / maxSupply) ^ 2)
     uint256 k = (1 << 128) - (((totalSupply * totalSupply) / maxSupply) << 128) / maxSupply;
-    (address _receiver, uint256 _value) = miner_data.claimSlot(slot, k, key);
+    (address _receiver, uint256 _value) = minerData.claimSlot(slot, k, key);
     mint(_receiver, _value);
     emit NewSlotKing(slot, msg.sender);
   }
@@ -799,29 +799,29 @@ contract KingAutomaton {
   // DEX
   //////////////////////////////////////////////////////////////////////////////////////////////////
 
-  DEX.Data public dex_data;
+  DEX.Data public dexData;
 
   uint256 public constant minOrderETH = 1 ether / 10;
   uint256 public constant minOrderAUTO = 1000 ether;
 
   function withdraw(uint256 _value) external {
-    require(_value <= dex_data.balanceETH[msg.sender]);
-    dex_data.balanceETH[msg.sender] -= _value;
+    require(_value <= dexData.balanceETH[msg.sender]);
+    dexData.balanceETH[msg.sender] -= _value;
     (bool success, ) = msg.sender.call.value(_value)("");
     require(success);
   }
 
   function getBalanceETH(address _user) public view returns (uint256) {
-    return dex_data.balanceETH[_user];
+    return dexData.balanceETH[_user];
   }
 
   function getOrdersLength() public view returns (uint256) {
-    return dex_data.ids;
+    return dexData.ids;
   }
 
   function getOrder(uint256 _id) public view
       returns (uint256 AUTO, uint256 ETH, address owner, DEX.OrderType orderType) {
-    DEX.Order memory o = dex_data.orders[_id];
+    DEX.Order memory o = dexData.orders[_id];
     AUTO = o.AUTO;
     ETH = o.ETH;
     owner = o.owner;
@@ -831,35 +831,35 @@ contract KingAutomaton {
   function buy(uint256 _AUTO) public payable returns (uint256) {
     require(msg.value >= minOrderETH, "Minimum ETH requirement not met");
     require(_AUTO >= minOrderAUTO, "Minimum AUTO requirement not met");
-    return dex_data.addOrder(_AUTO, msg.value, msg.sender, DEX.OrderType.Buy);
+    return dexData.addOrder(_AUTO, msg.value, msg.sender, DEX.OrderType.Buy);
   }
 
   function sellNow(uint256 _id, uint256 _AUTO, uint256 _ETH) public {
-    dex_data.sellNow(_id, _AUTO, _ETH);
-    transfer(dex_data.orders[_id].owner, _AUTO);
+    dexData.sellNow(_id, _AUTO, _ETH);
+    transfer(dexData.orders[_id].owner, _AUTO);
   }
 
   function sell(uint256 _AUTO, uint256 _ETH) public returns (uint256 _id){
     require(_AUTO >= minOrderAUTO, "Minimum AUTO requirement not met");
     require(_ETH >= minOrderETH, "Minimum ETH requirement not met");
     transfer(DEXAddress, _AUTO);
-    return dex_data.addOrder(_AUTO, _ETH, msg.sender, DEX.OrderType.Sell);
+    return dexData.addOrder(_AUTO, _ETH, msg.sender, DEX.OrderType.Sell);
   }
 
   function buyNow(uint256 _id, uint256 _AUTO) public payable {
-    dex_data.buyNow(_id, _AUTO, msg.value);
+    dexData.buyNow(_id, _AUTO, msg.value);
     transferInternal(DEXAddress, msg.sender, _AUTO);
   }
 
   function cancelOrder(uint256 _id) public {
-    DEX.Order memory o = dex_data.orders[_id];
+    DEX.Order memory o = dexData.orders[_id];
     require(o.owner == msg.sender);
-    dex_data.removeOrder(_id);
+    dexData.removeOrder(_id);
 
     if (o.orderType == DEX.OrderType.Buy) {
-      uint256 balance = dex_data.balanceETH[msg.sender];
+      uint256 balance = dexData.balanceETH[msg.sender];
       require(balance + o.ETH > balance);
-      dex_data.balanceETH[msg.sender] += o.ETH;
+      dexData.balanceETH[msg.sender] += o.ETH;
     } else if (o.orderType == DEX.OrderType.Sell) {
       transferInternal(DEXAddress, msg.sender, o.AUTO);
     }
