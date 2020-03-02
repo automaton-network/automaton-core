@@ -835,8 +835,9 @@ contract KingAutomaton {
   }
 
   function sellNow(uint256 _id, uint256 _AUTO, uint256 _ETH) public {
+    address owner = dexData.orders[_id].owner;
     dexData.sellNow(_id, _AUTO, _ETH);
-    transfer(dexData.orders[_id].owner, _AUTO);
+    transfer(owner, _AUTO);
   }
 
   function sell(uint256 _AUTO, uint256 _ETH) public returns (uint256 _id){
