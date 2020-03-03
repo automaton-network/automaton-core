@@ -21,52 +21,81 @@ describe('TestKingAutomatonDEX', async (accounts) => {
     koh = await KingAutomaton.new(4, 16, "0x010000", "406080000", 10, -10, 2);
     minOrderAUTO = await koh.minOrderAUTO();
     minOrderETH = await koh.minOrderETH();
+    DEXAddress = "0x0000000000000000000000000000000000000002";
   });
 
   it('complete test buy() and sellNow()', async () => {
-    await koh.buy(minOrderAUTO, { from: accounts[1], value: minOrderETH });
-    assert.equal(await web3.eth.getBalance(koh.address), minOrderETH,
-        "The ETH should be deposited in the contract");
+    let initialBuyerAUTOBalance = new BN(await koh.balanceOf(accounts[1]));
+    let initialSellerAUTOBalance = new BN(await koh.balanceOf(accounts[0]));
+    let initialSellerETHBalance = new BN(await koh.getBalanceETH(accounts[0]));
 
-    let startETHBalance = new BN(await web3.eth.getBalance(accounts[0]));
-    let txReceipt = await koh.sellNow(0, minOrderAUTO, minOrderETH, { from: accounts[0] });
+    await koh.buy(minOrderAUTO, { from: accounts[1], value: minOrderETH });
+    assert.equal(await web3.eth.getBalance(koh.address), minOrderETH, "The ETH should be deposited in the contract");
+    await koh.sellNow(1, minOrderAUTO, minOrderETH, { from: accounts[0] });
+
+    let finalBuyerAUTOBalance = new BN(await koh.balanceOf(accounts[1]));
+    let finalSellerAUTOBalance = new BN(await koh.balanceOf(accounts[0]));
+    let finalSellerETHBalance = new BN(await koh.getBalanceETH(accounts[0]));
+
+    let buyerAUTOBalance = finalBuyerAUTOBalance.sub(initialBuyerAUTOBalance);
+    let sellerAUTOBalance = initialSellerAUTOBalance.sub(finalSellerAUTOBalance);
+    let sellerETHBalance = finalSellerETHBalance.sub(initialSellerETHBalance);
+
+    assert.equal(buyerAUTOBalance.toString(), minOrderAUTO.toString(), "Buyer's AUTO balance is incorrect!");
+    assert.equal(sellerAUTOBalance.toString(), minOrderAUTO.toString(), "Seller's AUTO balance is incorrect!");
+    assert.equal(sellerETHBalance.toString(), minOrderETH.toString(), "Seller's ETH balance is incorrect!");
+
+    let initialSellerAccountBalance = new BN(await web3.eth.getBalance(accounts[0]));
+    let txReceipt = await koh.withdraw(minOrderETH, { from: accounts[0] })
 
     // Calculate final balance including gas costs
     let gasUsed = new BN(txReceipt.receipt.gasUsed);
     let tx = await web3.eth.getTransaction(txReceipt.tx);
     let gasPrice = new BN(tx.gasPrice);
-    let expectedETHBalance = startETHBalance.add(minOrderETH).sub(gasPrice.mul(gasUsed));
-    let finalETHBalance = new BN(await web3.eth.getBalance(accounts[0]));
-    let finalAUTOBalance = new BN(await koh.balanceOf(accounts[1]));
+    let expectedSellerAccountBalance = initialSellerAccountBalance.add(minOrderETH).sub(gasPrice.mul(gasUsed));
+    let finalSellerAccountBalance = new BN(await web3.eth.getBalance(accounts[0]));
 
     assert.equal(await web3.eth.getBalance(koh.address), 0, "There should be no ETH left in the contract");
-    assert.equal(await koh.getDEXBalance(), 0, "There should be no AUTO left in the DEX account");
-    assert.equal(finalAUTOBalance.toString(), minOrderAUTO.toString(), "Buyer should end up with requested AUTO");
-    assert.equal(finalETHBalance.toString(), expectedETHBalance.toString(), "Seller should end up with requested ETH");
+    assert.equal(finalSellerAccountBalance.toString(), expectedSellerAccountBalance.toString(),
+        "Seller should final up with requested ETH");
   });
 
   it('complete test sell() and buyNow()', async () => {
+    let initialBuyerAUTOBalance = new BN(await koh.balanceOf(accounts[1]));
+    let initialSellerAUTOBalance = new BN(await koh.balanceOf(accounts[0]));
+
     await koh.sell(minOrderAUTO, minOrderETH);
-    DEXBalance = await koh.getDEXBalance();
+    DEXBalance = await koh.balances(DEXAddress);
     assert.equal(DEXBalance.toString(), minOrderAUTO.toString(),
         "The AUTO should be deposited in the DEX special purpose account");
 
-    let startETHBalance = new BN(await web3.eth.getBalance(accounts[0]));
-    let txReceipt = await koh.buyNow(0, minOrderAUTO, { from: accounts[1], value: minOrderETH });
+    await koh.buyNow(1, minOrderAUTO, { from: accounts[1], value: minOrderETH });
+
+    let finalBuyerAUTOBalance = new BN(await koh.balanceOf(accounts[1]));
+    let finalSellerAUTOBalance = new BN(await koh.balanceOf(accounts[0]));
+
+    let buyerAUTOBalance = finalBuyerAUTOBalance.sub(initialBuyerAUTOBalance);
+    let sellerAUTOBalance = initialSellerAUTOBalance.sub(finalSellerAUTOBalance);
+    let sellerETHBalance = new BN(await koh.getBalanceETH(accounts[0]));
+
+    assert.equal(buyerAUTOBalance.toString(), minOrderAUTO.toString(), "Buyer's AUTO balance is incorrect!");
+    assert.equal(sellerAUTOBalance.toString(), minOrderAUTO.toString(), "Seller's AUTO balance is incorrect!");
+    assert.equal(sellerETHBalance.toString(), minOrderETH.toString(), "Seller's ETH balance is incorrect!");
+    
+    let initialSellerAccountBalance = new BN(await web3.eth.getBalance(accounts[0]));
+    let txReceipt = await koh.withdraw(minOrderETH, { from: accounts[0] })
 
     // Calculate final balance including gas costs
     let gasUsed = new BN(txReceipt.receipt.gasUsed);
     let tx = await web3.eth.getTransaction(txReceipt.tx);
     let gasPrice = new BN(tx.gasPrice);
-    let expectedETHBalance = startETHBalance.add(minOrderETH); // .sub(gasPrice.mul(gasUsed));
-    let finalETHBalance = new BN(await web3.eth.getBalance(accounts[0]));
-    let finalAUTOBalance = new BN(await koh.balanceOf(accounts[1]));
+    let expectedSellerAccountBalance = initialSellerAccountBalance.add(minOrderETH).sub(gasPrice.mul(gasUsed));
+    let finalSellerAccountBalance = new BN(await web3.eth.getBalance(accounts[0]));
 
     assert.equal(await web3.eth.getBalance(koh.address), 0, "There should be no ETH left in the contract");
-    assert.equal(await koh.getDEXBalance(), 0, "There should be no AUTO left in the DEX account");
-    assert.equal(finalETHBalance.toString(), expectedETHBalance.toString(),
-        "Seller should end up with requested ETH");
-    assert.equal(finalAUTOBalance.toString(), minOrderAUTO.toString(), "Buyer should end up with requested AUTO");
+    assert.equal(finalSellerAccountBalance.toString(), expectedSellerAccountBalance.toString(),
+        "Seller should final up with requested ETH");
+    assert.equal(await koh.balances(DEXAddress), 0, "There should be no AUTO left in the DEX account");
   });
 
   it('calling buy() without any ether should fail', async () => {
@@ -86,11 +115,11 @@ describe('TestKingAutomatonDEX', async (accounts) => {
     assert.equal(await web3.eth.getBalance(koh.address), minOrderETH.toString(),
         "Incorrect ETH balance in contract after buy()");
     assert.equal(await koh.getOrdersLength(), 1, "Order not created");
-    let order = await koh.orders(0);
+    let order = await koh.getOrder(1);
     assert.equal(order.AUTO.toString(), minOrderAUTO.toString(), "Invalid AUTO in order");
     assert.equal(order.ETH.toString(), minOrderETH.toString(), "Invalid ETH in order");
     assert.equal(order.owner, accounts[0], "Invalid owner in order");
-    assert.equal(order.orderType, 0, "Invalid order type");
+    assert.equal(order.orderType, 1, "Invalid order type");
   });
 
   it('calling sell() with less than minOrderAUTO should fail', async () => {
@@ -107,52 +136,44 @@ describe('TestKingAutomatonDEX', async (accounts) => {
 
   it('sell() should create and register order correctly', async () => {
     await koh.sell(minOrderAUTO, minOrderETH);
-    assert.equal((await koh.getDEXBalance()).toString(), minOrderAUTO.toString(),
+    assert.equal((await koh.balances(DEXAddress)).toString(), minOrderAUTO.toString(),
         "Incorrect AUTO balance in DEX after sell()");
     assert.equal(await koh.getOrdersLength(), 1, "Order not created");
-    let order = await koh.orders(0);
+    let order = await koh.getOrder(1);
     assert.equal(order.AUTO.toString(), minOrderAUTO.toString(), "Invalid AUTO in order");
     assert.equal(order.ETH.toString(), minOrderETH.toString(), "Invalid ETH in order");
     assert.equal(order.owner, accounts[0], "Invalid owner in order");
-    assert.equal(order.orderType, 1, "Invalid order type");
+    assert.equal(order.orderType, 2, "Invalid order type");
   });
 
   it('cancel() after a buy() should return ETH back to owner', async () => {
-    let startETHBalance = new BN(await web3.eth.getBalance(accounts[0]));
-    let startAUTOBalance = new BN(await koh.balanceOf(accounts[0]));
+    let initialETHBalance = new BN(await koh.getBalanceETH(accounts[0]));
+    let initialAUTOBalance = new BN(await koh.balanceOf(accounts[0]));
 
     let tx1 = await koh.buy(minOrderAUTO, {value: minOrderETH});
-    let tx2 = await koh.cancelOrder(0);
+    let tx2 = await koh.cancelOrder(1);
 
-    // Calculate final balance including gas costs
-    let gasUsed = (await calcGasUsed(tx1)).add(await calcGasUsed(tx2));
-    let expectedETHBalance = startETHBalance.sub(gasUsed);
-    let finalETHBalance = new BN(await web3.eth.getBalance(accounts[0]));
+    let finalETHBalance = new BN(await koh.getBalanceETH(accounts[0]));
     let finalAUTOBalance = new BN(await koh.balanceOf(accounts[0]));
 
-    assert.equal(finalAUTOBalance.toString(), startAUTOBalance.toString(), "AUTO should not have changed");
-    assert.equal(finalETHBalance.toString(), expectedETHBalance.toString(),
-        "ETH should have been returned (minus gas costs)");
+    assert.equal(finalAUTOBalance.toString(), initialAUTOBalance.toString(), "AUTO should not have changed");
+    assert.equal(finalETHBalance.toString(), finalETHBalance.toString(),
+        "ETH should have been returned to buyer (in balanceETH to be withdrawn)");
   });
 
   it('cancel() after a sell() should return AUTO back to owner', async () => {
-    let startETHBalance = new BN(await web3.eth.getBalance(accounts[0]));
-    let startAUTOBalance = new BN(await koh.balanceOf(accounts[0]));
+    let initialETHBalance = new BN(await koh.getBalanceETH(accounts[0]));
+    let initialAUTOBalance = new BN(await koh.balanceOf(accounts[0]));
 
-    let tx1 = await koh.sell(minOrderAUTO, minOrderETH);
-    let tx2 = await koh.cancelOrder(0);
+    await koh.sell(minOrderAUTO, minOrderETH);
+    await koh.cancelOrder(1);
 
-    let gas1 = await calcGasUsed(tx1);
-    let gas2 = await calcGasUsed(tx2);
-
-    // Calculate final balance including gas costs
-    let gasUsed = gas1.add(gas2);
-    let expectedETHBalance = startETHBalance.sub(gasUsed);
-    let finalETHBalance = new BN(await web3.eth.getBalance(accounts[0]));
+    let finalETHBalance = new BN(await koh.getBalanceETH(accounts[0]));
     let finalAUTOBalance = new BN(await koh.balanceOf(accounts[0]));
 
-    assert.equal(finalETHBalance.toString(), expectedETHBalance.toString(),
+    assert.equal(finalETHBalance.toString(), initialETHBalance.toString(),
         "Should not have changed ETH balance except for gas costs");
-    assert.equal(finalAUTOBalance.toString(), startAUTOBalance.toString(), "AUTO should have been returned");
+    assert.equal(finalAUTOBalance.toString(), initialAUTOBalance.toString(), "AUTO should have been returned");
   });
+
 });

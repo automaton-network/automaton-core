@@ -4,12 +4,16 @@ import "truffle/Assert.sol";
 import "truffle/DeployedAddresses.sol";
 import "../contracts/KingAutomaton.sol";
 
+contract KingAutomatonDebug is KingAutomaton {
+  // Set mask to 0x10000 to trigger debug mode.
+  constructor() KingAutomaton (16, 4, 0x10000, 406080000, 10, -10, 2) public {}
+}
+
 contract TestKingAutomatonDebug {
-  KingAutomaton koh;
+  KingAutomatonDebug koh;
 
   function beforeEach() public {
-    // Set mask to 0x10000 to trigger debug mode.
-    koh = new KingAutomaton(16, 4, 0x10000, 406080000, 10, -10, 2);
+    koh = new KingAutomatonDebug();
   }
 
   function afterEach() public {
