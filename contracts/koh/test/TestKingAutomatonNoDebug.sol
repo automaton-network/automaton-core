@@ -4,12 +4,16 @@ import "truffle/Assert.sol";
 import "truffle/DeployedAddresses.sol";
 import "../contracts/KingAutomaton.sol";
 
-contract TestKingAutomatonNoDebug {
-  KingAutomaton koh;
+contract KingAutomatonNoDebug is KingAutomaton {
+  // Set mask to 0 as it should be in the live contract.
+  constructor() KingAutomaton (16, 4, 0, 406080000, 10, -10, 2) public {}
+}
+
+contract TestKingAutomatonDebug {
+  KingAutomatonNoDebug koh;
 
   function beforeEach() public {
-    // Set mask to 0 as it should be in the live contract.
-    koh = new KingAutomaton(16, 4, 0, 406080000, 10, -10, 2);
+    koh = new KingAutomatonNoDebug();
   }
 
   function afterEach() public {
