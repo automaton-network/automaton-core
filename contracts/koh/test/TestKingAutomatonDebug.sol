@@ -21,7 +21,7 @@ contract TestKingAutomatonDebug {
   }
 
   function testDebugMask() public {
-    Assert.equal(koh.getMask(), 0x10000, "Mask should have been 0x10000");
+    Assert.equal(koh.mask(), 0x10000, "Mask should have been 0x10000");
   }
 
   function testDebugFlagTrue() public {

@@ -1,16 +1,16 @@
 var KingAutomaton = artifacts.require("KingAutomaton");
-var Helpers = artifacts.require("Helpers");
+var Util = artifacts.require("Util");
 var DEX = artifacts.require("DEX");
-var Miner = artifacts.require("Miner");
+var KingOfTheHill = artifacts.require("KingOfTheHill");
 var Proposals = artifacts.require("Proposals");
 
 module.exports = function(deployer) {
-  deployer.deploy(Helpers);
-  deployer.link(Helpers, KingAutomaton);
+  deployer.deploy(Util);
+  deployer.link(Util, KingOfTheHill);
+  deployer.link(Util, KingAutomaton);
+  deployer.link(Util, Proposals);
   deployer.deploy(DEX);
   deployer.link(DEX, KingAutomaton);
-  deployer.deploy(Miner);
-  deployer.link(Miner, KingAutomaton);
   deployer.deploy(Proposals);
   deployer.link(Proposals, KingAutomaton);
 
