@@ -21,7 +21,7 @@ contract TestKingAutomatonDebug {
   }
 
   function testDebugMask() public {
-    Assert.notEqual(koh.getMask(), 0, "Mask should not be 0 in live contract!");
+    Assert.notEqual(koh.mask(), 0, "Mask should not be 0 in live contract!");
   }
 
   function testDebugFlagFalse() public {
