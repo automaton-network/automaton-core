@@ -38,6 +38,7 @@ abstract contract KingOfTheHill {
     if (lastTime != 0) {
       require (lastTime < now, "mining same slot in same block not allowed!");
     }
+    slotAcquired(id);
     // Update the slot with data for the new king.
     ValidatorSlot memory newSlot;
     newSlot.owner = msg.sender;
@@ -48,10 +49,18 @@ abstract contract KingOfTheHill {
     numTakeOvers++;
 
     emit NewSlotKing(id, msg.sender);
-    rewardSlotOwner(slot);
   }
 
-  function rewardSlotOwner(ValidatorSlot memory) internal virtual;
+  function slotAcquired(uint256 _id) internal virtual;
+
+  function initMinDifficulty(uint256 minDifficultyBits) internal {
+    require(minDifficultyBits > 0);
+    minDifficulty = (2 ** minDifficultyBits - 1) << (256 - minDifficultyBits);
+  }
+
+  function setMask(uint256 _mask) internal {
+    mask = _mask;
+  }
 
   function getSlot(uint256 slot) public view returns (address owner, uint256 difficulty, uint256 last_claim_time) {
     ValidatorSlot memory s = slots[slot];

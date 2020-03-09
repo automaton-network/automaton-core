@@ -281,26 +281,24 @@ contract KingAutomaton is KingOfTheHill {
 
   function initMining(uint256 nSlots, uint256 minDifficultyBits, uint256 predefinedMask, uint256 initialDailySupply) public {
     require(nSlots > 0);
-    require(minDifficultyBits > 0);
-
-    minDifficulty = (2 ** minDifficultyBits - 1) << (256 - minDifficultyBits);
+    initMinDifficulty(minDifficultyBits);
     if (predefinedMask == 0) {
       // Prevents premining with a known predefined mask.
-      mask = uint256(keccak256(abi.encodePacked(now, msg.sender)));
+      setMask(uint256(keccak256(abi.encodePacked(now, msg.sender))));
     } else {
       // Setup predefined mask, useful for testing purposes.
-      mask = predefinedMask;
+      setMask(predefinedMask);
     }
     rewardPerSlotPerSecond = (1 ether * initialDailySupply) / 1 days / nSlots;
   }
 
-  function rewardSlotOwner(ValidatorSlot memory _slot) internal override {
+  function slotAcquired(uint256 id) internal override {
     require(totalSupply < maxSupply, "Cap reached");
-
-    if (_slot.last_claim_time != 0) {
+    ValidatorSlot memory slot = slots[id];
+    if (slot.last_claim_time != 0) {
       uint256 k = (1 << 128) - (((totalSupply * totalSupply) / maxSupply) << 128) / maxSupply;
-      uint256 _value = ((now - _slot.last_claim_time) * rewardPerSlotPerSecond * k) >> 128;
-      mint(_slot.owner, _value);
+      uint256 _value = ((now - slot.last_claim_time) * rewardPerSlotPerSecond * k) >> 128;
+      mint(slot.owner, _value);
     } else {
       // Reward first time validators as if they held the slot for 1 hour.
       mint(msg.sender, (3600) * rewardPerSlotPerSecond);
