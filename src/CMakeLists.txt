@@ -18,31 +18,75 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
   set(CMAKE_CXX_FLAGS "-Wl,--no-as-needed")
 endif()
 
-set(LOCAL_THIRD_PARTY_LIBS
-  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/bitcoin/src/secp256k1/.libs/libsecp256k1.a
-  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/boost/stage/lib/libboost_filesystem.a
-  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/boost/stage/lib/libboost_iostreams.a
-  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/boost/stage/lib/libboost_system.a
-  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/curl/lib/.libs/libcurl.a
-  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/openssl/libssl.a
-  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/openssl/libcrypto.a
-  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/cryptopp/libcryptopp.a
-  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/g3log/build/libg3logger.a
-  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/gmp/.libs/libgmp.a
-  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/lua/liblua.a
-  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/protobuf/src/.libs/libprotobuf-lite.a
-  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/protobuf/src/.libs/libprotobuf-lite.a
-  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/protobuf/src/.libs/libprotobuf.a
-  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/replxx/build/libreplxx.a
-  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/zlib/libz.a
-)
+if (NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+  set(LOCAL_THIRD_PARTY_LIBS
+    ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/bitcoin/src/secp256k1/.libs/libsecp256k1.a
+    ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/boost/stage/lib/libboost_filesystem.a
+    ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/boost/stage/lib/libboost_iostreams.a
+    ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/boost/stage/lib/libboost_system.a
+    ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/curl/lib/.libs/libcurl.a
+    ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/openssl/libssl.a
+    ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/openssl/libcrypto.a
+    ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/cryptopp/libcryptopp.a
+    ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/g3log/build/libg3logger.a
+    ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/gmp/.libs/libgmp.a
+    ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/lua/liblua.a
+    ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/protobuf/src/.libs/libprotobuf-lite.a
+    ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/protobuf/src/.libs/libprotobuf.a
+    ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/replxx/build/libreplxx.a
+    ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/zlib/libz.a
+  )
+else()
+  set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
+  set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
+  set(LOCAL_THIRD_PARTY_LIBS
+  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/bitcoin/build_msvc/libsecp256k1/x64/Release/libsecp256k1/libsecp256k1.lib
+  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/boost/stage/lib/libboost_filesystem-vc142-mt-s-x64-1_70.lib
+  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/boost/stage/lib/libboost_iostreams-vc142-mt-s-x64-1_70.lib
+  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/boost/stage/lib/libboost_system-vc142-mt-s-x64-1_70.lib
+  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/cryptopp/x64/Output/Release/cryptlib.lib
+  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/curl/builds/libcurl-vc-x64-release-static-ssl-static-zlib-static-ipv6-sspi/lib/libcurl_a.lib
+  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/curl/winbuild/lib/libeay32.lib
+  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/curl/winbuild/lib/ssleay32.lib
+  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/curl/winbuild/lib/zlib.lib
+  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/g3log/build/Release/g3logger.lib
+  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/lua/lua.lib
+  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/protobuf/build_msvc/Release/libprotobuf-lite.lib
+  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/protobuf/build_msvc/Release/libprotobuf.lib
+  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/replxx/build/Release/replxx.lib
+  #  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/boost/stage/lib/libboost_filesystem.a
+  #  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/boost/stage/lib/libboost_iostreams.a
+  #  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/boost/stage/lib/libboost_system.a
+  #  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/curl/lib/.libs/libcurl.a
+  #  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/openssl/libssl.a
+  #  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/openssl/libcrypto.a
+  #  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/cryptopp/libcryptopp.a
+  #  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/g3log/build/libg3logger.a
+  #  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/gmp/.libs/libgmp.a
+  #  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/lua/liblua.a
+  #  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/protobuf/src/.libs/libprotobuf-lite.a
+  #  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/protobuf/src/.libs/libprotobuf-lite.a
+  #  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/protobuf/src/.libs/libprotobuf.a
+  #  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/replxx/build/libreplxx.a
+  #  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/zlib/libz.a
+  )
+endif()
 
-set(GTEST_LIBS
-  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/googletest/build/googlemock/gtest/libgtest_main.a
-  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/googletest/build/googlemock/gtest/libgtest.a
-  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/googletest/build/googlemock/libgmock_main.a
-  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/googletest/build/googlemock/libgmock.a
-)
+if (NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+  set(GTEST_LIBS
+    ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/googletest/build/googlemock/gtest/libgtest_main.a
+    ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/googletest/build/googlemock/gtest/libgtest.a
+    ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/googletest/build/googlemock/libgmock_main.a
+    ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/googletest/build/googlemock/libgmock.a
+  )
+else()
+  set(GTEST_LIBS
+    ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/googletest/build/googlemock/gtest/Release/gtest.lib
+    ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/googletest/build/googlemock/gtest/Release/gtest_main.lib
+    ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/googletest/build/googlemock/Release/gmock.lib
+    ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/googletest/build/googlemock/Release/gmock_main.lib
+  )
+endif()
 
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
