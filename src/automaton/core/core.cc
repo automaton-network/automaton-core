@@ -1,12 +1,13 @@
 #include <curl/curl.h>
+#include <cryptopp/base64.h>
+#include <cryptopp/filters.h>
+
 #include <future>
 #include <fstream>
 #include <iostream>
 #include <regex>
 #include <string>
 
-#include "base64.h"  // NOLINT
-#include "filters.h"  // NOLINT
 #include <json.hpp>
 
 #include "automaton/core/cli/cli.h"

@@ -1,6 +1,7 @@
 #include "automaton/tools/miner/miner.h"
 
 #include <assert.h>
+#include <string.h>
 #include <iomanip>
 #include <iostream>
 #include <random>
@@ -8,11 +9,6 @@
 #include <string>
 
 #include "automaton/core/io/io.h"
-
-#include "secp256k1/include/secp256k1_recovery.h"
-#include "secp256k1/include/secp256k1.h"
-#include "secp256k1/src/hash_impl.h"
-#include "secp256k1/src/hash.h"
 
 using automaton::core::io::bin2hex;
 

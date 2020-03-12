@@ -3,8 +3,6 @@
 
 #include "automaton/core/crypto/digital_signature.h"
 
-#include "eccrypto.h"  // NOLINT
-
 namespace automaton {
 namespace core {
 namespace crypto {

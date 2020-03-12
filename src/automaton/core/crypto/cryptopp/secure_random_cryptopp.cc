@@ -1,7 +1,6 @@
-#include "automaton/core/crypto/cryptopp/secure_random_cryptopp.h"
+#include <stdint.h>
 
-#include <cryptlib.h>
-#include <osrng.h>
+#include "automaton/core/crypto/cryptopp/secure_random_cryptopp.h"
 
 namespace automaton {
 namespace core {

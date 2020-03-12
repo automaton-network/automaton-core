@@ -1,0 +1,27 @@
+name: Node.js CI
+
+on:
+  [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [10.x, 12.x]
+    env:
+      test_dir: ./contracts/koh
+    steps:
+    - uses: actions/checkout@v2
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v1
+      with:
+        node-version: ${{ matrix.node-version }}
+    - run: npm i -g ganache-cli truffle
+    - run: npm ci
+      working-directory: ${{ env.test_dir }}
+    - name: test
+      run: |
+        ganache-cli -p 7545 &
+        truffle test
+      working-directory: ${{ env.test_dir }}

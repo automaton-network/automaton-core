@@ -1,6 +1,17 @@
 cmake_minimum_required(VERSION 3.0)
 project(automaton-network)
 
+if (POLICY CMP0091)
+  cmake_policy(SET CMP0091 NEW) # MSVC_RUNTIME_VERSION support
+endif()
+option(automaton_STATIC_RUNTIME "Use static C runtime" ON)
+
+if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+  option(automaton_USE_OPENSSL "Use OpenSSL" ON)
+else()
+  set(automaton_USE_OPENSSL ON)
+endif()
+
 set(CPACK_PACKAGE_VERSION_MAJOR "0")
 set(CPACK_PACKAGE_VERSION_MINOR "1")
 set(CPACK_PACKAGE_VERSION_PATCH "0")
@@ -18,96 +29,7 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
   set(CMAKE_CXX_FLAGS "-Wl,--no-as-needed")
 endif()
 
-if (NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-  set(LOCAL_THIRD_PARTY_LIBS
-    ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/bitcoin/src/secp256k1/.libs/libsecp256k1.a
-    ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/boost/stage/lib/libboost_filesystem.a
-    ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/boost/stage/lib/libboost_iostreams.a
-    ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/boost/stage/lib/libboost_system.a
-    ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/curl/lib/.libs/libcurl.a
-    ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/openssl/libssl.a
-    ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/openssl/libcrypto.a
-    ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/cryptopp/libcryptopp.a
-    ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/g3log/build/libg3logger.a
-    ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/gmp/.libs/libgmp.a
-    ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/lua/liblua.a
-    ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/protobuf/src/.libs/libprotobuf-lite.a
-    ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/protobuf/src/.libs/libprotobuf.a
-    ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/replxx/build/libreplxx.a
-    ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/zlib/libz.a
-  )
-else()
-  set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
-  set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
-  set(LOCAL_THIRD_PARTY_LIBS
-  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/bitcoin/build_msvc/libsecp256k1/x64/Release/libsecp256k1/libsecp256k1.lib
-  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/boost/stage/lib/libboost_filesystem-vc142-mt-s-x64-1_70.lib
-  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/boost/stage/lib/libboost_iostreams-vc142-mt-s-x64-1_70.lib
-  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/boost/stage/lib/libboost_system-vc142-mt-s-x64-1_70.lib
-  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/cryptopp/x64/Output/Release/cryptlib.lib
-  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/curl/builds/libcurl-vc-x64-release-static-ssl-static-zlib-static-ipv6-sspi/lib/libcurl_a.lib
-  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/curl/winbuild/lib/libeay32.lib
-  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/curl/winbuild/lib/ssleay32.lib
-  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/curl/winbuild/lib/zlib.lib
-  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/g3log/build/Release/g3logger.lib
-  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/lua/lua.lib
-  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/protobuf/build_msvc/Release/libprotobuf-lite.lib
-  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/protobuf/build_msvc/Release/libprotobuf.lib
-  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/replxx/build/Release/replxx.lib
-  #  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/boost/stage/lib/libboost_filesystem.a
-  #  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/boost/stage/lib/libboost_iostreams.a
-  #  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/boost/stage/lib/libboost_system.a
-  #  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/curl/lib/.libs/libcurl.a
-  #  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/openssl/libssl.a
-  #  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/openssl/libcrypto.a
-  #  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/cryptopp/libcryptopp.a
-  #  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/g3log/build/libg3logger.a
-  #  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/gmp/.libs/libgmp.a
-  #  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/lua/liblua.a
-  #  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/protobuf/src/.libs/libprotobuf-lite.a
-  #  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/protobuf/src/.libs/libprotobuf-lite.a
-  #  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/protobuf/src/.libs/libprotobuf.a
-  #  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/replxx/build/libreplxx.a
-  #  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/zlib/libz.a
-  )
-endif()
-
-if (NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-  set(GTEST_LIBS
-    ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/googletest/build/googlemock/gtest/libgtest_main.a
-    ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/googletest/build/googlemock/gtest/libgtest.a
-    ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/googletest/build/googlemock/libgmock_main.a
-    ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/googletest/build/googlemock/libgmock.a
-  )
-else()
-  set(GTEST_LIBS
-    ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/googletest/build/googlemock/gtest/Release/gtest.lib
-    ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/googletest/build/googlemock/gtest/Release/gtest_main.lib
-    ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/googletest/build/googlemock/Release/gmock.lib
-    ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/googletest/build/googlemock/Release/gmock_main.lib
-  )
-endif()
-
-include_directories(
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/bitcoin/src
-  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/boost
-  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/openssl/include
-  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/cryptopp
-  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/curl/include
-  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/ed25519/src
-  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/g3log/build/include
-  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/g3log/src
-  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/gmp
-  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/googletest/googlemock/include
-  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/googletest/googletest/include
-  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/json
-  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/lua
-  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/protobuf/src
-  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/replxx/include
-  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/sol2/single/sol
-  ${CMAKE_CURRENT_SOURCE_DIR}/local_third_party/zlib
-)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 file(
   GLOB CRYPTO_FILES
@@ -131,27 +53,100 @@ file(
   automaton/core/storage/*.cc
   automaton/core/testnet/*.cc
   automaton/tools/miner/miner.cc
-  local_third_party/ed25519/src/*.c
 )
+
+include_directories(${CMAKE_INSTALL_PREFIX}/include)
+link_directories(${CMAKE_INSTALL_PREFIX}/lib)
 
 add_library(automaton-core STATIC ${CRYPTO_FILES})
 
-#find_package(OpenSSL REQUIRED)
-#find_package(ZLIB REQUIRED)
+
+add_dependencies(automaton-core
+  ext_replxx
+  ext_cryptopp
+  ext_g3log
+  ed25519_install
+  ed25519
+  ext_protobuf
+  ext_curl
+  ext_googletest
+  ext_boost
+  ext_sol2
+  lua_install
+  json_install
+)
+
+if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+  if (automaton_STATIC_RUNTIME)
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+  endif()
+  set(CRYPTOPP_LIB cryptopp-static)
+  set(PROTOBUF_LIB libprotobuf)
+  set(CURL_LIB libcurl)
+  set(BOOST_LIBS libboost_system;libboost_date_time;libboost_iostreams;libboost_filesystem)
+  if (automaton_USE_OPENSSL)
+    set(OPENSSL_LIBS libssl;libcrypto)
+  else()
+    set(OPENSSL_LIBS "")
+  endif()
+  if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+    set(GTEST_LIBS gtestd;gtest_maind)
+    set(REPLXX_LIB replxx-d)
+    set(PROTOBUF_LIB libprotobufd)
+    set(CURL_LIB libcurl-d)
+    set(Z_LIB zlibstaticd)
+  else()
+    set(GTEST_LIBS gtest;gtest_main)
+    set(REPLXX_LIB replxx)
+    set(PROTOBUF_LIB libprotobuf)
+    set(CURL_LIB libcurl)
+    set(Z_LIB zlibstatic)
+  endif()
+else()
+  set(CRYPTOPP_LIB cryptopp)
+  if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+    set(PROTOBUF_LIB protobufd)
+    set(GTEST_LIBS gtestd;gtest_maind)
+    set(CURL_LIB curl-d)
+  else()
+    set(PROTOBUF_LIB protobuf)
+    set(GTEST_LIBS gtest;gtest_main)
+    set(CURL_LIB curl)
+  endif()
+  set(BOOST_LIBS boost_system;boost_date_time;boost_iostreams;boost_filesystem)
+  set(REPLXX_LIB replxx)
+  set(OPENSSL_LIBS ssl;crypto)
+  set(Z_LIB z)
+  set(GMP_LIB ${CMAKE_INSTALL_PREFIX}/lib/libgmp.a)
+  add_dependencies(automaton-core ext_gmp ext_secp256k1)
+endif()
 
 target_link_libraries(
   automaton-core
   Threads::Threads
-#  OpenSSL::SSL
-#  ${ZLIB_LIBRARIES}
+  ${REPLXX_LIB}
+  ${CRYPTOPP_LIB}
+  secp256k1
+  g3logger
+  ed25519
+  ${PROTOBUF_LIB}
+  ${CURL_LIB}
+  lua
+  ${BOOST_LIBS}
+  ${OPENSSL_LIBS}
+  ${Z_LIB}
+  ${GTEST_LIBS}
   ${CMAKE_DL_LIBS}
-  ${LOCAL_THIRD_PARTY_LIBS}
+  ${GMP_LIB}
 )
+
+
 
 # On Linux if using curl we need to add ssl & crypto.
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
   target_link_libraries(
     automaton-core
+    ssl crypto z
   )
 endif()
 
@@ -159,12 +154,32 @@ endif()
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
   target_link_libraries(
     automaton-core
-    LDAP
+    ssl crypto z LDAP
   )
 endif()
 
+# On Windows if using curl we need to also link to LDAP, Wincrypt, Winnls, Winsock.
+if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+  target_link_libraries(
+    automaton-core
+    crypt32 Normaliz wldap32 ws2_32
+  )
+endif()
+
+macro(automaton_configure_debugger_directory target_name)
+  if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+    set_property(TARGET ${target_name} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
+  endif()
+endmacro()
+
 add_executable(automaton-core-cli automaton/core/core.cc)
+target_compile_definitions(
+  automaton-core-cli PUBLIC
+  BOOST_ALL_NO_LIB
+  CURL_STATICLIB
+)
 target_link_libraries(automaton-core-cli automaton-core)
+automaton_configure_debugger_directory(automaton-core-cli)
 
 # === TOOLS ===
 
@@ -175,6 +190,8 @@ add_executable(
 )
 target_link_libraries(automaton-miner automaton-core)
 
+
+
 enable_testing()
 SET(CTEST_OUTPUT_ON_FAILURE ON)
 
@@ -184,12 +201,14 @@ macro(automaton_test test_path test_name)
     automaton/tests/${test_path}/${test_name}.cc
     automaton/tests/data/proto_files.cc
   )
+  target_include_directories(${test_name} PRIVATE ${GTEST_INCLUDE_DIR})
   target_link_libraries(${test_name} automaton-core ${GTEST_LIBS})
   add_test(
     NAME ${test_name}
     COMMAND ${test_name}
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
   )
+  automaton_configure_debugger_directory(${test_name})
 endmacro()
 
 automaton_test(crypto test_ed25519_orlp)
@@ -223,8 +242,10 @@ automaton_test(miner miner_test)
 
 automaton_test(script test_script)
 
-automaton_test(state state_test)
-automaton_test(state state_persistent_test)
+if (NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+  automaton_test(state state_test)
+  automaton_test(state state_persistent_test)
+endif()
 
 automaton_test(storage blobstore_test)
 automaton_test(storage persistent_blobstore_test)
@@ -232,7 +253,7 @@ automaton_test(storage persistent_blobstore_test)
 automaton_test(storage persistent_vector_test)
 
 add_library(
-  blockchain_cpp_node
+  blockchain_cpp_node STATIC
   automaton/examples/node/blockchain_cpp_node/blockchain_cpp_node.cc
 )
 
@@ -252,8 +273,9 @@ target_link_libraries(
   automaton-core
 )
 
+
 add_library(
-  koh-miner
+  koh-miner STATIC
   automaton/tools/miner/miner.cc
 )
 
@@ -274,7 +296,7 @@ target_link_libraries(
 )
 
 add_library(
-  eth_contract_raw
+  eth_contract_raw STATIC
   automaton/core/interop/ethereum/eth_contract_raw.cc
 )
 
@@ -318,3 +340,29 @@ target_link_libraries(
   contract_functions_test
   automaton-core
 )
+
+if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+target_compile_definitions(
+  automaton-core PUBLIC
+  CURL_STATICLIB
+  BOOST_ALL_NO_LIB
+  NOGDI
+  _WIN32_WINNT=0x0A00
+)
+endif()
+
+install(TARGETS automaton-core;blockchain_cpp_node
+  ARCHIVE
+    DESTINATION lib
+  PUBLIC_HEADER
+    DESTINATION include
+)
+
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/automaton/
+  DESTINATION include/automaton
+  FILES_MATCHING PATTERN "*.h"
+  PATTERN "automaton/tests" EXCLUDE
+)
+
+set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+include(BuildDependencies)

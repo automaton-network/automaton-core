@@ -1,11 +1,9 @@
 #include "automaton/core/interop/ethereum/eth_transaction.h"
 
-#include <iostream>  // for debugging purposes / to be removed
+#include <secp256k1.h>
+#include <secp256k1_recovery.h>
 
-#include "secp256k1/include/secp256k1_recovery.h"
-#include "secp256k1/include/secp256k1.h"
-#include "secp256k1/src/hash_impl.h"
-#include "secp256k1/src/hash.h"
+#include <iostream>  // for debugging purposes / to be removed
 
 #include "automaton/core/crypto/cryptopp/Keccak_256_cryptopp.h"
 #include "automaton/core/io/io.h"
@@ -90,7 +88,7 @@ std::string recover_address(const unsigned char* rsv, const unsigned char* messa
   }
 
   size_t out_len = 65;
-  unsigned char pub_key_serialized[out_len];
+  unsigned char pub_key_serialized[65];
   secp256k1_ec_pubkey_serialize(context, pub_key_serialized, &out_len, pubkey, SECP256K1_EC_UNCOMPRESSED);
   std::string pub_key_uncompressed(reinterpret_cast<char*>(pub_key_serialized), out_len);
   delete pubkey;

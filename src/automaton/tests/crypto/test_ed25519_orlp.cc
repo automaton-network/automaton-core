@@ -1,10 +1,12 @@
+#include <cryptopp/hex.h>
+#include <cryptopp/filters.h>
+
 #include <string>
 #include <vector>
+
 #include "automaton/core/crypto/digital_signature.h"
 #include "automaton/core/crypto/ed25519_orlp/ed25519_orlp.h"
 #include "gtest/gtest.h"
-#include "hex.h"  // NOLINT
-#include "filters.h"  // NOLINT
 
 using automaton::core::crypto::digital_signature;
 using automaton::core::crypto::ed25519_orlp::ed25519_orlp;

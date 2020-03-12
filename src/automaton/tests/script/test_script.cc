@@ -1,11 +1,12 @@
+#include <cryptopp/cryptlib.h>
+#include <cryptopp/hex.h>
+
 #include "automaton/core/crypto/cryptopp/SHA256_cryptopp.h"
 #include "automaton/core/data/protobuf/protobuf_factory.h"
 #include "automaton/core/io/io.h"
 #include "automaton/core/script/engine.h"
 
 #include "gtest/gtest.h"
-#include "cryptlib.h"  // NOLINT
-#include "hex.h"  // NOLINT
 
 using automaton::core::data::protobuf::protobuf_factory;
 

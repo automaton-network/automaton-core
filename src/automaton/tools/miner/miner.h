@@ -2,16 +2,15 @@
 #define AUTOMATON_TOOLS_MINER_MINER_H_
 
 #include <assert.h>
+#include <secp256k1.h>
+#include <secp256k1_recovery.h>
+
 #include <iomanip>
 #include <iostream>
 #include <random>
 #include <sstream>
 #include <string>
 
-#include "secp256k1/include/secp256k1_recovery.h"
-#include "secp256k1/include/secp256k1.h"
-#include "secp256k1/src/hash_impl.h"
-#include "secp256k1/src/hash.h"
 
 // will need tests, so we need to make it library,
 // but we also need it to be executable printing the information

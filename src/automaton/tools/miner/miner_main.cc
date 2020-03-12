@@ -1,13 +1,12 @@
 #include <assert.h>
+#include <secp256k1.h>
+#include <secp256k1_recovery.h>
+
 #include <iomanip>
 #include <iostream>
 #include <sstream>
 #include <string>
 
-#include "secp256k1/include/secp256k1_recovery.h"
-#include "secp256k1/include/secp256k1.h"
-#include "secp256k1/src/hash_impl.h"
-#include "secp256k1/src/hash.h"
 #include "automaton/tools/miner/miner.h"
 #include "automaton/core/io/io.h"
 

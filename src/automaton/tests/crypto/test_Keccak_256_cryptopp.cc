@@ -1,12 +1,15 @@
+#include <cryptopp/cryptlib.h>
+#include <cryptopp/keccak.h>
+#include <cryptopp/hex.h>
+#include <cryptopp/filters.h>
+
 #include <string>
+
 #include "automaton/core/crypto/cryptopp/Keccak_256_cryptopp.h"
 #include "automaton/core/crypto/hash_transformation.h"
 #include "automaton/core/io/io.h"
-#include "cryptlib.h"  // NOLINT
-#include "keccak.h"  // NOLINT
-#include "gtest/gtest.h"  // NOLINT
-#include "hex.h"  // NOLINT
-#include "filters.h"  // NOLINT
+
+#include "gtest/gtest.h"
 
 using automaton::core::crypto::cryptopp::Keccak_256_cryptopp;
 using automaton::core::crypto::hash_transformation;
