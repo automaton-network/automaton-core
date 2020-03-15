@@ -93,6 +93,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "vitalyster",
+      "name": "vitalyster",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/1052407?v=4",
+      "profile": "https://github.com/vitalyster",
+      "contributions": [
+        "infra"
+      ]
     }
   ],
   "contributorsPerLine": 7,
