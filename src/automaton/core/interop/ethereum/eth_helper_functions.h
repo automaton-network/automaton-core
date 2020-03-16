@@ -519,7 +519,7 @@ static std::string encode(const std::string& signatures_json, const std::string&
   std::string signature;
   auto p_it = j_params.begin();
   uint32_t s_i = 0;
-  for (; s_i < signatures.size(), p_it != j_params.end(); ++s_i, ++p_it) {
+  for (; s_i < signatures.size() && p_it != j_params.end(); ++s_i, ++p_it) {
     signature = signatures[s_i];
     type t = get_type(signature);
     if (t.s_type == dynamic_size_bytes || t.s_type == string || t.s_array_type == dynamic) {

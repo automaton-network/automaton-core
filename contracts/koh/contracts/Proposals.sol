@@ -36,6 +36,7 @@ library Proposals {
   struct BallotBox {
     BallotBoxState state;
     uint256 numChoices;
+    uint256 numSlots;
     uint256 paidSlots;
 
     mapping (uint256 => uint256) votes;
@@ -65,6 +66,7 @@ library Proposals {
     int256 approvalPercentage;
     int256 contestPercentage;
     uint256 treasuryLimitPercentage;
+    uint256 ballotBoxIDs;
 
     mapping (uint256 => BallotBox) ballotBoxes;
     mapping (uint256 => Proposal) proposals;
@@ -75,18 +77,22 @@ library Proposals {
     _;
   }
 
-  function createBallotBox(Data storage self, uint256 _choices, uint256 _id) public {
+  function createBallotBox(Data storage self, uint256 _choices, uint256 _numSlots) public returns (uint256 id) {
     require(_choices > 1, "Number of choices must be bigger than 1!");
-    BallotBox storage b = self.ballotBoxes[_id];
+    id = ++self.ballotBoxIDs;
+    BallotBox storage b = self.ballotBoxes[id];
+    b.numSlots = _numSlots;
     b.numChoices = _choices;
     b.state = BallotBoxState.PrepayingGas;
     for (uint256 i = 0; i <= _choices; i++) {
       b.voteCount[i] = MSB_SET;
     }
+    payForGas(self, id, 1);
   }
 
-  function createProposal(Data storage self, uint256 id, address payable contributor, string memory title,
-      string memory documents_link, bytes memory documents_hash, uint256 budget_period_len, uint256 num_periods, uint256 budget_per_period) public {
+  function createProposal(Data storage self, uint256 num_slots, address payable contributor, string memory title,
+      string memory documents_link, bytes memory documents_hash, uint256 budget_period_len, uint256 num_periods, uint256 budget_per_period) public returns (uint256 id) {
+    id = createBallotBox(self, 2, num_slots);
     Proposal storage p = self.proposals[id];
     p.contributor = contributor;
     p.title = title;
@@ -100,13 +106,14 @@ library Proposals {
   }
 
   // Pay for multiple slots at once, 32 seems to be a reasonable amount.
-  function payForGas(Data storage self, uint256 _id, uint256 _slotsToPay, uint256 _slotsLength) public validBallotBoxID(self, _id) {
+  function payForGas(Data storage self, uint256 _id, uint256 _slotsToPay) public validBallotBoxID(self, _id) {
     BallotBox storage b = self.ballotBoxes[_id];
+    uint256 _numSlots = b.numSlots;
     uint256 _paidSlots = b.paidSlots;
-    require((_slotsLength - _paidSlots) >= _slotsToPay, "Too many slots!");
+    require((_numSlots - _paidSlots) >= _slotsToPay, "Too many slots!");
     uint256 _newLength = _paidSlots + _slotsToPay;
     uint256 votesPerWord = 255 / (Util.msb(b.numChoices) + 1);
-    uint256 votesWords = (_slotsLength + votesPerWord - 1) / votesPerWord;
+    uint256 votesWords = (_numSlots + votesPerWord - 1) / votesPerWord;
     for (uint256 i = 1; i <= _slotsToPay; i++) {
       uint256 idx = _newLength - i;
       b.payGas1[idx] = b.payGas2[idx] = MSB_SET;
@@ -115,16 +122,16 @@ library Proposals {
       }
     }
     b.paidSlots = _newLength;
-    if (_newLength == _slotsLength) {
+    if (_newLength == _numSlots) {
       b.state = BallotBoxState.Active;
     }
   }
 
-  function calcVoteDifference(Data storage self, uint256 _id, uint256 _numSlots) view public validBallotBoxID(self, _id) returns (int256) {
+  function calcVoteDifference(Data storage self, uint256 _id) view public validBallotBoxID(self, _id) returns (int256) {
     BallotBox storage b = self.ballotBoxes[_id];
     int256 yes = int256(b.voteCount[1]);
     int256 no = int256(b.voteCount[2]);
-    return (yes - no) * 100 / int256(_numSlots);
+    return (yes - no) * 100 / int256(b.numSlots);
   }
 
   function castVote(Data storage self, uint256 _id, uint256 _slot, uint8 _choice) public validBallotBoxID(self, _id) {
@@ -173,7 +180,7 @@ library Proposals {
     return (self.ballotBoxes[_id].votes[index] & mask) >> offset;
   }
 
-  function updateProposalState(Data storage self, uint256 _id, uint256 _numSlots) public validBallotBoxID(self, _id) returns (bool _transfer) {
+  function updateProposalState(Data storage self, uint256 _id) public validBallotBoxID(self, _id) returns (bool _return_to_treasury) {
     Proposal storage p = self.proposals[_id];
     ProposalState p_state = p.state;
     uint256 _initialEndDate = p.initialEndDate;
@@ -182,14 +189,14 @@ library Proposals {
       if (b.state == BallotBoxState.Active) {  // Gas is paid
         if (_initialEndDate != 0) {
           if (now >= _initialEndDate) {
-            int256 vote_diff = calcVoteDifference(self, _id, _numSlots);
+            int256 vote_diff = calcVoteDifference(self, _id);
             if (vote_diff >= self.approvalPercentage) {
               p.state = ProposalState.Accepted;
               p.nextPaymentDate = now;
             } else {
               p.state = ProposalState.Rejected;
               b.state = BallotBoxState.Inactive;
-              _transfer = true;
+              _return_to_treasury = true;
             }
           }
         } else {  // Either gas has been just paid and time hasn't been set or the initial time hasn't passed
@@ -197,20 +204,20 @@ library Proposals {
         }
       }
     } else if (p_state == ProposalState.Accepted) {
-      int256 vote_diff = calcVoteDifference(self, _id, _numSlots);
+      int256 vote_diff = calcVoteDifference(self, _id);
       if (vote_diff <= self.contestPercentage) {
         p.state = ProposalState.Contested;
         p.contestEndDate = now + CONTEST_PERIOD;
       }
     } else if (p_state == ProposalState.Contested) {
       if (now >= p.contestEndDate) {
-        int256 vote_diff = calcVoteDifference(self, _id, _numSlots);
+        int256 vote_diff = calcVoteDifference(self, _id);
         if (vote_diff >= self.approvalPercentage) {
           p.state = ProposalState.Accepted;
         } else {
           p.state = ProposalState.Rejected;
           self.ballotBoxes[_id].state = BallotBoxState.Inactive;
-          _transfer = true;
+          _return_to_treasury = true;
         }
       }
     }
