@@ -53,7 +53,7 @@ abstract contract KingOfTheHill {
 
   function slotAcquired(uint256 _id) internal virtual;
 
-  function initMinDifficulty(uint256 minDifficultyBits) internal {
+  function setMinDifficulty(uint256 minDifficultyBits) internal {
     require(minDifficultyBits > 0);
     minDifficulty = (2 ** minDifficultyBits - 1) << (256 - minDifficultyBits);
   }

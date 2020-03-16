@@ -30,6 +30,7 @@ contract KingAutomaton is KingOfTheHill {
     proposalsData.approvalPercentage = approval_pct;
     proposalsData.contestPercentage = contest_pct;
     proposalsData.treasuryLimitPercentage = treasury_limit_pct;
+    proposalsData.ballotBoxIDs = 99;  // Ensure special addresses are not already used
     // Check if we're on a testnet (We will not using predefined mask when going live)
     if (predefinedMask != 0) {
       // If so, fund the owner for debugging purposes.
@@ -116,11 +117,9 @@ contract KingAutomaton is KingOfTheHill {
   // Treasury
   //////////////////////////////////////////////////////////////////////////////////////////////////
 
-  uint256 public constant MIN_PERIOD_LEN = 3 days;
+  uint256 public minPeriodLen = 3 days;
 
   bool public debugging = false;
-
-  uint256 public ballotBoxIDs = 99;  // Ensure special addresses are not already used
 
   Proposals.Data public proposalsData;
 
@@ -166,19 +165,16 @@ contract KingAutomaton is KingOfTheHill {
     contestEndDate = p.contestEndDate;
   }
 
-  function createBallotBox(uint256 _choices) public returns (uint256 id) {
-    id = ++ballotBoxIDs;
-    proposalsData.createBallotBox(_choices, id);
-    payForGas(id, 1);
+  function createBallotBox(uint256 _choices) public returns (uint256) {
+    return proposalsData.createBallotBox(_choices, numSlots);
   }
 
   function createProposal(address payable contributor, string calldata title, string calldata documents_link,
       bytes calldata documents_hash, uint256 budget_period_len, uint256 num_periods, uint256 budget_per_period)
       external returns (uint256 _id) {
-    require(budget_period_len <= MIN_PERIOD_LEN);
+    require(budget_period_len <= minPeriodLen);
     require(num_periods * budget_per_period <= proposalsData.treasuryLimitPercentage * balances[treasuryAddress] / 100);
-    _id = createBallotBox(2);
-    proposalsData.createProposal(_id, contributor, title, documents_link, documents_hash, budget_period_len, num_periods, budget_per_period);
+    _id = proposalsData.createProposal(numSlots, contributor, title, documents_link, documents_hash, budget_period_len, num_periods, budget_per_period);
     transferInternal(treasuryAddress, address(_id), num_periods * budget_per_period);
   }
 
@@ -190,11 +186,11 @@ contract KingAutomaton is KingOfTheHill {
 
   // Pay for multiple slots at once, 32 seems to be a reasonable amount.
   function payForGas(uint256 _id, uint256 _slotsToPay) public {
-    proposalsData.payForGas(_id, _slotsToPay, numSlots);
+    proposalsData.payForGas(_id, _slotsToPay);
   }
 
   function calcVoteDifference(uint256 _id) view public returns (int256) {
-    return proposalsData.calcVoteDifference(_id, numSlots);
+    return proposalsData.calcVoteDifference(_id);
   }
 
   function castVote(uint256 _id, uint256 _slot, uint8 _choice) public slotOwner(_slot) {
@@ -223,8 +219,8 @@ contract KingAutomaton is KingOfTheHill {
   }
 
   function updateProposalState(uint256 _id) public validBallotBoxID(_id) {
-    bool _transfer = proposalsData.updateProposalState(_id, numSlots);
-    if (_transfer) {
+    bool _return_to_treasury = proposalsData.updateProposalState(_id);
+    if (_return_to_treasury) {
       transferInternal(address(_id), treasuryAddress, balances[address(_id)]);
     }
   }
@@ -281,7 +277,7 @@ contract KingAutomaton is KingOfTheHill {
 
   function initMining(uint256 nSlots, uint256 minDifficultyBits, uint256 predefinedMask, uint256 initialDailySupply) public {
     require(nSlots > 0);
-    initMinDifficulty(minDifficultyBits);
+    setMinDifficulty(minDifficultyBits);
     if (predefinedMask == 0) {
       // Prevents premining with a known predefined mask.
       setMask(uint256(keccak256(abi.encodePacked(now, msg.sender))));
@@ -345,8 +341,8 @@ contract KingAutomaton is KingOfTheHill {
 
   DEX.Data public dexData;
 
-  uint256 public constant minOrderETH = 1 ether / 10;
-  uint256 public constant minOrderAUTO = 1000 ether;
+  uint256 public minOrderETH = 1 ether / 10;
+  uint256 public minOrderAUTO = 1000 ether;
 
   function withdraw(uint256 _value) external {
     require(_value <= dexData.balanceETH[msg.sender]);
