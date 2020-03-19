@@ -58,10 +58,14 @@ sudo apt-get install build-essential git curl cmake autotools-dev autoconf autog
 
 #### Build instructions
 
+From the automaton repo:
+
+```
 cd src
 mkdir build
 cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=../local_third_party
+```
 
 ### Windows
 
