@@ -73,16 +73,20 @@ cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=../local_third_party
 
 #### Build instructions
 
-Start the "x64 Native Tools Command Prompt for VS 2019"
 **IMPORTANT FOR WINDOWS**
 Sync the repos into a root path that's not too long, otherwise boost filenames might become unaccessible! e.g. c:\dev, instead of 
 
+Start the "x64 Native Tools Command Prompt for VS 2019"
+
 From the automaton repo folder:
+
+```
 cd src
 mkdir build
 cd build
 cmake .. -DCMAKE_BUILD_TYPE=Debug -A x64 -Dautomaton_STATIC_RUNTIME=OFF -DCMAKE_INSTALL_PREFIX=../local_third_party
 msbuild /t:Build /m /p:Configuration=Debug /p:Platform=x64 INSTALL.vcxproj
+```
 
 This will build and install necessary libraries for projects using core (such as the Automaton Playground)
 
