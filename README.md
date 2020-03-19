@@ -39,7 +39,11 @@ Telegram: https://t.me/automaton_network
 
 ## Building Automaton
 
-### Prerequisites
+### Linux
+
+At the moment Ubuntu is the only known working distro.
+
+#### Prerequisites
 
 ```
 sudo apt-get install build-essential git curl cmake autotools-dev autoconf autogen automake libtool
@@ -52,39 +56,22 @@ sudo apt-get install build-essential git curl cmake autotools-dev autoconf autog
 * autotools
 * libtool
 
-### External Third Party Libraries
+#### Build instructions
 
-First you need to run a script to download and build some required third party libraries.
+cd src
+mkdir build
+cd build
+cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=../local_third_party
 
-**Linux & Mac OS**
-
-```
-./download_and_build_third_party_libs.sh
-```
-
-**Windows**
-
-1. Start [Developer Command Prompt for Visual Studio 2017](https://docs.microsoft.com/en-us/dotnet/framework/tools/developer-command-prompt-for-vs)
-2. In the started command prompt type in ``powershell``
-3. Move to the project's directory ``cd "<path_to_project>"``
-4. Run ``.\download_and_build_third_party_libs_windows.ps1``
-5. Build and run with Bazel
-
-### Bazel Build & Run
-
-Once you have bazel you can run the following to build and run Automaton Core
-
-**Linux & Mac OS**
-```
-./build-and-run-automaton-core.sh
-```
-**Windows**
+### Windows
 
 #### Prerequisites
 
 * Visual Studio (VS 2019 recommended)
 * CMake (3.15 minimum) https://cmake.org/download/
 * Git - This is what we use: https://gitforwindows.org/
+
+#### Build instructions
 
 Start the "x64 Native Tools Command Prompt for VS 2019"
 **IMPORTANT FOR WINDOWS**
