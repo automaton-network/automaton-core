@@ -79,9 +79,25 @@ Once you have bazel you can run the following to build and run Automaton Core
 ./build-and-run-automaton-core.sh
 ```
 **Windows**
-```
-.\build-and-run-automaton-core.ps1
-```
+
+#### Prerequisites
+
+* Visual Studio (VS 2019 recommended)
+* CMake (3.15 minimum) https://cmake.org/download/
+* Git - This is what we use: https://gitforwindows.org/
+
+Start the "x64 Native Tools Command Prompt for VS 2019"
+**IMPORTANT FOR WINDOWS**
+Sync the repos into a root path that's not too long, otherwise boost filenames might become unaccessible! e.g. c:\dev, instead of 
+
+From the automaton repo folder:
+cd src
+mkdir build
+cd build
+cmake .. -DCMAKE_BUILD_TYPE=Debug -A x64 -Dautomaton_STATIC_RUNTIME=OFF -DCMAKE_INSTALL_PREFIX=../local_third_party
+msbuild /t:Build /m /p:Configuration=Debug /p:Platform=x64 INSTALL.vcxproj
+
+This will build and install necessary libraries for projects using core (such as the Automaton Playground)
 
 ## Getting Started
 
