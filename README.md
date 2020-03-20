@@ -5,10 +5,9 @@
 
 ## Build Status
 
-<img src="https://ci.appveyor.com/api/projects/status/5euy83253gjqdasg/branch/master?svg=true">
+![Automaton Core](https://github.com/automaton-network/automaton/workflows/C/C++%20CI/badge.svg?branch=master)
 
-[![Build Status Travis](https://travis-ci.org/automaton-network/automaton.svg?branch=master)](https://travis-ci.org/automaton-network/automaton)
-
+![Smart Contract](https://github.com/automaton-network/automaton/workflows/Node.js%20CI/badge.svg?branch=master)
 
 Table of Contents
 =================
