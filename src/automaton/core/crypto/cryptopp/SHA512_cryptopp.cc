@@ -1,8 +1,4 @@
 #include "automaton/core/crypto/cryptopp/SHA512_cryptopp.h"
-
-#include "cryptlib.h"  // NOLINT
-#include "sha.h"  // NOLINT
-
 #include "automaton/core/crypto/hash_transformation.h"
 
 namespace automaton {

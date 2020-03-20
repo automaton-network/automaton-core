@@ -1,8 +1,4 @@
 #include "automaton/core/crypto/cryptopp/RIPEMD160_cryptopp.h"
-
-#include "cryptlib.h"  // NOLINT
-#include "ripemd.h"  // NOLINT
-
 #include "automaton/core/crypto/hash_transformation.h"
 
 namespace automaton {

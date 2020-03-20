@@ -1,10 +1,10 @@
 #ifndef AUTOMATON_CORE_CRYPTO_CRYPTOPP_RIPEMD160_CRYPTOPP_H_
 #define AUTOMATON_CORE_CRYPTO_CRYPTOPP_RIPEMD160_CRYPTOPP_H_
 
-#include "automaton/core/crypto/hash_transformation.h"
+#include <cryptopp/cryptlib.h>
+#include <cryptopp/ripemd.h>
 
-#include "cryptlib.h"  // NOLINT
-#include "ripemd.h"  // NOLINT
+#include "automaton/core/crypto/hash_transformation.h"
 
 namespace automaton {
 namespace core {

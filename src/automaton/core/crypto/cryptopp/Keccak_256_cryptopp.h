@@ -1,10 +1,10 @@
 #ifndef AUTOMATON_CORE_CRYPTO_CRYPTOPP_KECCAK_256_CRYPTOPP_H_
 #define AUTOMATON_CORE_CRYPTO_CRYPTOPP_KECCAK_256_CRYPTOPP_H_
 
-#include "automaton/core/crypto/hash_transformation.h"
+#include <cryptopp/cryptlib.h>
+#include <cryptopp/keccak.h>
 
-#include "cryptlib.h"  // NOLINT
-#include "keccak.h"  // NOLINT
+#include "automaton/core/crypto/hash_transformation.h"
 
 namespace automaton {
 namespace core {

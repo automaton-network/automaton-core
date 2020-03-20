@@ -1,8 +1,8 @@
 #ifndef AUTOMATON_CORE_CRYPTO_CRYPTOPP_SECURE_RANDOM_CRYPTOPP_H_
 #define AUTOMATON_CORE_CRYPTO_CRYPTOPP_SECURE_RANDOM_CRYPTOPP_H_
 
-#include <stdint.h>
-#include <osrng.h>
+#include <cryptopp/cryptlib.h>
+#include <cryptopp/osrng.h>
 
 #include "automaton/core/crypto/secure_random.h"
 
