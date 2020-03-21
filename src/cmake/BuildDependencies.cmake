@@ -281,8 +281,8 @@ else()
 endif()
 
 FetchContent_Declare(JUCE
-  URL https://github.com/WeAreROLI/JUCE/archive/5.4.5.tar.gz
-  URL_HASH SHA256=e51019065f1185db124954959aeb9101d759a4f2a4dd0c4a6b305a37f0c9271f
+  URL https://github.com/WeAreROLI/JUCE/archive/5.4.7.tar.gz
+  URL_HASH SHA256=0f446cf09177e559d2f2e9a77a78faed611cc869e219a7dc859a6e9b72eca64d
   SOURCE_DIR ${CMAKE_INSTALL_PREFIX}/JUCE
 )
 
