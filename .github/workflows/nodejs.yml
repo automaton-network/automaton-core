@@ -1,8 +1,14 @@
 name: Node.js CI
 
 on:
-  [push, pull_request]
-
+  push:
+    paths:
+      - 'contracts/**'
+      - '.github/workflows/nodejs.yml'
+  pull_request:
+    paths:
+      - 'contracts/**'
+      - '.github/workflows/nodejs.yml'
 jobs:
   test:
     runs-on: ubuntu-latest
