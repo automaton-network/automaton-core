@@ -73,6 +73,7 @@ cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=../local_third_party
 * Visual Studio (VS 2019 recommended)
 * CMake (3.15 minimum) https://cmake.org/download/
 * Git - This is what we use: https://gitforwindows.org/
+* Perl (needed to build OpenSSL) - This is what we use: http://strawberryperl.com/
 
 #### Build instructions
 
