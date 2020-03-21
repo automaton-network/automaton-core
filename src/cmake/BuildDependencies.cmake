@@ -1,5 +1,13 @@
 include(ExternalProject)
 include (FetchContent)
+include(ProcessorCount)
+ProcessorCount(CPUCOUNT)
+if(NOT CPUCOUNT EQUAL 0)
+  set(CTEST_BUILD_FLAGS -j${CPUCOUNT})
+  set(ctest_test_args ${ctest_test_args} PARALLEL_LEVEL ${CPUCOUNT})
+else()
+  set(CPUCOUNT 1)
+endif()
 
 set(FETCHCONTENT_QUIET OFF)
 
@@ -138,10 +146,10 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     set (BOOST_RUNTIME_LINKING runtime-link=shared)
     set (GTEST_SHARED_CRT -Dgtest_force_shared_crt=ON)
   endif()
-  set(OPENSSL_MAKE_COMMAND nmake)
+  set(OPENSSL_MAKE_COMMAND nmake /mp)
 else()
   set(BOOST_BOOTSTRAP_COMMAND bootstrap.sh)
-  set(OPENSSL_MAKE_COMMAND make)
+  set(OPENSSL_MAKE_COMMAND make -j${CPUCOUNT})
 endif()
 
 ExternalProject_Add(ext_boost
@@ -150,7 +158,7 @@ ExternalProject_Add(ext_boost
   INSTALL_DIR ${CMAKE_INSTALL_PREFIX}
   BUILD_IN_SOURCE 1
   CONFIGURE_COMMAND <SOURCE_DIR>/${BOOST_BOOTSTRAP_COMMAND}
-  BUILD_COMMAND <SOURCE_DIR>/b2 --prefix=${CMAKE_INSTALL_PREFIX} --layout=system --with-date_time --with-filesystem --with-system --with-iostreams cxxstd=14 ${BOOST_RUNTIME_LINKING} link=static variant=${BOOST_VARIANT} address-model=${BOOST_ADDRESS_MODEL} -s ZLIB_INCLUDE="${CMAKE_INSTALL_PREFIX}/include" -s ZLIB_BINARY=${Z_LIB} -s ZLIB_LIBPATH="${CMAKE_INSTALL_PREFIX}/lib" -s NO_BZIP2=1 install
+  BUILD_COMMAND <SOURCE_DIR>/b2 --prefix=${CMAKE_INSTALL_PREFIX} --layout=system --with-date_time --with-filesystem --with-system --with-iostreams cxxstd=14 ${BOOST_RUNTIME_LINKING} link=static variant=${BOOST_VARIANT} address-model=${BOOST_ADDRESS_MODEL} -s ZLIB_INCLUDE="${CMAKE_INSTALL_PREFIX}/include" -s ZLIB_BINARY=${Z_LIB} -s ZLIB_LIBPATH="${CMAKE_INSTALL_PREFIX}/lib" -s NO_BZIP2=1 install -j${CPUCOUNT}
   INSTALL_COMMAND ""
   DEPENDS ext_zlib
 )
@@ -256,7 +264,6 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
     PUBLIC_HEADER
       DESTINATION include
   )
-
 else()
   ExternalProject_Add(ext_gmp
     URL "https://gmplib.org/download/gmp/gmp-6.1.2.tar.xz"
@@ -264,8 +271,8 @@ else()
     INSTALL_DIR ${CMAKE_INSTALL_PREFIX}
     BUILD_IN_SOURCE 1
     CONFIGURE_COMMAND ./configure --prefix=${CMAKE_INSTALL_PREFIX} --enable-shared=no
-    BUILD_COMMAND make
-    INSTALL_COMMAND make install
+    BUILD_COMMAND make -j${CPUCOUNT}
+    INSTALL_COMMAND make -j${CPUCOUNT} install
   )
   ExternalProject_Add(ext_secp256k1
     GIT_REPOSITORY "https://github.com/bitcoin-core/secp256k1"
@@ -273,8 +280,8 @@ else()
     INSTALL_DIR ${CMAKE_INSTALL_PREFIX}
     BUILD_IN_SOURCE 1
     CONFIGURE_COMMAND ./autogen.sh COMMAND ./configure --prefix=${CMAKE_INSTALL_PREFIX} --enable-module-recovery --enable-shared=no --with-sysroot=${CMAKE_INSTALL_PREFIX}
-    BUILD_COMMAND make
-    INSTALL_COMMAND make install
+    BUILD_COMMAND make -j${CPUCOUNT}
+    INSTALL_COMMAND make -j${CPUCOUNT} install
     UPDATE_COMMAND ""
     DEPENDS ext_gmp
   )
