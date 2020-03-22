@@ -172,7 +172,7 @@ add_custom_target(lua_install
   COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_BINARY_DIR}/_deps/lua_source-src/lauxlib.h ${CMAKE_INSTALL_PREFIX}/include/lauxlib.h
 )
 
-install(TARGETS lua
+install(TARGETS lua;ed25519
   ARCHIVE
     DESTINATION lib
   PUBLIC_HEADER
