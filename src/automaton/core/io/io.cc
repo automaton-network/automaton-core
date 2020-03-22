@@ -65,6 +65,9 @@ uint8_t hex2nibble(char c) {
 
 std::string hex2bin(const std::string& input) {
   size_t len = input.length();
+  if (len == 0) {
+    return "";
+  }
   size_t out_len = (len + 1) / 2;
 
   std::string output;
