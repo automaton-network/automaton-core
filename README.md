@@ -6,8 +6,8 @@
 
 ## Build Status
 
-![Automaton Core](https://github.com/automaton-network/automaton/workflows/C/C++%20CI/badge.svg?branch=master)
-![Smart Contract](https://github.com/automaton-network/automaton/workflows/Node.js%20CI/badge.svg?branch=master)
+[![Automaton Core](https://github.com/automaton-network/automaton/workflows/C/C++%20CI/badge.svg?branch=master)](https://github.com/automaton-network/automaton/actions?query=workflow%3A%22C%2FC%2B%2B+CI%22+branch%3Amaster)
+[![Smart Contract](https://github.com/automaton-network/automaton/workflows/Node.js%20CI/badge.svg?branch=master)](https://github.com/automaton-network/automaton/actions?query=workflow%3A%22Node.js+CI%22+branch%3Amaster)
 
 Table of Contents
 =================
