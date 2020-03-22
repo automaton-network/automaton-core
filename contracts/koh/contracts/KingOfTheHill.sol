@@ -13,7 +13,7 @@ abstract contract KingOfTheHill {
   }
 
   mapping (uint256 => ValidatorSlot) slots;
-  uint256 numSlots;
+  uint256 public numSlots;
 
   uint256 public minDifficulty;          // Minimum difficulty
   uint256 public mask;                   // Prevents premine
