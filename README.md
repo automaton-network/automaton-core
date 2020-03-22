@@ -1,4 +1,5 @@
 # <img title="Automaton" width="231" height="39" src="media/automaton-logo-black-on-white-8x8.svg">
+
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
 [![All Contributors](https://img.shields.io/badge/all_contributors-9-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
@@ -6,7 +7,6 @@
 ## Build Status
 
 ![Automaton Core](https://github.com/automaton-network/automaton/workflows/C/C++%20CI/badge.svg?branch=master)
-
 ![Smart Contract](https://github.com/automaton-network/automaton/workflows/Node.js%20CI/badge.svg?branch=master)
 
 Table of Contents
