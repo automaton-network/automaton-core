@@ -12,6 +12,8 @@ else()
   set(automaton_USE_OPENSSL ON)
 endif()
 
+option(automaton_BUILD_DEPENDENCIES "Build third-party libraries" ON)
+
 set(CPACK_PACKAGE_VERSION_MAJOR "0")
 set(CPACK_PACKAGE_VERSION_MINOR "1")
 set(CPACK_PACKAGE_VERSION_PATCH "0")
@@ -60,22 +62,6 @@ link_directories(${CMAKE_INSTALL_PREFIX}/lib)
 
 add_library(automaton-core STATIC ${CRYPTO_FILES})
 
-
-add_dependencies(automaton-core
-  ext_replxx
-  ext_cryptopp
-  ext_g3log
-  ed25519_install
-  ed25519
-  ext_protobuf
-  ext_curl
-  ext_googletest
-  ext_boost
-  ext_sol2
-  lua_install
-  json_install
-)
-
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
   if (automaton_STATIC_RUNTIME)
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
@@ -118,7 +104,9 @@ else()
   set(OPENSSL_LIBS ssl;crypto)
   set(Z_LIB z)
   set(GMP_LIB ${CMAKE_INSTALL_PREFIX}/lib/libgmp.a)
-  add_dependencies(automaton-core ext_gmp ext_secp256k1)
+  if (automaton_BUILD_DEPENDENCIES)
+    add_dependencies(automaton-core ext_gmp ext_secp256k1)
+  endif()
 endif()
 
 target_link_libraries(
@@ -364,5 +352,21 @@ install(DIRECTORY ${CMAKE_SOURCE_DIR}/automaton/
   PATTERN "automaton/tests" EXCLUDE
 )
 
-set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
-include(BuildDependencies)
+if (automaton_BUILD_DEPENDENCIES)
+  set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+  include(BuildDependencies)
+  add_dependencies(automaton-core
+    ext_replxx
+    ext_cryptopp
+    ext_g3log
+    ed25519_install
+    ed25519
+    ext_protobuf
+    ext_curl
+    ext_googletest
+    ext_boost
+    ext_sol2
+    lua_install
+    json_install
+  )
+endif()
