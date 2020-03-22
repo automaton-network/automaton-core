@@ -64,7 +64,11 @@ cd src
 mkdir build
 cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=../local_third_party
+make
+make install
 ```
+
+make install is necessary in order to setup libraries for projects using core (such as the Automaton Playground)
 
 ### Windows
 
