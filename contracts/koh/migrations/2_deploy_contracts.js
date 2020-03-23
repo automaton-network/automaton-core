@@ -16,7 +16,7 @@ module.exports = function(deployer) {
 
   numSlots = 256;
   difficultyBits = 16;
-  mask = "0";
+  mask = "0x10000";
   initialDailySupply ="406080000";
   approval_percentage = 10;
   contest_percentage = -10;
