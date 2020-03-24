@@ -236,7 +236,7 @@ if (NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
   automaton_test(state state_persistent_test)
   automaton_test(storage persistent_blobstore_test)
   automaton_test(storage blobstore_test)
-  automaton_test(storage persistent_storage_test)
+  # automaton_test(storage persistent_storage_test)
   automaton_test(storage persistent_vector_test)
 endif()
 
