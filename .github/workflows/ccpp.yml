@@ -14,7 +14,6 @@ jobs:
   windows:
     runs-on: windows-latest
     strategy:
-      fail-fast: false
       matrix:
         configuration: [Debug, Release]
         platform: [Win32, x64]
@@ -24,11 +23,6 @@ jobs:
     - uses: actions/checkout@v2
     - name: prepare
       run: mkdir ${{ env.build_dir }}
-    #- uses: actions/cache@v1
-    #  name: Restore cache
-    #  with:
-    #    path: src/build
-    #    key: ${{ runner.os }}-${{ matrix.platform }}-${{ matrix.configuration }}-${{ hashFiles('**/CMakeLists.txt') }}
     - name: Add msbuild to PATH
       uses: microsoft/setup-msbuild@v1.0.0    
     - name: configure
@@ -43,10 +37,17 @@ jobs:
       working-directory: ${{ env.build_dir }}
       run: ctest -j4 -C ${{ matrix.configuration }}
       shell: cmd
-    - uses: actions/upload-artifact@v1
+    - name: Archive
+      if: startsWith(github.ref, 'refs/tags/v')
+      working-directory: ${{ env.build_dir }}/local_third_party
+      run: zip -r ../../../Windows-${{ matrix.configuration}}-${{ matrix.platform}}-$GITHUB_SHA.zip .
+    - name: Release      
+      uses: softprops/action-gh-release@v1
+      if: startsWith(github.ref, 'refs/tags/v')
       with:
-        name: Windows-${{ matrix.configuration }}-${{ matrix.platform }}
-        path: src/local_third_party
+        files: Windows-${{ matrix.configuration }}-${{ matrix.platform}}-${{ github.sha }}.zip
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   ubuntu:
     runs-on: ubuntu-latest
     strategy:
@@ -67,10 +68,17 @@ jobs:
     - name: test
       working-directory: ${{ env.build_dir }}
       run: ctest -j4 -C ${{ matrix.configuration }}
-    - uses: actions/upload-artifact@v1
+    - name: Archive
+      if: startsWith(github.ref, 'refs/tags/v')
+      working-directory: ${{ env.build_dir }}/local_third_party
+      run: zip -r ../../../Linux-${{ matrix.configuration}}-$GITHUB_SHA.zip .
+    - name: Release      
+      uses: softprops/action-gh-release@v1
+      if: startsWith(github.ref, 'refs/tags/v')
       with:
-        name: Linux-${{ matrix.configuration }}
-        path: src/local_third_party
+        files: Linux-${{ matrix.configuration }}-${{ github.sha }}.zip
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   macos:
     runs-on: macos-latest
     strategy:
@@ -94,10 +102,17 @@ jobs:
     - name: test
       working-directory: ${{ env.build_dir }}
       run: ctest -j4 -C ${{ matrix.configuration }}
-    - uses: actions/upload-artifact@v1
+    - name: Archive
+      if: startsWith(github.ref, 'refs/tags/v')
+      working-directory: ${{ env.build_dir }}/local_third_party
+      run: zip -r ../../../macOS-${{ matrix.configuration}}-$GITHUB_SHA.zip .
+    - name: Release      
+      uses: softprops/action-gh-release@v1
+      if: startsWith(github.ref, 'refs/tags/v')
       with:
-        name: macOS-${{ matrix.configuration }}
-        path: src/local_third_party
+        files: macOS-${{ matrix.configuration }}-${{ github.sha }}.zip
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   lint:
     runs-on: macos-latest
     steps:
