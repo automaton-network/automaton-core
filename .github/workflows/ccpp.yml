@@ -28,7 +28,7 @@ jobs:
       uses: microsoft/setup-msbuild@v1.0.0    
     - name: configure
       working-directory: ${{ env.build_dir }}
-      run: cmake .. -DCMAKE_BUILD_TYPE=${{ matrix.configuration }} -A ${{ matrix.platform }} -Dautomaton_STATIC_RUNTIME=OFF -DCMAKE_INSTALL_PREFIX=${{ env.dist_dir }}
+      run: cmake .. -DCMAKE_BUILD_TYPE=${{ matrix.configuration }} -A ${{ matrix.platform }} -Dautomaton_STATIC_RUNTIME=OFF -DCMAKE_INSTALL_PREFIX=../local_third_party
       shell: cmd
     - name: build
       working-directory: ${{ env.build_dir }}
@@ -64,7 +64,7 @@ jobs:
       run: mkdir ${{ env.build_dir }}
     - name: configure
       working-directory: ${{ env.build_dir }}
-      run: cmake .. -DCMAKE_BUILD_TYPE=${{ matrix.configuration }} -DCMAKE_INSTALL_PREFIX=${{ env.dist_dir }}
+      run: cmake .. -DCMAKE_BUILD_TYPE=${{ matrix.configuration }} -DCMAKE_INSTALL_PREFIX=../local_third_party
     - name: build
       working-directory: ${{ env.build_dir }}
       run: make install
@@ -100,7 +100,7 @@ jobs:
       run: mkdir ${{ env.build_dir }}
     - name: configure
       working-directory: ${{ env.build_dir }}
-      run: cmake .. -DCMAKE_BUILD_TYPE=${{ matrix.configuration }} -DCMAKE_INSTALL_PREFIX=${{ env.dist_dir }}
+      run: cmake .. -DCMAKE_BUILD_TYPE=${{ matrix.configuration }} -DCMAKE_INSTALL_PREFIX=../local_third_party
     - name: build
       working-directory: ${{ env.build_dir }}
       run: make install
