@@ -46,6 +46,7 @@ jobs:
       if: startsWith(github.ref, 'refs/tags/v')
       with:
         files: Windows-${{ matrix.configuration }}-${{ matrix.platform}}-${{ github.sha }}.zip
+        prerelease: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   ubuntu:
@@ -77,6 +78,7 @@ jobs:
       if: startsWith(github.ref, 'refs/tags/v')
       with:
         files: Linux-${{ matrix.configuration }}-${{ github.sha }}.zip
+        prerelease: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   macos:
@@ -111,6 +113,7 @@ jobs:
       if: startsWith(github.ref, 'refs/tags/v')
       with:
         files: macOS-${{ matrix.configuration }}-${{ github.sha }}.zip
+        prerelease: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   lint:
