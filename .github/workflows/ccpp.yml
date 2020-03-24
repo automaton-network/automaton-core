@@ -43,7 +43,7 @@ jobs:
     - name: Archive
       if: startsWith(github.ref, 'refs/tags/v')
       working-directory: ${{ env.dist_dir }}
-      run: zip -r ../../Windows-${{ matrix.configuration}}-${{ matrix.platform}}-$GITHUB_SHA.zip .
+      run: zip -r ../../Windows-${{ matrix.configuration}}-${{ matrix.platform}}-${{ github.sha }}.zip .
       shell: cmd
     - name: Release      
       uses: softprops/action-gh-release@v1
