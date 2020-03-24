@@ -351,7 +351,7 @@ int main(int argc, char* argv[]) {
       script.safe_script(get_file_contents(p.c_str()));
     }
     for (auto& c : j["commands"]) {
-      rpc_commands[c["cmd"]] = std::make_pair(c["input"], c["output"]);
+      rpc_commands[c["cmd"]] = std::make_pair<std::string, std::string>(c["input"], c["output"]);
     }
     rpc_port = j["rpc_config"]["default_port"];
 

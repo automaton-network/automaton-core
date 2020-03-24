@@ -5,6 +5,7 @@ FILTERS=(
   "-legal/copyright"
   "-runtime/explicit"
   "-build/c++11"
+  "-build/explicit_make_pair"
 )
 
 FILTER_ARG=$(join_by "," "${FILTERS[@]}")
