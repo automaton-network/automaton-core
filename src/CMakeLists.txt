@@ -230,15 +230,15 @@ automaton_test(miner miner_test)
 
 automaton_test(script test_script)
 
+# Memory mapped file tests seem to be flaky on Windows
 if (NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
   automaton_test(state state_test)
   automaton_test(state state_persistent_test)
   automaton_test(storage persistent_blobstore_test)
+  automaton_test(storage blobstore_test)
+  automaton_test(storage persistent_storage_test)
+  automaton_test(storage persistent_vector_test)
 endif()
-
-automaton_test(storage blobstore_test)
-# automaton_test(storage persistent_storage_test)
-automaton_test(storage persistent_vector_test)
 
 add_library(
   blockchain_cpp_node STATIC
