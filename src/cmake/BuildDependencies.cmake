@@ -91,6 +91,11 @@ add_custom_target(ed25519_install
   COMMAND ${CMAKE_COMMAND} -E copy_if_different ${ed25519_source_SOURCE_DIR}/src/ed25519.h ${CMAKE_INSTALL_PREFIX}/include/ed25519.h
 )
 
+install(TARGETS ed25519
+  ARCHIVE
+    DESTINATION lib
+)
+
 ExternalProject_Add(ext_g3log
   GIT_REPOSITORY "https://github.com/KjellKod/g3log.git"
   GIT_TAG "4000c5c899c0ae58b8b851f9b66e1a2ac0fe2bff"
