@@ -19,6 +19,7 @@ jobs:
         platform: [Win32, x64]
     env:
       build_dir: ./src/build
+      dist_dir: ./src/local_third_party
     steps:
     - uses: actions/checkout@v2
     - name: prepare
@@ -27,7 +28,7 @@ jobs:
       uses: microsoft/setup-msbuild@v1.0.0    
     - name: configure
       working-directory: ${{ env.build_dir }}
-      run: cmake .. -DCMAKE_BUILD_TYPE=${{ matrix.configuration }} -A ${{ matrix.platform }} -Dautomaton_STATIC_RUNTIME=OFF -DCMAKE_INSTALL_PREFIX=../local_third_party
+      run: cmake .. -DCMAKE_BUILD_TYPE=${{ matrix.configuration }} -A ${{ matrix.platform }} -Dautomaton_STATIC_RUNTIME=OFF -DCMAKE_INSTALL_PREFIX=${{ env.dist_dir }}
       shell: cmd
     - name: build
       working-directory: ${{ env.build_dir }}
@@ -39,8 +40,8 @@ jobs:
       shell: cmd
     - name: Archive
       if: startsWith(github.ref, 'refs/tags/v')
-      working-directory: ${{ env.build_dir }}/local_third_party
-      run: zip -r ../../../Windows-${{ matrix.configuration}}-${{ matrix.platform}}-$GITHUB_SHA.zip .
+      working-directory: ${{ env.dist_dir }}
+      run: zip -r ../../Windows-${{ matrix.configuration}}-${{ matrix.platform}}-$GITHUB_SHA.zip .
     - name: Release      
       uses: softprops/action-gh-release@v1
       if: startsWith(github.ref, 'refs/tags/v')
@@ -56,13 +57,14 @@ jobs:
         configuration: [Debug, Release]
     env:
       build_dir: ./src/build
+      dist_dir: ./src/local_third_party
     steps:
     - uses: actions/checkout@v2
     - name: prepare
       run: mkdir ${{ env.build_dir }}
     - name: configure
       working-directory: ${{ env.build_dir }}
-      run: cmake .. -DCMAKE_BUILD_TYPE=${{ matrix.configuration }} -DCMAKE_INSTALL_PREFIX=../local_third_party
+      run: cmake .. -DCMAKE_BUILD_TYPE=${{ matrix.configuration }} -DCMAKE_INSTALL_PREFIX=${{ env.dist_dir }}
     - name: build
       working-directory: ${{ env.build_dir }}
       run: make install
@@ -71,8 +73,8 @@ jobs:
       run: ctest -j4 -C ${{ matrix.configuration }}
     - name: Archive
       if: startsWith(github.ref, 'refs/tags/v')
-      working-directory: ${{ env.build_dir }}/local_third_party
-      run: zip -r ../../../Linux-${{ matrix.configuration}}-$GITHUB_SHA.zip .
+      working-directory: ${{ env.dist_dir }}
+      run: zip -r ../../Linux-${{ matrix.configuration}}-$GITHUB_SHA.zip .
     - name: Release      
       uses: softprops/action-gh-release@v1
       if: startsWith(github.ref, 'refs/tags/v')
@@ -89,6 +91,7 @@ jobs:
     env:
       build_dir: ./src/build
       lint_dir: ./src/automaton
+      dist_dir: ./src/local_third_party
     steps:
     - uses: actions/checkout@v2
     - name: Install build dependencies
@@ -97,7 +100,7 @@ jobs:
       run: mkdir ${{ env.build_dir }}
     - name: configure
       working-directory: ${{ env.build_dir }}
-      run: cmake .. -DCMAKE_BUILD_TYPE=${{ matrix.configuration }} -DCMAKE_INSTALL_PREFIX=../local_third_party
+      run: cmake .. -DCMAKE_BUILD_TYPE=${{ matrix.configuration }} -DCMAKE_INSTALL_PREFIX=${{ env.dist_dir }}
     - name: build
       working-directory: ${{ env.build_dir }}
       run: make install
@@ -106,8 +109,8 @@ jobs:
       run: ctest -j4 -C ${{ matrix.configuration }}
     - name: Archive
       if: startsWith(github.ref, 'refs/tags/v')
-      working-directory: ${{ env.build_dir }}/local_third_party
-      run: zip -r ../../../macOS-${{ matrix.configuration}}-$GITHUB_SHA.zip .
+      working-directory: ${{ env.dist_dir }}
+      run: zip -r ../../macOS-${{ matrix.configuration}}-$GITHUB_SHA.zip .
     - name: Release      
       uses: softprops/action-gh-release@v1
       if: startsWith(github.ref, 'refs/tags/v')
