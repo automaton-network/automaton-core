@@ -111,6 +111,7 @@ jobs:
       build_dir: ./src/build
       lint_dir: ./src/automaton
       dist_dir: ./src/local_third_party
+      MACOSX_DEPLOYMENT_TARGET: 10.8
     steps:
     - uses: actions/checkout@v2
     - name: Get tag information
