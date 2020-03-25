@@ -20,7 +20,7 @@ jobs:
     env:
       build_dir: ./src/build
       dist_dir: ./src/local_third_party
-    steps:    
+    steps:
     - uses: actions/checkout@v2
     - name: Get tag information
       if: startsWith(github.ref, 'refs/tags/v')
