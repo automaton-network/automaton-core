@@ -1,7 +1,7 @@
 # <img title="Automaton" width="231" height="39" src="media/automaton-logo-black-on-white-8x8.svg">
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-9-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-10-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 ## Build Status
@@ -124,6 +124,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
   <tr>
     <td align="center"><a href="https://github.com/sept-en"><img src="https://avatars1.githubusercontent.com/u/920587?v=4" width="100px;" alt=""/><br /><sub><b>sept-en</b></sub></a><br /><a href="https://github.com/automaton-network/automaton/commits?author=sept-en" title="Code">💻</a></td>
     <td align="center"><a href="https://github.com/vitalyster"><img src="https://avatars2.githubusercontent.com/u/1052407?v=4" width="100px;" alt=""/><br /><sub><b>vitalyster</b></sub></a><br /><a href="#infra-vitalyster" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
+    <td align="center"><a href="https://github.com/todddorov"><img src="https://avatars1.githubusercontent.com/u/62315265?v=4" width="100px;" alt=""/><br /><sub><b>todddorov</b></sub></a><br /><a href="#design-todddorov" title="Design">🎨</a></td>
   </tr>
 </table>
 
