@@ -22,6 +22,14 @@ jobs:
       dist_dir: ./src/local_third_party
     steps:
     - uses: actions/checkout@v2
+    - name: Get tag information
+      if: startsWith(github.ref, 'refs/tags/v')
+      id: tag
+      uses: actions/github-script@0.2.0
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          return context.payload.ref.replace(/\/refs\/tags\//, '');
     - name: Install build dependencies
       run: choco install zip
     - name: prepare
@@ -43,13 +51,13 @@ jobs:
     - name: Archive
       if: startsWith(github.ref, 'refs/tags/v')
       working-directory: ${{ env.dist_dir }}
-      run: zip -r ../../Windows-${{ matrix.configuration}}-${{ matrix.platform}}-${{ github.sha }}.zip .
+      run: zip -r ../../automaton-Windows-${{ matrix.configuration}}-${{ matrix.platform}}-${{ steps.tag.outputs.result }}.zip .
       shell: cmd
     - name: Release      
       uses: softprops/action-gh-release@v1
       if: startsWith(github.ref, 'refs/tags/v')
       with:
-        files: Windows-${{ matrix.configuration }}-${{ matrix.platform}}-${{ github.sha }}.zip
+        files: automaton-Windows-${{ matrix.configuration }}-${{ matrix.platform}}-${{ steps.tag.outputs.result }}.zip
         prerelease: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -63,6 +71,14 @@ jobs:
       dist_dir: ./src/local_third_party
     steps:
     - uses: actions/checkout@v2
+    - name: Get tag information
+      if: startsWith(github.ref, 'refs/tags/v')
+      id: tag
+      uses: actions/github-script@0.2.0
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          return context.payload.ref.replace(/\/refs\/tags\//, '');
     - name: prepare
       run: mkdir ${{ env.build_dir }}
     - name: configure
@@ -77,12 +93,12 @@ jobs:
     - name: Archive
       if: startsWith(github.ref, 'refs/tags/v')
       working-directory: ${{ env.dist_dir }}
-      run: zip -r ../../Linux-${{ matrix.configuration}}-$GITHUB_SHA.zip .
+      run: zip -r ../../automaton-Linux-${{ matrix.configuration}}-${{ steps.tag.outputs.result }}.zip .
     - name: Release      
       uses: softprops/action-gh-release@v1
       if: startsWith(github.ref, 'refs/tags/v')
       with:
-        files: Linux-${{ matrix.configuration }}-${{ github.sha }}.zip
+        files: automaton-Linux-${{ matrix.configuration }}-${{ steps.tag.outputs.result }}.zip
         prerelease: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -95,8 +111,17 @@ jobs:
       build_dir: ./src/build
       lint_dir: ./src/automaton
       dist_dir: ./src/local_third_party
+      MACOSX_DEPLOYMENT_TARGET: 10.9
     steps:
     - uses: actions/checkout@v2
+    - name: Get tag information
+      if: startsWith(github.ref, 'refs/tags/v')
+      id: tag
+      uses: actions/github-script@0.2.0
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          return context.payload.ref.replace(/\/refs\/tags\//, '');
     - name: Install build dependencies
       run: brew install autoconf automake libtool
     - name: prepare
@@ -113,12 +138,12 @@ jobs:
     - name: Archive
       if: startsWith(github.ref, 'refs/tags/v')
       working-directory: ${{ env.dist_dir }}
-      run: zip -r ../../macOS-${{ matrix.configuration}}-$GITHUB_SHA.zip .
+      run: zip -r ../../automaton-macOS-${{ matrix.configuration}}-${{ steps.tag.outputs.result }}.zip .
     - name: Release      
       uses: softprops/action-gh-release@v1
       if: startsWith(github.ref, 'refs/tags/v')
       with:
-        files: macOS-${{ matrix.configuration }}-${{ github.sha }}.zip
+        files: automaton-macOS-${{ matrix.configuration }}-${{ steps.tag.outputs.result }}.zip
         prerelease: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
