@@ -13,9 +13,7 @@ namespace common {
 
 class versions {
  public:
-  static unsigned automaton_core_major() {
-    return AUTOMATON_CORE_VERSION_MAJOR;
-  }
+  static unsigned automaton_core_major() { return AUTOMATON_CORE_VERSION_MAJOR; }
   static unsigned automaton_core_minor() { return AUTOMATON_CORE_VERSION_MINOR; }
   static unsigned automaton_core_revision() { return AUTOMATON_CORE_VERSION_REVISION; }
 
