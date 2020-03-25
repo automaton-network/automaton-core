@@ -29,7 +29,7 @@ jobs:
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
-          return context.payload.ref.replace(/\/refs\/tags\//, '');
+          return context.payload.ref.replace(/refs\/tags\//, '');
     - name: Install build dependencies
       run: choco install zip
     - name: prepare
@@ -78,7 +78,7 @@ jobs:
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
-          return context.payload.ref.replace(/\/refs\/tags\//, '');
+          return context.payload.ref.replace(/refs\/tags\//, '');
     - name: prepare
       run: mkdir ${{ env.build_dir }}
     - name: configure
@@ -121,7 +121,7 @@ jobs:
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
-          return context.payload.ref.replace(/\/refs\/tags\//, '');
+          return context.payload.ref.replace(/refs\/tags\//, '');
     - name: Install build dependencies
       run: brew install autoconf automake libtool
     - name: prepare
