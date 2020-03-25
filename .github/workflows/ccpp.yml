@@ -20,8 +20,15 @@ jobs:
     env:
       build_dir: ./src/build
       dist_dir: ./src/local_third_party
+      build_deps: OFF
+      automaton_version: v0.1.10a
     steps:
     - uses: actions/checkout@v2
+    - name: Check for full rebuild
+      if: startsWith(github.ref, 'refs/tags/v')
+      run: |
+           echo "::set-env name=build_deps::ON"
+      shell: bash
     - name: Get tag information
       if: startsWith(github.ref, 'refs/tags/v')
       id: tag
@@ -34,12 +41,20 @@ jobs:
     - name: Install build dependencies
       run: choco install zip
     - name: prepare
-      run: mkdir ${{ env.build_dir }}
+      run: |        
+        mkdir ${{ env.build_dir }}
+        mkdir ${{ env.dist_dir }}
+    - name: Fetch dependencies
+      if: startsWith(env.build_deps, 'OFF')
+      working-directory: ${{ env.dist_dir }}
+      run: |
+        curl -L -O https://github.com/automaton-network/automaton/releases/download/${{ env.automaton_version }}/Windows-${{ matrix.configuration }}-${{ matrix.platform }}-${{ env.automaton_version }}.zip
+        unzip Windows-${{ matrix.configuration }}-${{ matrix.platform }}-${{ env.automaton_version }}.zip
     - name: Add msbuild to PATH
       uses: microsoft/setup-msbuild@v1.0.0    
     - name: configure
       working-directory: ${{ env.build_dir }}
-      run: cmake .. -DCMAKE_BUILD_TYPE=${{ matrix.configuration }} -A ${{ matrix.platform }} -Dautomaton_STATIC_RUNTIME=OFF -DCMAKE_INSTALL_PREFIX=../local_third_party
+      run: cmake .. -DCMAKE_BUILD_TYPE=${{ matrix.configuration }} -A ${{ matrix.platform }} -Dautomaton_STATIC_RUNTIME=OFF -Dautomaton_BUILD_DEPS=${{ env.build_deps }} -DCMAKE_INSTALL_PREFIX=../local_third_party
       shell: cmd
     - name: build
       working-directory: ${{ env.build_dir }}
