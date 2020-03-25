@@ -11,6 +11,7 @@
 #include <json.hpp>
 
 #include "automaton/core/cli/cli.h"
+#include "automaton/core/common/versions.h"
 #include "automaton/core/data/factory.h"
 #include "automaton/core/data/protobuf/protobuf_factory.h"
 #include "automaton/core/data/protobuf/protobuf_schema.h"
@@ -18,23 +19,24 @@
 #include "automaton/core/network/simulated_connection.h"
 #include "automaton/core/network/tcp_implementation.h"
 #include "automaton/core/node/lua_node/lua_node.h"
-#include "automaton/core/node/node.h"
 #include "automaton/core/node/node_updater.h"
+#include "automaton/core/node/node.h"
 #include "automaton/core/script/engine.h"
 #include "automaton/core/smartproto/smart_protocol.h"
 #include "automaton/core/testnet/testnet.h"
 
 #include "automaton/core/io/io.h"  //  IO needs to be included after boost
 
+using automaton::core::common::versions;
 using automaton::core::data::factory;
 using automaton::core::data::protobuf::protobuf_factory;
 using automaton::core::data::protobuf::protobuf_schema;
 using automaton::core::data::schema;
 using automaton::core::io::get_file_contents;
 using automaton::core::network::http_server;
+using automaton::core::node::default_node_updater;
 using automaton::core::node::luanode::lua_node;
 using automaton::core::node::node;
-using automaton::core::node::default_node_updater;
 using automaton::core::script::engine;
 using automaton::core::smartproto::smart_protocol;
 using automaton::core::testnet::testnet;
@@ -55,16 +57,6 @@ void string_replace(string* str,
      pos += newStr.length();
   }
 }
-
-static const char* automaton_ascii_logo_cstr =
-  "\n\x1b[40m\x1b[1m"
-  "                                                                     " "\x1b[0m\n\x1b[40m\x1b[1m"
-  "                                                                     " "\x1b[0m\n\x1b[40m\x1b[1m"
-  "    @197m█▀▀▀█ @39m█ █ █ @11m▀▀█▀▀ @129m█▀▀▀█ @47m█▀█▀█ @9m█▀▀▀█ @27m▀▀█▀▀ @154m█▀▀▀█ @13m█▀█ █            " "\x1b[0m\n\x1b[40m\x1b[1m" // NOLINT
-  "    @197m█▀▀▀█ @39m█ ▀ █ @11m█ █ █ @129m█ ▀ █ @47m█ ▀ █ @9m█▀▀▀█ @27m█ █ █ @154m█ ▀ █ @13m█ █ █   @15mCORE     " "\x1b[0m\n\x1b[40m\x1b[1m" // NOLINT
-  "    @197m▀ ▀ ▀ @39m▀▀▀▀▀ @11m▀ ▀ ▀ @129m▀▀▀▀▀ @47m▀ ▀ ▀ @9m▀ ▀ ▀ @27m▀ ▀ ▀ @154m▀▀▀▀▀ @13m▀ ▀▀▀   @15mv0.0.1   " "\x1b[0m\n\x1b[40m\x1b[1m" // NOLINT
-  "                                                                     " "\x1b[0m\n@0m"
-  "▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀" "\x1b[0m\n";
 
 class rpc_server_handler: public automaton::core::network::http_server::server_handler {
   engine* script;
@@ -116,7 +108,17 @@ class rpc_server_handler: public automaton::core::network::http_server::server_h
 };
 
 int main(int argc, char* argv[]) {
-  string automaton_ascii_logo(automaton_ascii_logo_cstr);
+  std::string AUTOMATON_ASCII_LOGO_STR =
+    "\n\x1b[40m\x1b[1m"
+    "                                                                     " "\x1b[0m\n\x1b[40m\x1b[1m"
+    "                                                                     " "\x1b[0m\n\x1b[40m\x1b[1m"
+    "    @197m█▀▀▀█ @39m█ █ █ @11m▀▀█▀▀ @129m█▀▀▀█ @47m█▀█▀█ @9m█▀▀▀█ @27m▀▀█▀▀ @154m█▀▀▀█ @13m█▀█ █            " "\x1b[0m\n\x1b[40m\x1b[1m" // NOLINT
+    "    @197m█▀▀▀█ @39m█ ▀ █ @11m█ █ █ @129m█ ▀ █ @47m█ ▀ █ @9m█▀▀▀█ @27m█ █ █ @154m█ ▀ █ @13m█ █ █  @15mCORE      " "\x1b[0m\n\x1b[40m\x1b[1m" // NOLINT
+    "    @197m▀ ▀ ▀ @39m▀▀▀▀▀ @11m▀ ▀ ▀ @129m▀▀▀▀▀ @47m▀ ▀ ▀ @9m▀ ▀ ▀ @27m▀ ▀ ▀ @154m▀▀▀▀▀ @13m▀ ▀▀▀  @15mv" + versions::automaton_core_version_string() + std::string(9-versions::automaton_core_version_string().size(), ' ') + "\x1b[0m\n\x1b[40m\x1b[1m" // NOLINT
+    "                                                                     " "\x1b[0m\n@0m"
+    "▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀" "\x1b[0m\n";
+
+  string automaton_ascii_logo(AUTOMATON_ASCII_LOGO_STR);
   string_replace(&automaton_ascii_logo, "@", "\x1b[38;5;");
   auto core_factory = std::make_shared<protobuf_factory>();
   node::register_node_type("lua", [](const std::string& id, const std::string& proto_id)->std::shared_ptr<node> {
