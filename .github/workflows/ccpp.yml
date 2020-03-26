@@ -49,7 +49,7 @@ jobs:
       working-directory: ${{ env.dist_dir }}
       run: |
         curl -L -O https://github.com/automaton-network/automaton/releases/download/${{ env.automaton_version }}/automaton-Windows-${{ matrix.configuration }}-${{ matrix.platform }}-${{ env.automaton_version }}.zip
-        unzip automaton-Windows-${{ matrix.configuration }}-${{ matrix.platform }}-${{ env.automaton_version }}.zip
+        unzip automaton-Windows-${{ matrix.configuration }}-${{ matrix.platform }}-${{ env.automaton_version }}.zip -x "include/automaton/*"
     - name: Add msbuild to PATH
       uses: microsoft/setup-msbuild@v1.0.0    
     - name: configure
@@ -112,7 +112,7 @@ jobs:
       working-directory: ${{ env.dist_dir }}
       run: |
         curl -L -O https://github.com/automaton-network/automaton/releases/download/${{ env.automaton_version }}/automaton-Linux-${{ matrix.configuration }}-${{ env.automaton_version }}.zip
-        unzip automaton-Linux-${{ matrix.configuration }}-${{ env.automaton_version }}.zip
+        unzip automaton-Linux-${{ matrix.configuration }}-${{ env.automaton_version }}.zip -x "include/automaton/*"
     - name: configure
       working-directory: ${{ env.build_dir }}
       run: cmake .. -DCMAKE_BUILD_TYPE=${{ matrix.configuration }} -Dautomaton_BUILD_DEPENDENCIES=${{ env.build_deps }} -DCMAKE_INSTALL_PREFIX=../local_third_party
@@ -173,7 +173,7 @@ jobs:
       working-directory: ${{ env.dist_dir }}
       run: |
         curl -L -O https://github.com/automaton-network/automaton/releases/download/${{ env.automaton_version }}/automaton-macOS-${{ matrix.configuration }}-${{ env.automaton_version }}.zip
-        unzip automaton-macOS-${{ matrix.configuration }}-${{ env.automaton_version }}.zip
+        unzip automaton-macOS-${{ matrix.configuration }}-${{ env.automaton_version }}.zip -x "include/automaton/*"
     - name: configure
       working-directory: ${{ env.build_dir }}
       run: cmake .. -DCMAKE_BUILD_TYPE=${{ matrix.configuration }} -Dautomaton_BUILD_DEPENDENCIES=${{ env.build_deps }} -DCMAKE_INSTALL_PREFIX=../local_third_party
