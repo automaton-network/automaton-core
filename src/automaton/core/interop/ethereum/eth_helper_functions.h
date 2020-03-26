@@ -42,8 +42,8 @@ static size_t curl_callback(void *contents, size_t size, size_t nmemb, std::stri
   try {
     s->append(reinterpret_cast<char*>(contents), new_length);
   }
-  catch (std::bad_alloc &e) {
-    LOG(_ERROR) << "Bad_alloc while reading data!";
+  catch (std::bad_alloc& e) {
+    LOG(_ERROR) << "Bad_alloc while reading data! " << e.what();
     return 0;
   }
   return new_length;
@@ -72,7 +72,7 @@ static status handle_result(const std::string& result) {
     }
     return status::ok(j["result"].dump());
   }
-  return status::internal("No result and no error!?");
+  return status::internal("No result and no error!? Received: \n" + result);
 }
 
 static status curl_post(const std::string& url, const std::string& data) {
@@ -217,7 +217,7 @@ static type get_type(std::string s) {
 
   bool is_array = false;
   // Check if it is an array and its size if any
-  int32_t k1 = 0, k2 = 0, pos, first_pos;
+  size_t k1 = 0, k2 = 0, pos, first_pos;
   first_pos = pos = s.find('[');
   while (pos != std::string::npos) {
     k1 = pos;
@@ -226,7 +226,7 @@ static type get_type(std::string s) {
   if (k1 != 0) {
     k2 = s.find(']', k1 + 1);
   }
-  if (k1 && k2) {
+  if (k1 && k2 != std::string::npos) {
     is_array = true;
     if (k1 < (k2 - 1)) {
       std::string len_str = s.substr(k1 + 1, k2 - k1 - 1);
@@ -259,7 +259,7 @@ static type get_type(std::string s) {
 
 static type extract_array_type(std::string s) {
   type new_t;
-  int32_t k1 = 0, k2 = 0, pos = 0;
+  size_t k1 = 0, k2 = 0, pos = 0;
   pos = s.find('[', pos + 1);
   while (pos != std::string::npos) {
     k1 = pos;
@@ -268,7 +268,7 @@ static type extract_array_type(std::string s) {
   if (k1 != 0) {
     k2 = s.find(']', k1 + 1);
   }
-  if (k1 && k2) {
+  if (k1 && k2 != std::string::npos) {
     s.erase(k1, k2 - k1 + 1);
     new_t = get_type(s);
   } else {
@@ -330,6 +330,10 @@ static std::string dec_to_i256(bool is_signed, std::string s) {
 
 static std::string i256_to_dec(bool is_signed, const std::string& s) {
   // TODO(kari): If the number is more than 64 bits, throw error or use only 64 bits of it.
+  if (s.size() == 0) {
+    LOG(ERROR) << "Invalid argument for i256!";
+    return "";
+  }
   CryptoPP::Integer::Signedness sign = is_signed ? CryptoPP::Integer::SIGNED : CryptoPP::Integer::UNSIGNED;
   CryptoPP::Integer i(reinterpret_cast<const uint8_t*>(s.c_str()), 32, sign);
   std::stringstream ss;
@@ -471,7 +475,7 @@ static void encode_param(type t, const json& json_data, char** buffer, uint64_t*
         return;
       }
       encoded = u64_to_u256(json_data.get<bool>() ? 1 : 0);
-    } else if (t.str.find("int") >= 0) {
+    } else if (t.str.find("int") != std::string::npos) {
       std::string s;
       if (json_data.is_number()) {
         s = std::to_string(json_data.get<uint64_t>());
@@ -483,7 +487,7 @@ static void encode_param(type t, const json& json_data, char** buffer, uint64_t*
       }
       bool is_signed = t.str[0] != 'u';
       encoded = dec_to_i256(is_signed, s);
-    } else if (t.str.find("fixed") >= 0) {
+    } else if (t.str.find("fixed") != std::string::npos) {
       LOG(_ERROR) << "Unsuported data type double!";
       return;
     }
@@ -552,13 +556,13 @@ static std::string decode_param(type t, const std::string& data, uint64_t pos) {
     std::stringstream ss;
     ss << '[';
     if (tp.s_array_type == fixed) {
-      for (int32_t i = 0; i < t.array_len - 1; ++i) {
+      for (int32_t i = 1; i < t.array_len; ++i) {
         ss << decode_param(tp, data, pos) << ",";
         pos += calculate_offset({tp.str});
       }
       ss << decode_param(tp, data, pos);
     } else if (tp.s_type == numerical || tp.s_type == fixed_size_bytes) {
-      for (int32_t i = 0; i < t.array_len - 1; ++i) {
+      for (int32_t i = 1; i < t.array_len; ++i) {
         ss << decode_param(tp, data, pos) << ",";
         pos += 32;
       }
@@ -572,25 +576,28 @@ static std::string decode_param(type t, const std::string& data, uint64_t pos) {
       std::string s = data.substr(pos, 32);
       len = u256_to_u64(s);
       pos += 32;
+      if (len == 0) {
+        return "[]";
+      }
     }
     std::stringstream ss;
     ss << '[';
     auto tp = extract_array_type(t.str);
     if (tp.s_array_type == no_array && (tp.s_type == numerical || tp.s_type == fixed_size_bytes)) {
-      for (int32_t i = 0; i < len - 1; ++i) {
+      for (int32_t i = 1; i < len; ++i) {
         ss << decode_param(tp, data, pos) << ",";
         pos += 32;
       }
       ss << decode_param(tp, data, pos);
     } else if (tp.s_array_type == fixed) {
-      for (int32_t i = 0; i < len - 1; ++i) {
+      for (int32_t i = 1; i < len; ++i) {
         ss << decode_param(tp, data, pos) << ",";
         pos += calculate_offset({tp.str});
       }
       ss << decode_param(tp, data, pos);
     } else if (tp.s_type == string || tp.s_type == dynamic_size_bytes || tp.s_array_type == dynamic) {
-      for (int32_t i = 0; i < len - 1; ++i) {
-        std::string s = data.substr(pos + (32 * i), 32);
+      for (int32_t i = 1; i < len; ++i) {
+        std::string s = data.substr(pos + (32 * (i - 1)), 32);
         uint64_t offset = u256_to_u64(s);
         ss << decode_param(tp, data, pos + offset) << ",";
       }
@@ -617,10 +624,10 @@ static std::string decode_param(type t, const std::string& data, uint64_t pos) {
     if (t.str == "bool") {
       uint64_t k = u256_to_u64(res);
       return k > 0 ? "true" : "false";
-    } else if (t.str.find("int") >= 0) {
+    } else if (t.str.find("int") != std::string::npos) {
       bool is_signed = t.str[0] != 'u';
       return '"' + i256_to_dec(is_signed, res) + '"';
-    } else if (t.str.find("fixed") >= 0) {
+    } else if (t.str.find("fixed") != std::string::npos) {
       LOG(_ERROR) << "Unsuported data type double!";
       return "\"\"";
     }
