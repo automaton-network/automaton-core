@@ -231,6 +231,8 @@ automaton_test(io test_io)
 
 automaton_test(script test_script)
 
+automaton_test(interop abi_encoder_test)
+
 # Memory mapped file tests seem to be flaky on Windows
 if (NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
   automaton_test(state state_test)
@@ -313,12 +315,6 @@ target_link_libraries(
   eth_contract_curl_test
   automaton-core
 )
-
-add_executable(
-  encoder_test
-  automaton/tests/interop/abi_encoder_test.cc
-)
-target_link_libraries(encoder_test automaton-core ${GTEST_LIBS})
 
 add_executable(
   contract_functions_test
