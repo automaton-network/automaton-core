@@ -556,13 +556,13 @@ static std::string decode_param(type t, const std::string& data, uint64_t pos) {
     std::stringstream ss;
     ss << '[';
     if (tp.s_array_type == fixed) {
-      for (int32_t i = 1; i < t.array_len; ++i) {
+      for (uint32_t i = 1; i < t.array_len; ++i) {
         ss << decode_param(tp, data, pos) << ",";
         pos += calculate_offset({tp.str});
       }
       ss << decode_param(tp, data, pos);
     } else if (tp.s_type == numerical || tp.s_type == fixed_size_bytes) {
-      for (int32_t i = 1; i < t.array_len; ++i) {
+      for (uint32_t i = 1; i < t.array_len; ++i) {
         ss << decode_param(tp, data, pos) << ",";
         pos += 32;
       }
@@ -612,7 +612,7 @@ static std::string decode_param(type t, const std::string& data, uint64_t pos) {
     return ss.str();
   } else if (t.s_type == dynamic_size_bytes || t.s_type == string) {
     std::string s = data.substr(pos, 32);
-    int64_t len = u256_to_u64(s);
+    uint64_t len = u256_to_u64(s);
     pos += 32;
     std::string res = data.substr(pos, len);
     if (t.s_type == string) {
