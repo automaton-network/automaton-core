@@ -1,12 +1,17 @@
-cmake_minimum_required(VERSION 3.0)
-project(automaton-network)
+cmake_minimum_required(VERSION 3.1)
 
 if (POLICY CMP0091)
   cmake_policy(SET CMP0091 NEW) # MSVC_RUNTIME_VERSION support
 endif()
+
+project(automaton-network)
+
 option(automaton_STATIC_RUNTIME "Use static C runtime" ON)
 
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+  if (automaton_STATIC_RUNTIME)
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+  endif()
   option(automaton_USE_OPENSSL "Use OpenSSL" ON)
 else()
   set(automaton_USE_OPENSSL ON)
@@ -63,9 +68,6 @@ link_directories(${CMAKE_INSTALL_PREFIX}/lib)
 add_library(automaton-core STATIC ${CRYPTO_FILES})
 
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-  if (automaton_STATIC_RUNTIME)
-    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-  endif()
   set(CRYPTOPP_LIB cryptopp-static)
   set(PROTOBUF_LIB libprotobuf)
   set(CURL_LIB libcurl)
