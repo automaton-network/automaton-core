@@ -331,7 +331,7 @@ static std::string dec_to_i256(bool is_signed, std::string s) {
 static std::string i256_to_dec(bool is_signed, const std::string& s) {
   // TODO(kari): If the number is more than 64 bits, throw error or use only 64 bits of it.
   if (s.size() == 0) {
-    LOG(ERROR) << "Invalid argument for i256!";
+    LOG(_ERROR) << "Invalid argument for i256!";
     return "";
   }
   CryptoPP::Integer::Signedness sign = is_signed ? CryptoPP::Integer::SIGNED : CryptoPP::Integer::UNSIGNED;
