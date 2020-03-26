@@ -18,7 +18,7 @@ using automaton::core::io::bin2hex;
 using automaton::core::io::hex2bin;
 using automaton::core::io::hex2dec;
 
-TEST(encoder, enode_decode_test) {
+TEST(encoder, encode_decode_test) {
   std::unique_ptr<g3::LogWorker> logworker {g3::LogWorker::createLogWorker()};
   auto l_handler = logworker->addDefaultLogger("demo", "./");
   g3::initializeLogging(logworker.get());
