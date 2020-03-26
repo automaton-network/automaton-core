@@ -223,7 +223,8 @@ automaton_test(data protobuf_schema_test_setting_fields)
 
 automaton_test(io test_io)
 
-automaton_test(miner miner_test)
+# TODO(akovachev): test is flaky, but we should fix that
+# automaton_test(miner miner_test)
 
 # automaton_test(network rpc_server_test)
 # automaton_test(network http_server_test)
