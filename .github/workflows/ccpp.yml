@@ -130,6 +130,9 @@ jobs:
     - name: Setup Ganache
       run: ganache-cli -m 'myth like bonus scare over problem client lizard pioneer submit female collect' -p 7545 -e 10000 &
       working-directory: ${{ env.test_contracts_dir }}
+    - name: Deploy contract
+      run: truffle --network ganache deploy --reset
+      working-directory: ${{ env.test_contracts_dir }}
     - name: test
       working-directory: ${{ env.build_dir }}
       run: ctest -j4 -C ${{ matrix.configuration }} --build-run-dir=..
