@@ -88,6 +88,7 @@ jobs:
       test_contracts_dir: ./contracts/test_contract
       build_deps: OFF
       automaton_version: v0.1.10a
+      CTEST_OUTPUT_ON_FAILURE: 1
     steps:
     - uses: actions/checkout@v2
     - name: Check for full rebuild
@@ -116,7 +117,7 @@ jobs:
         unzip automaton-Linux-${{ matrix.configuration }}-${{ env.automaton_version }}.zip -x "include/automaton/*"
     - name: configure
       working-directory: ${{ env.build_dir }}
-      run: cmake .. -DCMAKE_BUILD_TYPE=${{ matrix.configuration }} -Dautomaton_BUILD_DEPENDENCIES=${{ env.build_deps }} -DCMAKE_INSTALL_PREFIX=../local_third_party
+      run: cmake .. -DCMAKE_BUILD_TYPE=${{ matrix.configuration }} -Dautomaton_BUILD_DEPENDENCIES=${{ env.build_deps }} -DCMAKE_INSTALL_PREFIX=../local_third_party -Dautomaton_RUN_GANACHE_TESTS=ON
     - name: build
       working-directory: ${{ env.build_dir }}
       run: make install
@@ -129,9 +130,12 @@ jobs:
     - name: Setup Ganache
       run: ganache-cli -m 'myth like bonus scare over problem client lizard pioneer submit female collect' -p 7545 -e 10000 &
       working-directory: ${{ env.test_contracts_dir }}
+    - name: Deploy contract
+      run: truffle --network ganache deploy --reset
+      working-directory: ${{ env.test_contracts_dir }}
     - name: test
       working-directory: ${{ env.build_dir }}
-      run: ctest -j4 -C ${{ matrix.configuration }}
+      run: ctest -j4 -C ${{ matrix.configuration }} --build-run-dir=..
     - name: Archive
       if: startsWith(github.ref, 'refs/tags/v')
       working-directory: ${{ env.dist_dir }}

@@ -18,7 +18,7 @@ using automaton::core::io::bin2hex;
 using automaton::core::io::hex2bin;
 using automaton::core::io::hex2dec;
 
-int main() {
+TEST(encoder, encode_decode_test) {
   std::unique_ptr<g3::LogWorker> logworker {g3::LogWorker::createLogWorker()};
   auto l_handler = logworker->addDefaultLogger("demo", "./");
   g3::initializeLogging(logworker.get());
@@ -216,9 +216,8 @@ int main() {
 
   const char* JSON_FILE = "../contracts/test_contract/build/contracts/test_contract.json";
   const char* URL = "127.0.0.1:7545";
-  const char* CONTRACT_ADDR = "0x22D9d6faB361FaA969D2EfDE420472633cBB7B11";
-  const char* ADDRESS = "0x603CB0d1c8ab86E72beb3c7DF564A36D7B85ecD2";
-  const char* PRIVATE_KEY = "56aac550d97013a8402c98e3b2aeb20482d19f142a67022d2ab357eb8bb673b0";
+  const char* CONTRACT_ADDR = "0xCfEB869F69431e42cdB54A4F4f105C19C080A601";
+  const char* ADDRESS = "0x90F8bf6A479f320ead074411a4B0e7944Ea8c9C1";
 
   curl_global_init(CURL_GLOBAL_ALL);
 
@@ -240,11 +239,7 @@ int main() {
   fs.close();
 
   auto contract = eth_contract::get_contract(CONTRACT_ADDR);
-  if (contract == nullptr) {
-    LOG(ERROR) << "Contract is NULL";
-    curl_global_cleanup();
-    return 0;
-  }
+  EXPECT_NE(contract, nullptr);
 
   status s = status::ok();
 
@@ -264,7 +259,7 @@ int main() {
   EXPECT_EQ(s.msg, "[\"ABCDEABCDE\"]");
 
   s = contract->call("f6", "");
-  EXPECT_EQ(s.msg, "[\"22D9D6FAB361FAA969D2EFDE420472633CBB7B11\"]");
+  EXPECT_EQ(s.msg, "[\"CFEB869F69431E42CDB54A4F4F105C19C080A601\"]");
 
   s = contract->call("f7", "[true]");
   EXPECT_EQ(s.msg, "[false]");
@@ -322,5 +317,4 @@ int main() {
 
   s = contract->call("f22", "[[[[\"aa\"],[\"ss\"]],[[\"bb\"],[\"pp\"]],[[\"cc\"],[\"rr\"]]]]");
   EXPECT_EQ(s.msg, "[[[[\"aa\",\"bb\",\"cc\"],[\"ss\",\"pp\",\"rr\"]]]]");
-  return 0;
 }
