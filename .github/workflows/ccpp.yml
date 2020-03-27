@@ -41,7 +41,7 @@ jobs:
     - name: Install build dependencies
       run: choco install zip
     - name: prepare
-      run: |        
+      run: |
         mkdir ${{ env.build_dir }}
         mkdir ${{ env.dist_dir }}
     - name: Fetch dependencies
@@ -51,7 +51,7 @@ jobs:
         curl -L -O https://github.com/automaton-network/automaton/releases/download/${{ env.automaton_version }}/automaton-Windows-${{ matrix.configuration }}-${{ matrix.platform }}-${{ env.automaton_version }}.zip
         unzip automaton-Windows-${{ matrix.configuration }}-${{ matrix.platform }}-${{ env.automaton_version }}.zip -x "include/automaton/*"
     - name: Add msbuild to PATH
-      uses: microsoft/setup-msbuild@v1.0.0    
+      uses: microsoft/setup-msbuild@v1.0.0
     - name: configure
       working-directory: ${{ env.build_dir }}
       run: cmake .. -DCMAKE_BUILD_TYPE=${{ matrix.configuration }} -A ${{ matrix.platform }} -Dautomaton_STATIC_RUNTIME=OFF -Dautomaton_BUILD_DEPENDENCIES=${{ env.build_deps }} -DCMAKE_INSTALL_PREFIX=../local_third_party
@@ -69,7 +69,7 @@ jobs:
       working-directory: ${{ env.dist_dir }}
       run: zip -r ../../automaton-Windows-${{ matrix.configuration}}-${{ matrix.platform}}-${{ steps.tag.outputs.result }}.zip .
       shell: cmd
-    - name: Release      
+    - name: Release
       uses: softprops/action-gh-release@v1
       if: startsWith(github.ref, 'refs/tags/v')
       with:
@@ -85,8 +85,10 @@ jobs:
     env:
       build_dir: ./src/build
       dist_dir: ./src/local_third_party
+      test_contracts_dir: ./contracts/test_contract
       build_deps: OFF
       automaton_version: v0.1.10a
+      CTEST_OUTPUT_ON_FAILURE: 1
     steps:
     - uses: actions/checkout@v2
     - name: Check for full rebuild
@@ -115,18 +117,30 @@ jobs:
         unzip automaton-Linux-${{ matrix.configuration }}-${{ env.automaton_version }}.zip -x "include/automaton/*"
     - name: configure
       working-directory: ${{ env.build_dir }}
-      run: cmake .. -DCMAKE_BUILD_TYPE=${{ matrix.configuration }} -Dautomaton_BUILD_DEPENDENCIES=${{ env.build_deps }} -DCMAKE_INSTALL_PREFIX=../local_third_party
+      run: cmake .. -DCMAKE_BUILD_TYPE=${{ matrix.configuration }} -Dautomaton_BUILD_DEPENDENCIES=${{ env.build_deps }} -DCMAKE_INSTALL_PREFIX=../local_third_party -Dautomaton_RUN_GANACHE_TESTS=ON
     - name: build
       working-directory: ${{ env.build_dir }}
       run: make install
+    - name: Use Node.js 10.x
+      uses: actions/setup-node@v1
+      with:
+        node-version: 10.x
+    - run: npm i -g ganache-cli truffle
+      working-directory: ${{ env.test_contracts_dir }}
+    - name: Setup Ganache
+      run: ganache-cli -m 'myth like bonus scare over problem client lizard pioneer submit female collect' -p 7545 -e 10000 &
+      working-directory: ${{ env.test_contracts_dir }}
+    - name: Deploy contract
+      run: truffle --network ganache deploy --reset
+      working-directory: ${{ env.test_contracts_dir }}
     - name: test
       working-directory: ${{ env.build_dir }}
-      run: ctest -j4 -C ${{ matrix.configuration }}
+      run: ctest -j4 -C ${{ matrix.configuration }} --build-run-dir=..
     - name: Archive
       if: startsWith(github.ref, 'refs/tags/v')
       working-directory: ${{ env.dist_dir }}
       run: zip -r ../../automaton-Linux-${{ matrix.configuration}}-${{ steps.tag.outputs.result }}.zip .
-    - name: Release      
+    - name: Release
       uses: softprops/action-gh-release@v1
       if: startsWith(github.ref, 'refs/tags/v')
       with:
@@ -187,7 +201,7 @@ jobs:
       if: startsWith(github.ref, 'refs/tags/v')
       working-directory: ${{ env.dist_dir }}
       run: zip -r ../../automaton-macOS-${{ matrix.configuration}}-${{ steps.tag.outputs.result }}.zip .
-    - name: Release      
+    - name: Release
       uses: softprops/action-gh-release@v1
       if: startsWith(github.ref, 'refs/tags/v')
       with:

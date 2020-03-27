@@ -19,6 +19,8 @@ endif()
 
 option(automaton_BUILD_DEPENDENCIES "Build third-party libraries" ON)
 
+option(automaton_RUN_GANACHE_TESTS "Run tests with local ganache server" OFF)
+
 set(CPACK_PACKAGE_VERSION_MAJOR "0")
 set(CPACK_PACKAGE_VERSION_MINOR "1")
 set(CPACK_PACKAGE_VERSION_PATCH "0")
@@ -233,6 +235,10 @@ automaton_test(io test_io)
 
 automaton_test(script test_script)
 
+if(automaton_RUN_GANACHE_TESTS)
+  automaton_test(interop abi_encoder_test)
+endif()
+
 # Memory mapped file tests seem to be flaky on Windows
 if (NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
   automaton_test(state state_test)
@@ -315,12 +321,6 @@ target_link_libraries(
   eth_contract_curl_test
   automaton-core
 )
-
-add_executable(
-  encoder_test
-  automaton/tests/interop/abi_encoder_test.cc
-)
-target_link_libraries(encoder_test automaton-core ${GTEST_LIBS})
 
 add_executable(
   contract_functions_test
