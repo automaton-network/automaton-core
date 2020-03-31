@@ -40,7 +40,7 @@ Telegram: https://t.me/automaton_network
 
 ### Linux
 
-At the moment Ubuntu is the only known working distro.
+At the moment Ubuntu is the only known Linux distro compatible with Automaton.
 
 #### Prerequisites
 
