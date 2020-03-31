@@ -217,8 +217,8 @@ static type get_type(std::string s) {
 
   bool is_array = false;
   // Check if it is an array and its size if any
-  size_t k1 = 0, k2 = 0, pos, first_pos;
-  first_pos = pos = s.find('[');
+  size_t k1 = 0, k2 = 0, pos;
+  pos = s.find('[');
   while (pos != std::string::npos) {
     k1 = pos;
     pos = s.find('[', pos + 1);
