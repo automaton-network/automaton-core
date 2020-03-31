@@ -322,42 +322,42 @@ TEST(dummy_state, using_deleted_locations) {
   state.set("b", "2");
   state.set("c", "3");
   state.set("d", "4");
-  EXPECT_EQ(state.size(), 5);
+  EXPECT_EQ(state.size(), 5U);
   state.commit_changes();
-  EXPECT_EQ(state.size(), 5);
+  EXPECT_EQ(state.size(), 5U);
 
   state.erase("a");
-  EXPECT_EQ(state.size(), 5);
+  EXPECT_EQ(state.size(), 5U);
   state.commit_changes();
-  EXPECT_EQ(state.size(), 4);
+  EXPECT_EQ(state.size(), 4U);
 
   state.erase("b");
   state.discard_changes();
-  EXPECT_EQ(state.size(), 4);
+  EXPECT_EQ(state.size(), 4U);
 
   state.set("a", "1");
   state.erase("b");
-  EXPECT_EQ(state.size(), 5);
+  EXPECT_EQ(state.size(), 5U);
   state.discard_changes();
-  EXPECT_EQ(state.size(), 4);
+  EXPECT_EQ(state.size(), 4U);
 
   state.erase("b");
   state.set("a", "1");
-  EXPECT_EQ(state.size(), 4);
+  EXPECT_EQ(state.size(), 4U);
   state.discard_changes();
-  EXPECT_EQ(state.size(), 4);
+  EXPECT_EQ(state.size(), 4U);
 
   state.set("a", "1");
-  EXPECT_EQ(state.size(), 5);
+  EXPECT_EQ(state.size(), 5U);
   state.erase("b");
   state.set("x", "2");
-  EXPECT_EQ(state.size(), 5);
+  EXPECT_EQ(state.size(), 5U);
   state.discard_changes();
-  EXPECT_EQ(state.size(), 4);
+  EXPECT_EQ(state.size(), 4U);
 
   state.erase("b");
   state.commit_changes();
-  EXPECT_EQ(state.size(), 3);
+  EXPECT_EQ(state.size(), 3U);
   state.set("e", "1");
-  EXPECT_EQ(state.size(), 4);
+  EXPECT_EQ(state.size(), 4U);
 }

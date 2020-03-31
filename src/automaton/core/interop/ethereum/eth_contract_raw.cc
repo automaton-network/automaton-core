@@ -174,8 +174,8 @@ void eth_contract::handle_message(const automaton::core::common::status& s) {
 }
 
 void eth_contract::read_header() {
-  uint32_t pos = header.find(CRLF2);
-  if (pos == -1) {
+  auto pos = header.find(CRLF2);
+  if (pos == std::string::npos) {
     conn->async_read(buffer, buffer_size, 0, WAITING_HEADER);
   } else if (pos + 4 < header.size()) {
     body = header.substr(pos + 4);
@@ -196,8 +196,8 @@ void eth_contract::read_header() {
 }
 
 void eth_contract::read_body() {
-  uint32_t pos = body.find(CRLF);
-  if (pos == -1) {
+  auto pos = body.find(CRLF);
+  if (pos == std::string::npos) {
     conn->async_read(buffer, buffer_size, 0, WAITING_BODY);
     return;
   }
@@ -212,8 +212,8 @@ void eth_contract::read_body() {
     }
     handle_message(automaton::core::common::status::ok());
   } else {  // Chunk size > 0 so we are expecting more data
-    uint32_t pos2 = body.find(CRLF, pos + 2);  // the end of the chunk
-    if (pos2 == -1) {  // If the end of the chunk has not yet arrived, read more data
+    auto pos2 = body.find(CRLF, pos + 2);  // the end of the chunk
+    if (pos2 == std::string::npos) {  // If the end of the chunk has not yet arrived, read more data
       conn->async_read(buffer, buffer_size, 0, WAITING_BODY);
     } else {
       // Substract the whole chunk(message part) and remove it from body as it is already handled.

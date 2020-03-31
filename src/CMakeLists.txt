@@ -26,8 +26,7 @@ if (MSVC)
   # add_compile_options(/W4 /WX)
   add_compile_options(/W4)
 else()
-  # add_compile_options(-Wall -Wextra -pedantic -Werror -Wno-unused-parameter)
-  add_compile_options(-Wall -Wextra -pedantic -Wno-unused-parameter)
+  add_compile_options(-Wall -Wextra -pedantic -Wno-unused-parameter -Werror)
 endif()
 
 

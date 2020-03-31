@@ -189,6 +189,9 @@ int main() {
   std::string bin_min_diff = hex2bin(hex_min_diff);
   memcpy(&difficulty, bin_min_diff.c_str(), 32);
   unsigned int keys_generated = mine_key(mask, difficulty, pk, 10000000);
+  if (keys_generated == 0) {
+    LOG(FATAL) << "Did not mine a key...";
+  }
 
   // Generate signature.
   std::string pub_key = gen_pub_key(pk);

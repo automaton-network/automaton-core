@@ -42,7 +42,7 @@ TEST(protobuf_factory, message_serialization) {
 
   EXPECT_EQ(msg1->get_blob(1), "value");
   EXPECT_EQ(msg2->get_blob(1), msg1->get_blob(1));
-  EXPECT_EQ(msg2->get_repeated_field_size(2), 2);
+  EXPECT_EQ(msg2->get_repeated_field_size(2), 2U);
   EXPECT_EQ(msg2->get_repeated_int32(2, 0), 7);
   EXPECT_EQ(msg2->get_repeated_int32(2, 1), 11);
 

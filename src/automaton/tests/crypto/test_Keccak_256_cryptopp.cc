@@ -85,5 +85,5 @@ TEST(keccak_256_cryptopp, update_and_finish) {
 
 TEST(keccak_256_cryptopp, digest_size) {
   Keccak_256_cryptopp hasher;
-  EXPECT_EQ(hasher.digest_size(), CryptoPP::Keccak_256::DIGESTSIZE);
+  EXPECT_EQ(hasher.digest_size(), static_cast<size_t>(CryptoPP::Keccak_256::DIGESTSIZE));
 }

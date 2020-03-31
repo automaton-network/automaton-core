@@ -101,7 +101,7 @@ TEST(protobuf_factory, enums) {
   msg3->set_repeated_enum(2, 1, -1);
 
   EXPECT_EQ(msg3->get_enum(1), 1);
-  EXPECT_EQ(msg3->get_repeated_field_size(2), 3);
+  EXPECT_EQ(msg3->get_repeated_field_size(2), 3U);
   EXPECT_EQ(msg3->get_repeated_enum(2, 0), 1);
   EXPECT_EQ(msg3->get_repeated_enum(2, 1), 0);
   EXPECT_EQ(msg3->get_repeated_enum(2, 2), 1);
@@ -111,7 +111,7 @@ TEST(protobuf_factory, enums) {
   msg4->deserialize_message(data2);
 
   EXPECT_EQ(msg4->get_enum(1), 1);
-  EXPECT_EQ(msg4->get_repeated_field_size(2), 3);
+  EXPECT_EQ(msg4->get_repeated_field_size(2), 3U);
   EXPECT_EQ(msg4->get_repeated_enum(2, 0), 1);
   EXPECT_EQ(msg4->get_repeated_enum(2, 1), 0);
   EXPECT_EQ(msg4->get_repeated_enum(2, 2), 1);

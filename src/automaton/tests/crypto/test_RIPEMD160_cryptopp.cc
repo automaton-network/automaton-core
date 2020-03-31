@@ -78,5 +78,5 @@ TEST(SHA256_cryptopp, update_and_finish) {
 
 TEST(SHA256_cryptopp, digest_size) {
   RIPEMD160_cryptopp hasher;
-  EXPECT_EQ(hasher.digest_size(), CryptoPP::RIPEMD160::DIGESTSIZE);
+  EXPECT_EQ(hasher.digest_size(), static_cast<size_t>(CryptoPP::RIPEMD160::DIGESTSIZE));
 }

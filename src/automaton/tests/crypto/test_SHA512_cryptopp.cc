@@ -92,5 +92,5 @@ TEST(SHA512_cryptopp, update_and_finish) {
 
 TEST(SHA512_cryptopp, digest_size) {
   SHA512_cryptopp hasher;
-  EXPECT_EQ(hasher.digest_size(), CryptoPP::SHA512::DIGESTSIZE);
+  EXPECT_EQ(hasher.digest_size(), static_cast<size_t>(CryptoPP::SHA512::DIGESTSIZE));
 }

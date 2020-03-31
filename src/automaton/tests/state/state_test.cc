@@ -256,42 +256,42 @@ TEST(dummy_state, using_deleted_locations) {
   s.set("b", "2");
   s.set("c", "3");
   s.set("d", "4");
-  EXPECT_EQ(s.size(), 5);
+  EXPECT_EQ(s.size(), 5U);
   s.commit_changes();
-  EXPECT_EQ(s.size(), 5);
+  EXPECT_EQ(s.size(), 5U);
 
   s.erase("a");
-  EXPECT_EQ(s.size(), 5);
+  EXPECT_EQ(s.size(), 5U);
   s.commit_changes();
-  EXPECT_EQ(s.size(), 4);
+  EXPECT_EQ(s.size(), 4U);
 
   s.erase("b");
   s.discard_changes();
-  EXPECT_EQ(s.size(), 4);
+  EXPECT_EQ(s.size(), 4U);
 
   s.set("a", "1");
   s.erase("b");
-  EXPECT_EQ(s.size(), 5);
+  EXPECT_EQ(s.size(), 5U);
   s.discard_changes();
-  EXPECT_EQ(s.size(), 4);
+  EXPECT_EQ(s.size(), 4U);
 
   s.erase("b");
   s.set("a", "1");
-  EXPECT_EQ(s.size(), 4);
+  EXPECT_EQ(s.size(), 4U);
   s.discard_changes();
-  EXPECT_EQ(s.size(), 4);
+  EXPECT_EQ(s.size(), 4U);
 
   s.set("a", "1");
-  EXPECT_EQ(s.size(), 5);
+  EXPECT_EQ(s.size(), 5U);
   s.erase("b");
   s.set("x", "2");
-  EXPECT_EQ(s.size(), 5);
+  EXPECT_EQ(s.size(), 5U);
   s.discard_changes();
-  EXPECT_EQ(s.size(), 4);
+  EXPECT_EQ(s.size(), 4U);
 
   s.erase("b");
   s.commit_changes();
-  EXPECT_EQ(s.size(), 3);
+  EXPECT_EQ(s.size(), 3U);
   s.set("e", "1");
-  EXPECT_EQ(s.size(), 4);
+  EXPECT_EQ(s.size(), 4U);
 }

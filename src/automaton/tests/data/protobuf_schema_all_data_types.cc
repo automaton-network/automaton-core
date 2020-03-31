@@ -116,10 +116,10 @@ TEST(protobuf_factory, all_data_types) {
   }
   ////
   EXPECT_EQ(msg->get_int32(1), 569);
-  EXPECT_EQ(msg->get_uint32(2), 123);
+  EXPECT_EQ(msg->get_uint32(2), 123U);
   EXPECT_EQ(msg->get_blob(3), "alabala");
   EXPECT_EQ(msg->get_blob(4), "nica");
-  EXPECT_EQ(msg->get_uint32(5), 89);
+  EXPECT_EQ(msg->get_uint32(5), 89U);
   EXPECT_EQ(msg->get_int64(6), -17);
   EXPECT_EQ(msg->get_repeated_boolean(7, 0), true);
   google::protobuf::ShutdownProtobufLibrary();

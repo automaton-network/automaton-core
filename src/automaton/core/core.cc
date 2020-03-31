@@ -63,6 +63,7 @@ class rpc_server_handler: public automaton::core::network::http_server::server_h
 
  public:
     explicit rpc_server_handler(engine* en): script(en) {}
+    ~rpc_server_handler() {}
     std::string handle(std::string json_cmd, http_server::status_code* s) {
       std::stringstream sstr(json_cmd);
       nlohmann::json j;

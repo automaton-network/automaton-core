@@ -47,13 +47,17 @@ int main(int argc, char* argv[]) {
   unsigned char difficulty[32] = {0};
   unsigned char priv_key[32] = {0};
   unsigned char address[32] = {0};
+  std::string address_bin;
   std::string mask_input, difficulty_input, address_input;
 
-  std::cout << "beneficiary address: ";
-  std::cin >> address_input;
-  std::string address_bin = hex2bin(address_input);
-  for (int i = 0; i < address_bin.size(); i++) {
-    int curr = 32 - address_bin.size() + i;
+  do {
+    std::cout << "beneficiary address: ";
+    std::cin >> address_input;
+    std::string address_bin = hex2bin(address_input);
+  } while(address_bin.size() >= 32);
+
+  for (size_t i = 0; i < address_bin.size(); i++) {
+    size_t curr = 32 - address_bin.size() + i;
     address[curr] = address_bin[i];
   }
 
@@ -85,10 +89,10 @@ int main(int argc, char* argv[]) {
   std::string mask_bin = hex2bin(mask_input);
   std::string difficulty_bin = hex2bin(difficulty_input);
 
-  for (int i = 0; i < mask_bin.size(); i++) {
+  for (size_t i = 0; i < mask_bin.size(); i++) {
     mask[i] = mask_bin[i];
   }
-  for (int i = 0; i < difficulty_bin.size(); i++) {
+  for (size_t i = 0; i < difficulty_bin.size(); i++) {
     difficulty[i] = difficulty_bin[i];
   }
 
