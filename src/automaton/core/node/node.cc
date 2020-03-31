@@ -470,7 +470,7 @@ peer_id node::add_peer(const string& address) {
       LOG(ERROR) << "Address was not parsed! " << address;
     } else {
       std::shared_ptr<node> self = shared_from_this();
-      new_connection = std::move(connection::create(protocol, info.id, addr, self));
+      new_connection = connection::create(protocol, info.id, addr, self);
       if (new_connection != nullptr && !new_connection->init()) {
         LOG(ERROR) << "Connection initialization failed! Connection was not created!";
       }

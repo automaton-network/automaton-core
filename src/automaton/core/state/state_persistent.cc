@@ -261,12 +261,12 @@ void state_persistent::erase(const std::string& path) {
     // Find out how many children does the parent have
     children.clear();
     cur_node = parent;
-    unsigned char i = 0;
+    unsigned char z = 0;
     do {
-      if (nodes[cur_node].get_child(i, bs)) {
-        children.push_back(i);
+      if (nodes[cur_node].get_child(z, bs)) {
+        children.push_back(z);
       }
-    } while (++i != 0);
+    } while (++z != 0);
     // If the parent of the deleted node has no prefix, has only one
     // child remaining and is not the root we will merge it with his child
     if (nodes[cur_node].get_value(bs).length() == 0
@@ -406,7 +406,7 @@ int32_t state_persistent::get_node_index(const std::string& path) {
 
 bool state_persistent::has_children(uint32_t node_index) {
   for (unsigned int i = 0; i < 256; ++i) {
-    if (nodes[node_index].get_child(i, bs)) {
+    if (nodes[node_index].get_child(static_cast<uint8_t>(i), bs)) {
       return true;
     }
   }
@@ -502,55 +502,55 @@ void state_persistent::subtrie_mark_free(uint32_t cur_node) {
 }
 
 
-uint32_t state_persistent::node::get_parent(storage::blobstore * bs) {
+uint32_t state_persistent::node::get_parent(storage::blobstore * _bs) {
   uint32_t sz;
-  uint8_t* p_parent = bs->get(parent_, &sz);
+  uint8_t* p_parent = _bs->get(parent_, &sz);
   return *(reinterpret_cast<uint32_t*>(p_parent));
 }
 
-std::string state_persistent::node::get_prefix(storage::blobstore * bs) {
+std::string state_persistent::node::get_prefix(storage::blobstore * _bs) {
   uint32_t sz;
-  uint8_t* p_prefix = bs->get(prefix_, &sz);
+  uint8_t* p_prefix = _bs->get(prefix_, &sz);
   return std::string(reinterpret_cast<char*>(p_prefix), sz);
 }
 
-std::string state_persistent::node::get_hash(storage::blobstore * bs) {
+std::string state_persistent::node::get_hash(storage::blobstore * _bs) {
   uint32_t sz;
-  uint8_t* p_hash = bs->get(hash_, &sz);
+  uint8_t* p_hash = _bs->get(hash_, &sz);
   return std::string(reinterpret_cast<char*>(p_hash), sz);
   // return hash_;
 }
 
-std::string state_persistent::node::get_value(storage::blobstore * bs) {
+std::string state_persistent::node::get_value(storage::blobstore * _bs) {
   uint32_t sz;
-  uint8_t* p_value = bs->get(value_, &sz);
+  uint8_t* p_value = _bs->get(value_, &sz);
   return std::string(reinterpret_cast<char*>(p_value), sz);
 }
 
-uint32_t state_persistent::node::get_child(uint8_t child, storage::blobstore * bs) {
+uint32_t state_persistent::node::get_child(uint8_t child, storage::blobstore * _bs) {
   return children_[child];
 }
 
-void state_persistent::node::set_parent(uint32_t parent, storage::blobstore * bs) {
-  parent_ = bs->store(sizeof(uint32_t), reinterpret_cast<uint8_t*>(&parent));
+void state_persistent::node::set_parent(uint32_t parent, storage::blobstore * _bs) {
+  parent_ = _bs->store(sizeof(uint32_t), reinterpret_cast<uint8_t*>(&parent));
 }
 
-void state_persistent::node::set_prefix(const std::string prefix, storage::blobstore * bs) {
-  prefix_ = bs->store(prefix.length(), reinterpret_cast<const uint8_t*>(prefix.data()));
+void state_persistent::node::set_prefix(const std::string prefix, storage::blobstore * _bs) {
+  prefix_ = _bs->store(prefix.length(), reinterpret_cast<const uint8_t*>(prefix.data()));
 }
 
-void state_persistent::node::set_hash(const std::string hash, storage::blobstore * bs) {
-  hash_ = bs->store(hash.length(), reinterpret_cast<const uint8_t*>(hash.data()));
+void state_persistent::node::set_hash(const std::string hash, storage::blobstore * _bs) {
+  hash_ = _bs->store(hash.length(), reinterpret_cast<const uint8_t*>(hash.data()));
 }
 
-void state_persistent::node::set_value(const std::string value, storage::blobstore * bs) {
-  value_ = bs->store(value.length(),
+void state_persistent::node::set_value(const std::string value, storage::blobstore * _bs) {
+  value_ = _bs->store(value.length(),
     reinterpret_cast<const uint8_t*>(value.data()));
 }
 
 void state_persistent::node::set_child(const uint8_t child,
                                        const uint32_t value,
-                                       storage::blobstore * bs) {
+                                       storage::blobstore * _bs) {
   children_[child] = value;
 }
 

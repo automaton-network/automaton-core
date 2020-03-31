@@ -7,8 +7,19 @@
 #include <memory>
 #include <string>
 #include <thread>
+
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wshadow"
+#endif
+
 #include <boost/asio/io_service.hpp>
 #include <boost/asio/ip/tcp.hpp>
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
+
 #include "automaton/core/io/io.h"
 
 namespace automaton {
@@ -44,7 +55,7 @@ class http_server {
   class server_handler {
    public:
     server_handler() {}
-    ~server_handler() {}
+    virtual ~server_handler() {}
     virtual std::string handle(std::string, status_code*) = 0;
   };
   http_server(uint16_t port, std::shared_ptr<server_handler>);

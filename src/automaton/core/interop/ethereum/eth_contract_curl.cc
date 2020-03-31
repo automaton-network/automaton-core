@@ -73,7 +73,7 @@ void eth_contract::parse_abi(json json_abi) {
       inputs << '[';
       if (jobj.find("inputs") != jobj.end()) {
         std::vector<json> v_inputs = jobj["inputs"].get<std::vector<json> >();
-        for (auto i = 0; i < v_inputs.size(); ++i) {
+        for (size_t i = 0; i < v_inputs.size(); ++i) {
           auto& inp = v_inputs[i];
           if (inp.find("type") != inp.end()) {
             auto s = inp["type"].get<std::string>();
@@ -93,7 +93,7 @@ void eth_contract::parse_abi(json json_abi) {
       outputs << '[';
       if (jobj.find("outputs") != jobj.end()) {
         std::vector<json> v_outputs = jobj["outputs"].get<std::vector<json> >();
-        for (auto i = 0; i < v_outputs.size(); ++i) {
+        for (size_t i = 0; i < v_outputs.size(); ++i) {
           auto& out = v_outputs[i];
           if (out.find("type") != out.end()) {
             outputs << '"' << out["type"].get<std::string>() << '"';

@@ -257,7 +257,7 @@ void protobuf_factory::import_schema(schema* schema, const string& name, const s
 }
 
 std::string protobuf_factory::dump_message_schema(uint32_t schema_id) const {
-  CHECK_BOUNDS(schema_id, 0, schemas.size() - 1);
+  CHECK_LT(schema_id, schemas.size());
   CHECK_NOTNULL(schemas[schema_id]);
   CHECK_NOTNULL(schemas[schema_id]->GetDescriptor());
   std::stringstream ostream_;
@@ -291,7 +291,7 @@ std::string protobuf_factory::dump_message_schema(uint32_t schema_id) const {
 }
 
 std::unique_ptr<msg> protobuf_factory::new_message_by_id(uint32_t schema_id) {
-  CHECK_BOUNDS(schema_id, 0, schemas.size() - 1);
+  CHECK_LT(schema_id, schemas.size());
   CHECK_NOTNULL(schemas[schema_id]);
   Message* m = schemas[schema_id]->New();
   return std::unique_ptr<msg>(new protobuf_msg(m, this, schema_id));
@@ -320,7 +320,7 @@ uint32_t protobuf_factory::get_enum_id(const string& enum_name) const {
 }
 
 std::string protobuf_factory::dump_enum(uint32_t enum_id) const {
-  CHECK_BOUNDS(enum_id, 0, enums.size() - 1);
+  CHECK_LT(enum_id, enums.size());
   CHECK_NOTNULL(enums[enum_id]);
   std::stringstream ostream_;
   const EnumDescriptor* edesc = enums[enum_id];
@@ -336,7 +336,7 @@ std::string protobuf_factory::dump_enum(uint32_t enum_id) const {
 }
 
 int32_t protobuf_factory::get_enum_value(uint32_t enum_id, const string& value_name) const {
-  CHECK_BOUNDS(enum_id, 0, enums.size() - 1);
+  CHECK_LT(enum_id, enums.size());
   CHECK_NOTNULL(enums[enum_id]);
   const EnumValueDescriptor* evd = enums[enum_id]->FindValueByName(value_name);
   if (evd == nullptr) {
@@ -349,7 +349,7 @@ int32_t protobuf_factory::get_enum_value(uint32_t enum_id, const string& value_n
 }
 
 std::vector<std::pair<string, int32_t> > protobuf_factory::get_enum_values(uint32_t enum_id) const {
-  CHECK_BOUNDS(enum_id, 0, enums.size() - 1);
+  CHECK_LT(enum_id, enums.size());
   CHECK_NOTNULL(enums[enum_id]);
   std::vector<std::pair<string, int32_t> > result;
   const EnumDescriptor* edesc = enums[enum_id];
@@ -362,7 +362,7 @@ std::vector<std::pair<string, int32_t> > protobuf_factory::get_enum_values(uint3
 }
 
 uint32_t protobuf_factory::get_fields_number(uint32_t schema_id) const {
-  CHECK_BOUNDS(schema_id, 0, schemas.size() - 1);
+  CHECK_LT(schema_id, schemas.size());
   CHECK_NOTNULL(schemas[schema_id]);
   CHECK_NOTNULL(schemas[schema_id]->GetDescriptor());
   const Descriptor* desc = schemas[schema_id]->GetDescriptor();
@@ -370,7 +370,7 @@ uint32_t protobuf_factory::get_fields_number(uint32_t schema_id) const {
 }
 
 bool protobuf_factory::is_repeated(uint32_t schema_id, uint32_t field_tag) const {
-  CHECK_BOUNDS(schema_id, 0, schemas.size() - 1);
+  CHECK_LT(schema_id, schemas.size());
   CHECK_NOTNULL(schemas[schema_id]);
   CHECK_NOTNULL(schemas[schema_id]->GetDescriptor());
   const FieldDescriptor* fdesc =
@@ -385,7 +385,7 @@ bool protobuf_factory::is_repeated(uint32_t schema_id, uint32_t field_tag) const
 }
 
 uint32_t protobuf_factory::get_nested_messages_number(uint32_t schema_id) const {
-  CHECK_BOUNDS(schema_id, 0, schemas.size() - 1);
+  CHECK_LT(schema_id, schemas.size());
   CHECK_NOTNULL(schemas[schema_id]);
   CHECK_NOTNULL(schemas[schema_id]->GetDescriptor());
   const Descriptor* d = schemas[schema_id]->GetDescriptor();
@@ -393,7 +393,7 @@ uint32_t protobuf_factory::get_nested_messages_number(uint32_t schema_id) const 
 }
 
 uint32_t protobuf_factory::get_nested_message_schema_id(uint32_t schema_id, uint32_t index) const {
-  CHECK_BOUNDS(schema_id, 0, schemas.size() - 1);
+  CHECK_LT(schema_id, schemas.size());
   CHECK_NOTNULL(schemas[schema_id]);
   CHECK_NOTNULL(schemas[schema_id]->GetDescriptor());
   const Descriptor* d = schemas[schema_id]->GetDescriptor();
@@ -402,7 +402,7 @@ uint32_t protobuf_factory::get_nested_message_schema_id(uint32_t schema_id, uint
 }
 
 schema::field_info protobuf_factory::get_field_info(uint32_t schema_id, uint32_t index) const {
-  CHECK_BOUNDS(schema_id, 0, schemas.size() - 1);
+  CHECK_LT(schema_id, schemas.size());
   CHECK_NOTNULL(schemas[schema_id]);
   CHECK_NOTNULL(schemas[schema_id]->GetDescriptor());
   const Descriptor* desc = schemas[schema_id]->GetDescriptor();
@@ -443,13 +443,13 @@ uint32_t protobuf_factory::get_schema_id(const string& message_name) const {
 }
 
 string protobuf_factory::get_schema_name(uint32_t schema_id) const {
-  CHECK_BOUNDS(schema_id, 0, schemas.size() - 1);
+  CHECK_LT(schema_id, schemas.size());
   CHECK_NOTNULL(schemas[schema_id]);
   return schemas[schema_id]->GetTypeName();
 }
 
 string protobuf_factory::get_field_type(uint32_t schema_id, uint32_t tag) const {
-  CHECK_BOUNDS(schema_id, 0, schemas.size() - 1);
+  CHECK_LT(schema_id, schemas.size());
   CHECK_NOTNULL(schemas[schema_id]);
   CHECK_NOTNULL(schemas[schema_id]->GetDescriptor());
   const FieldDescriptor* fdesc = schemas[schema_id]->GetDescriptor()->FindFieldByNumber(tag);
@@ -468,9 +468,8 @@ string protobuf_factory::get_field_type(uint32_t schema_id, uint32_t tag) const 
   throw std::invalid_argument(msg.str());
 }
 
-string protobuf_factory::get_message_field_type(uint32_t schema_id,
-    uint32_t field_tag) const {
-  CHECK_BOUNDS(schema_id, 0, schemas.size() - 1);
+string protobuf_factory::get_message_field_type(uint32_t schema_id, uint32_t field_tag) const {
+  CHECK_LT(schema_id, schemas.size());
   CHECK_NOTNULL(schemas[schema_id]);
   CHECK_NOTNULL(schemas[schema_id]->GetDescriptor());
   const FieldDescriptor* fdesc = schemas[schema_id]->GetDescriptor()->FindFieldByNumber(field_tag);
@@ -490,7 +489,7 @@ string protobuf_factory::get_message_field_type(uint32_t schema_id,
 }
 
 string protobuf_factory::get_enum_field_type(uint32_t schema_id, uint32_t field_tag) const {
-  CHECK_BOUNDS(schema_id, 0, schemas.size() - 1);
+  CHECK_LT(schema_id, schemas.size());
   CHECK_NOTNULL(schemas[schema_id]);
   CHECK_NOTNULL(schemas[schema_id]->GetDescriptor());
   const FieldDescriptor* fdesc = schemas[schema_id]->GetDescriptor()->FindFieldByNumber(field_tag);
@@ -510,7 +509,7 @@ string protobuf_factory::get_enum_field_type(uint32_t schema_id, uint32_t field_
 }
 
 uint32_t protobuf_factory::get_field_tag(uint32_t schema_id, const string& name) const {
-  CHECK_BOUNDS(schema_id, 0, schemas.size() - 1);
+  CHECK_LT(schema_id, schemas.size());
   CHECK_NOTNULL(schemas[schema_id]);
   CHECK_NOTNULL(schemas[schema_id]->GetDescriptor());
   const FieldDescriptor* fdesc =

@@ -123,13 +123,13 @@ TEST(state_persistent, node_hash_add_erase) {
     // Integrity check for all prior key/values.
     std::cout << i << std::endl;
     for (int32_t j = 0; j <= i; j++) {
-      std::string data = std::to_string(j);
-      std::string key = hash_key(j);
+      std::string data2 = std::to_string(j);
+      std::string key2 = hash_key(j);
 
-      if (data != state.get(key)) {
+      if (data2 != state.get(key2)) {
         std::cout << "Setting " << i << " fails at " << j << std::endl;
         std::cout << "Setting key " << bin2hex(keys.top())
-          << " fails " << bin2hex(key) << std::endl;
+          << " fails " << bin2hex(key2) << std::endl;
         throw "!!!";
       }
     }
@@ -322,42 +322,42 @@ TEST(dummy_state, using_deleted_locations) {
   state.set("b", "2");
   state.set("c", "3");
   state.set("d", "4");
-  EXPECT_EQ(state.size(), 5);
+  EXPECT_EQ(state.size(), 5U);
   state.commit_changes();
-  EXPECT_EQ(state.size(), 5);
+  EXPECT_EQ(state.size(), 5U);
 
   state.erase("a");
-  EXPECT_EQ(state.size(), 5);
+  EXPECT_EQ(state.size(), 5U);
   state.commit_changes();
-  EXPECT_EQ(state.size(), 4);
+  EXPECT_EQ(state.size(), 4U);
 
   state.erase("b");
   state.discard_changes();
-  EXPECT_EQ(state.size(), 4);
+  EXPECT_EQ(state.size(), 4U);
 
   state.set("a", "1");
   state.erase("b");
-  EXPECT_EQ(state.size(), 5);
+  EXPECT_EQ(state.size(), 5U);
   state.discard_changes();
-  EXPECT_EQ(state.size(), 4);
+  EXPECT_EQ(state.size(), 4U);
 
   state.erase("b");
   state.set("a", "1");
-  EXPECT_EQ(state.size(), 4);
+  EXPECT_EQ(state.size(), 4U);
   state.discard_changes();
-  EXPECT_EQ(state.size(), 4);
+  EXPECT_EQ(state.size(), 4U);
 
   state.set("a", "1");
-  EXPECT_EQ(state.size(), 5);
+  EXPECT_EQ(state.size(), 5U);
   state.erase("b");
   state.set("x", "2");
-  EXPECT_EQ(state.size(), 5);
+  EXPECT_EQ(state.size(), 5U);
   state.discard_changes();
-  EXPECT_EQ(state.size(), 4);
+  EXPECT_EQ(state.size(), 4U);
 
   state.erase("b");
   state.commit_changes();
-  EXPECT_EQ(state.size(), 3);
+  EXPECT_EQ(state.size(), 3U);
   state.set("e", "1");
-  EXPECT_EQ(state.size(), 4);
+  EXPECT_EQ(state.size(), 4U);
 }

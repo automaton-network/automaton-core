@@ -98,13 +98,13 @@ TEST(state_impl, node_hash_add_erase) {
     // Integrity check for all prior key/values.
     std::cout << i << std::endl;
     for (int32_t j = 0; j <= i; j++) {
-      std::string data = std::to_string(j);
-      std::string key = hash_key(j);
+      std::string data2 = std::to_string(j);
+      std::string key2 = hash_key(j);
 
-      if (data != state.get(key)) {
+      if (data2 != state.get(key2)) {
         std::cout << "Setting " << i << " fails at " << j << std::endl;
         std::cout << "Setting key " << bin2hex(keys.top())
-          << " fails " << bin2hex(key) << std::endl;
+          << " fails " << bin2hex(key2) << std::endl;
         throw "!!!";
       }
     }
@@ -256,42 +256,42 @@ TEST(dummy_state, using_deleted_locations) {
   s.set("b", "2");
   s.set("c", "3");
   s.set("d", "4");
-  EXPECT_EQ(s.size(), 5);
+  EXPECT_EQ(s.size(), 5U);
   s.commit_changes();
-  EXPECT_EQ(s.size(), 5);
+  EXPECT_EQ(s.size(), 5U);
 
   s.erase("a");
-  EXPECT_EQ(s.size(), 5);
+  EXPECT_EQ(s.size(), 5U);
   s.commit_changes();
-  EXPECT_EQ(s.size(), 4);
+  EXPECT_EQ(s.size(), 4U);
 
   s.erase("b");
   s.discard_changes();
-  EXPECT_EQ(s.size(), 4);
+  EXPECT_EQ(s.size(), 4U);
 
   s.set("a", "1");
   s.erase("b");
-  EXPECT_EQ(s.size(), 5);
+  EXPECT_EQ(s.size(), 5U);
   s.discard_changes();
-  EXPECT_EQ(s.size(), 4);
+  EXPECT_EQ(s.size(), 4U);
 
   s.erase("b");
   s.set("a", "1");
-  EXPECT_EQ(s.size(), 4);
+  EXPECT_EQ(s.size(), 4U);
   s.discard_changes();
-  EXPECT_EQ(s.size(), 4);
+  EXPECT_EQ(s.size(), 4U);
 
   s.set("a", "1");
-  EXPECT_EQ(s.size(), 5);
+  EXPECT_EQ(s.size(), 5U);
   s.erase("b");
   s.set("x", "2");
-  EXPECT_EQ(s.size(), 5);
+  EXPECT_EQ(s.size(), 5U);
   s.discard_changes();
-  EXPECT_EQ(s.size(), 4);
+  EXPECT_EQ(s.size(), 4U);
 
   s.erase("b");
   s.commit_changes();
-  EXPECT_EQ(s.size(), 3);
+  EXPECT_EQ(s.size(), 3U);
   s.set("e", "1");
-  EXPECT_EQ(s.size(), 4);
+  EXPECT_EQ(s.size(), 4U);
 }

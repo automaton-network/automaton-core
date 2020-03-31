@@ -15,8 +15,8 @@ static const char* JSON_FILE = "../contracts/koh/build/contracts/KingAutomaton.j
 // Ganache
 static const char* URL = "127.0.0.1:7545";
 static const char* CONTRACT_ADDR = "0x22D9d6faB361FaA969D2EfDE420472633cBB7B11";
-static const char* ADDRESS = "0x603CB0d1c8ab86E72beb3c7DF564A36D7B85ecD2";
-static const char* PRIVATE_KEY = "56aac550d97013a8402c98e3b2aeb20482d19f142a67022d2ab357eb8bb673b0";
+// static const char* ADDRESS = "0x603CB0d1c8ab86E72beb3c7DF564A36D7B85ecD2";
+// static const char* PRIVATE_KEY = "56aac550d97013a8402c98e3b2aeb20482d19f142a67022d2ab357eb8bb673b0";
 
 int main() {
   std::unique_ptr<g3::LogWorker> logworker {g3::LogWorker::createLogWorker()};
@@ -51,7 +51,7 @@ int main() {
   s = contract->call("getOwners", "[0,16]");
   if (s.code == automaton::core::common::status::OK) {
     std::vector<std::string> res;
-    json j = json::parse(s.msg);
+    j = json::parse(s.msg);
     try {
       res = (*j.begin()).get<std::vector<std::string> >();
     } catch (const std::exception& e) {
@@ -67,7 +67,7 @@ int main() {
   s = contract->call("getDifficulties", "[15,5]");
   if (s.code == automaton::core::common::status::OK) {
     std::vector<std::string> res;
-    json j = json::parse(s.msg);
+    j = json::parse(s.msg);
     try {
       res = (*j.begin()).get<std::vector<std::string> >();
     } catch (const std::exception& e) {
@@ -83,7 +83,7 @@ int main() {
   s = contract->call("getLastClaimTimes", "[2,18]");
   if (s.code == automaton::core::common::status::OK) {
     std::vector<std::string> res;
-    json j = json::parse(s.msg);
+    j = json::parse(s.msg);
     try {
       res = (*j.begin()).get<std::vector<std::string> >();
     } catch (const std::exception& e) {

@@ -31,7 +31,7 @@ struct status {
   };
 
   explicit status(status_code error_code) : code(error_code), msg("") {}
-  status(status_code error_code, std::string msg) : code(error_code), msg(msg) {}
+  status(status_code _error_code, std::string _msg) : code(_error_code), msg(_msg) {}
 
   status_code code;
   std::string msg;

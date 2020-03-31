@@ -23,7 +23,7 @@ TEST(persistent_blobstore, create_mapped_file) {
   {
     persistent_blobstore bs1;
     bs1.map_file("build/mapped_file.txt");
-    for (int i = 0; i < data.size(); i++) {
+    for (size_t i = 0; i < data.size(); i++) {
       ids.push_back(bs1.store(data[i].size(), reinterpret_cast<const uint8_t*>(data[i].data())));
     }
   }
@@ -31,7 +31,7 @@ TEST(persistent_blobstore, create_mapped_file) {
   uint8_t* pData;
   persistent_blobstore bs1;
   bs1.map_file("build/mapped_file.txt");
-  for (int i = 0; i < data.size(); i++) {
+  for (size_t i = 0; i < data.size(); i++) {
     pData = bs1.get(ids[i], &sz);
     std::cout << std::string(reinterpret_cast<char*>(pData), sz) << std::endl;
     EXPECT_FALSE(std::memcmp(pData, &data[i][0], sz));

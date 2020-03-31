@@ -106,8 +106,8 @@ uint32_t hex2dec(const std::string& hex) {
 
 std::string get_date_string(std::chrono::system_clock::time_point t) {
   auto as_time_t = std::chrono::system_clock::to_time_t(t);
-  struct tm* tm;
-  if ((tm = ::gmtime(&as_time_t))) {
+  struct tm* tm = ::gmtime(&as_time_t);
+  if (tm) {
     char some_buffer[64];
     if (std::strftime(some_buffer, sizeof(some_buffer), "%F %T", tm)) {
       return std::string{some_buffer};

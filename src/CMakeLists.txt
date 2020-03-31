@@ -21,6 +21,41 @@ option(automaton_BUILD_DEPENDENCIES "Build third-party libraries" ON)
 
 option(automaton_RUN_GANACHE_TESTS "Run tests with local ganache server" OFF)
 
+
+if (MSVC)
+  add_compile_options(
+    /W4
+#    /wd4100
+#    /wd4101
+#    /wd4127
+#    /wd4244
+#    /wd4245
+#    /wd4458
+#    /wd4505
+#    /wd4702
+#    /wd4996
+#    /WX
+  )
+else()
+  add_compile_options(
+    -Wall
+    -Wextra
+    -Wshadow
+#    -Wduplicated-cond
+#    -Wduplicated-branches
+#    -Wlogical-op
+    -Wnull-dereference
+#    -Wold-style-cast
+#    -Wuseless-cast
+#    -Wjump-misses-init
+    -Wformat=2
+    -Wno-unused-parameter
+    -Wno-uninitialized
+#    -Werror
+  )
+endif()
+
+
 set(CPACK_PACKAGE_VERSION_MAJOR "0")
 set(CPACK_PACKAGE_VERSION_MINOR "1")
 set(CPACK_PACKAGE_VERSION_PATCH "0")

@@ -255,12 +255,12 @@ void state_impl::erase(const std::string& path) {
     // Find out how many children does the parent have
     children.clear();
     cur_node = parent;
-    uint8_t i = 0;
+    uint8_t z = 0;
     do {
-      if (nodes[cur_node].children[i]) {
-        children.push_back(i);
+      if (nodes[cur_node].children[z]) {
+        children.push_back(z);
       }
-    } while (++i != 0);
+    } while (++z != 0);
     // If the parent of the deleted node has no prefix, has only one
     // child remaining and is not the root we will merge it with his child
     if (nodes[cur_node].value.length() == 0

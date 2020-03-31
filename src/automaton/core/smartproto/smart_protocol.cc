@@ -71,9 +71,9 @@ bool smart_protocol::load(const std::string& id, const std::string& path) {
       proto->commands.push_back({cmd[0], cmd[1], cmd[2]});
     }
 
-    for (uint32_t i = 0; i < schemas_filenames.size(); ++i) {
-      std::string file_content = get_file_contents((path + schemas_filenames[i]).c_str());
-      proto->msgs_defs[schemas_filenames[i]] = file_content;
+    for (uint32_t z = 0; z < schemas_filenames.size(); ++z) {
+      std::string file_content = get_file_contents((path + schemas_filenames[z]).c_str());
+      proto->msgs_defs[schemas_filenames[z]] = file_content;
       proto->schemas.push_back(new protobuf_schema(file_content));
       proto->factory->import_schema(proto->schemas.back(), "", "");
     }
@@ -81,8 +81,8 @@ bool smart_protocol::load(const std::string& id, const std::string& path) {
     for (nlohmann::json::iterator it = filenames.begin(); it != filenames.end(); ++it) {
       std::unordered_map<std::string, std::string> extracted_files;
       std::vector<std::string> fnames = it.value();
-      for (uint32_t i = 0; i < fnames.size(); ++i) {
-        std::string file_name = fnames[i];
+      for (uint32_t z = 0; z < fnames.size(); ++z) {
+        std::string file_name = fnames[z];
         extracted_files[file_name] = get_file_contents((path + file_name).c_str());
       }
       proto->files.insert(std::make_pair(it.key(), std::move(extracted_files)));

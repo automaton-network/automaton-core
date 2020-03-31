@@ -76,5 +76,5 @@ TEST(SHA256_cryptopp, update_and_finish) {
 
 TEST(SHA256_cryptopp, digest_size) {
   SHA256_cryptopp hasher;
-  EXPECT_EQ(hasher.digest_size(), CryptoPP::SHA256::DIGESTSIZE);
+  EXPECT_EQ(hasher.digest_size(), static_cast<size_t>(CryptoPP::SHA256::DIGESTSIZE));
 }
