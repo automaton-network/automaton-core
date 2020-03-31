@@ -30,12 +30,6 @@ namespace core {
 namespace interop {
 namespace ethereum {
 
-#ifdef _WIN32
-// TODO(vitalyster): use correct error level for these errors
-#define _ERROR WARNING
-#else
-#define _ERROR ERROR
-#endif
 
 inline size_t curl_callback(void *contents, size_t size, size_t nmemb, std::string *s) {
   size_t new_length = size * nmemb;
@@ -43,7 +37,7 @@ inline size_t curl_callback(void *contents, size_t size, size_t nmemb, std::stri
     s->append(reinterpret_cast<char*>(contents), new_length);
   }
   catch (std::bad_alloc& e) {
-    LOG(_ERROR) << "Bad_alloc while reading data! " << e.what();
+    LOG(WARNING) << "Bad_alloc while reading data! " << e.what();
     return 0;
   }
   return new_length;
@@ -104,7 +98,7 @@ inline status curl_post(const std::string& url, const std::string& data) {
     curl_easy_cleanup(curl);
     if (res != CURLE_OK) {
       size_t len = strlen(curl_err_buf);
-      LOG(_ERROR) << "Curl result code != CURLE_OK. Result code: " << res;
+      LOG(WARNING) << "Curl result code != CURLE_OK. Result code: " << res;
       if (len) {
         return status::internal(std::string(curl_err_buf, len));
       }
@@ -272,7 +266,7 @@ static type extract_array_type(std::string s) {
     s.erase(k1, k2 - k1 + 1);
     new_t = get_type(s);
   } else {
-    LOG(_ERROR) << "Array expected!: " << s;
+    LOG(WARNING) << "Array expected!: " << s;
   }
   return new_t;
 }
@@ -331,7 +325,7 @@ static std::string dec_to_i256(bool is_signed, std::string s) {
 static std::string i256_to_dec(bool is_signed, const std::string& s) {
   // TODO(kari): If the number is more than 64 bits, throw error or use only 64 bits of it.
   if (s.size() == 0) {
-    LOG(_ERROR) << "Invalid argument for i256!";
+    LOG(WARNING) << "Invalid argument for i256!";
     return "";
   }
   CryptoPP::Integer::Signedness sign = is_signed ? CryptoPP::Integer::SIGNED : CryptoPP::Integer::UNSIGNED;
@@ -344,7 +338,7 @@ static std::string i256_to_dec(bool is_signed, const std::string& s) {
 
 static uint64_t u256_to_u64(const std::string& s) {
   if (s.size() != 32) {
-    LOG(_ERROR) << "Invalid argument format!" << s;
+    LOG(WARNING) << "Invalid argument format!" << s;
     return 0;
   }
   uint64_t n = 0;
@@ -373,7 +367,7 @@ static void encode_param(type t, const json& json_data, char** buffer, size_t* b
     size_t* head_pos, size_t* tail_pos) {
   if (t.s_array_type == fixed) {
     if (!json_data.is_array() || json_data.size() != t.array_len) {
-      LOG(_ERROR) << "Invalid argument! Expected array with length " << t.array_len << ", got " << json_data;
+      LOG(WARNING) << "Invalid argument! Expected array with length " << t.array_len << ", got " << json_data;
       return;
     }
     type tp = extract_array_type(t.str);
@@ -382,11 +376,11 @@ static void encode_param(type t, const json& json_data, char** buffer, size_t* b
     }
   } else if (t.s_array_type == dynamic) {
     if (!json_data.is_array()) {
-      LOG(_ERROR) << "Invalid argument! Expected array, got " << json_data;
+      LOG(WARNING) << "Invalid argument! Expected array, got " << json_data;
       return;
     }
     if (t.array_len && json_data.size() != t.array_len) {
-      LOG(_ERROR) << "Invalid argument! Expected array with length " << t.array_len << ", got " << json_data;
+      LOG(WARNING) << "Invalid argument! Expected array with length " << t.array_len << ", got " << json_data;
       return;
     }
     std::string encoded;
@@ -419,13 +413,13 @@ static void encode_param(type t, const json& json_data, char** buffer, size_t* b
         encode_param(tp, *it, buffer, buf_size, &head_prim_pos, &tail_prim_pos);
       }
     } else {
-      LOG(_ERROR) << "Invalid type!" << tp.s_type;
+      LOG(WARNING) << "Invalid type!" << tp.s_type;
       return;
     }
     *tail_pos = tail_prim_pos;
   } else if (t.s_type == string || t.s_type == dynamic_size_bytes) {
     if (!json_data.is_string()) {
-      LOG(_ERROR) << "Invalid argument!";
+      LOG(WARNING) << "Invalid argument!";
       return;
     }
     std::string s;
@@ -445,19 +439,19 @@ static void encode_param(type t, const json& json_data, char** buffer, size_t* b
     *tail_pos += encoded.size();
   } else if (t.s_type == fixed_size_bytes) {
     if (!json_data.is_string()) {
-      LOG(_ERROR) << "Invalid argument! Expected string, got " << json_data;
+      LOG(WARNING) << "Invalid argument! Expected string, got " << json_data;
       return;
     }
     std::string data = json_data.get<std::string>();
     std::string bin_data = hex2bin(data);
     if (bin_data.size() > 32) {
-      LOG(_ERROR) << "Invalid argument! Size > 32 bytes! " << data;
+      LOG(WARNING) << "Invalid argument! Size > 32 bytes! " << data;
       return;
     }
     std::string encoded;
     if (t.str == "address") {
       if (bin_data.size() != 20) {
-        LOG(_ERROR) << "Invalid argument! Address size != 20 bytes! " << data;
+        LOG(WARNING) << "Invalid argument! Address size != 20 bytes! " << data;
         return;
       }
       encoded = std::string(12, '\0') + bin_data;
@@ -471,7 +465,7 @@ static void encode_param(type t, const json& json_data, char** buffer, size_t* b
     std::string encoded;
     if (t.str == "bool") {
       if (!json_data.is_boolean()) {
-        LOG(_ERROR) << "Invalid argument! Expected boolean, got " << json_data;
+        LOG(WARNING) << "Invalid argument! Expected boolean, got " << json_data;
         return;
       }
       encoded = u64_to_u256(json_data.get<bool>() ? 1 : 0);
@@ -482,20 +476,20 @@ static void encode_param(type t, const json& json_data, char** buffer, size_t* b
       } else if (json_data.is_string()) {
         s = json_data.get<std::string>();
       } else {
-        LOG(_ERROR) << "Invalid argument! Expected number or string, got " << json_data;
+        LOG(WARNING) << "Invalid argument! Expected number or string, got " << json_data;
         return;
       }
       bool is_signed = t.str[0] != 'u';
       encoded = dec_to_i256(is_signed, s);
     } else if (t.str.find("fixed") != std::string::npos) {
-      LOG(_ERROR) << "Unsuported data type double!";
+      LOG(WARNING) << "Unsuported data type double!";
       return;
     }
     check_and_resize_buffer(buffer, buf_size, *head_pos, 32);
     memcpy(*buffer + *head_pos, encoded.c_str(), 32);
     *head_pos += 32;
   } else {
-    LOG(_ERROR) << "Undefined type: " << t.s_type;
+    LOG(WARNING) << "Undefined type: " << t.s_type;
   }
 }
 
@@ -507,12 +501,12 @@ static std::string encode(const std::string& signatures_json, const std::string&
     std::stringstream params(parameters_json);
     params >> j_params;
   } catch (const std::exception& e) {
-    LOG(_ERROR) << "Json error: " << e.what();
+    LOG(WARNING) << "Json error: " << e.what();
     return "";
   }
 
   if (!j_params.is_array() || j_params.size() != j_sigs.size()) {
-    LOG(_ERROR) << "Invalid arguments!";
+    LOG(WARNING) << "Invalid arguments!";
     return "";
   }
 
@@ -523,7 +517,7 @@ static std::string encode(const std::string& signatures_json, const std::string&
   try {
     signatures = j_sigs.get<std::vector<std::string> >();
   } catch (const std::exception& e) {
-    LOG(_ERROR) << "Invalid arguments! " << e.what();
+    LOG(WARNING) << "Invalid arguments! " << e.what();
     return "";
   }
 
@@ -605,7 +599,7 @@ static std::string decode_param(type t, const std::string& data, size_t pos) {
       size_t offset = u256_to_u64(s);
       ss << decode_param(tp, data, pos + offset);
     } else {
-      LOG(_ERROR) << "Invalid type!";
+      LOG(WARNING) << "Invalid type!";
       return "";
     }
     ss << ']';
@@ -628,7 +622,7 @@ static std::string decode_param(type t, const std::string& data, size_t pos) {
       bool is_signed = t.str[0] != 'u';
       return '"' + i256_to_dec(is_signed, res) + '"';
     } else if (t.str.find("fixed") != std::string::npos) {
-      LOG(_ERROR) << "Unsuported data type double!";
+      LOG(WARNING) << "Unsuported data type double!";
       return "\"\"";
     }
     return "";
@@ -649,7 +643,7 @@ static std::string decode_param(type t, const std::string& data, size_t pos) {
     std::string res = data.substr(pos, k);
     return '"' + bin2hex(res) + '"';
   } else {
-    LOG(_ERROR) << "Undefined type: " << t.s_type;
+    LOG(WARNING) << "Undefined type: " << t.s_type;
   }
   return "";
 }
@@ -660,7 +654,7 @@ static std::string decode(const std::string& signatures_json, const std::string&
     std::stringstream sigs(signatures_json);
     sigs >> j_sigs;
   } catch (const std::exception& e) {
-    LOG(_ERROR) << "Json error: " << e.what();
+    LOG(WARNING) << "Json error: " << e.what();
     return "";
   }
 
