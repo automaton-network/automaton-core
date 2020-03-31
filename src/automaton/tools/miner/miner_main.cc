@@ -54,7 +54,7 @@ int main(int argc, char* argv[]) {
     std::cout << "beneficiary address: ";
     std::cin >> address_input;
     std::string address_bin = hex2bin(address_input);
-  } while(address_bin.size() >= 32);
+  } while (address_bin.size() >= 32);
 
   for (size_t i = 0; i < address_bin.size(); i++) {
     size_t curr = 32 - address_bin.size() + i;
