@@ -37,7 +37,7 @@ namespace ethereum {
 #define _ERROR ERROR
 #endif
 
-static size_t curl_callback(void *contents, size_t size, size_t nmemb, std::string *s) {
+inline size_t curl_callback(void *contents, size_t size, size_t nmemb, std::string *s) {
   size_t new_length = size * nmemb;
   try {
     s->append(reinterpret_cast<char*>(contents), new_length);
@@ -49,7 +49,7 @@ static size_t curl_callback(void *contents, size_t size, size_t nmemb, std::stri
   return new_length;
 }
 
-static status handle_result(const std::string& result) {
+inline status handle_result(const std::string& result) {
   json j;
   std::stringstream ss(result);
   try {
@@ -75,7 +75,7 @@ static status handle_result(const std::string& result) {
   return status::internal("No result and no error!? Received: \n" + result);
 }
 
-static status curl_post(const std::string& url, const std::string& data) {
+inline status curl_post(const std::string& url, const std::string& data) {
   CURL *curl;
   CURLcode res;
   std::string message;
@@ -118,34 +118,34 @@ static status curl_post(const std::string& url, const std::string& data) {
   }
 }
 
-static status eth_getTransactionCount(const std::string& url, const std::string& address) {
+inline status eth_getTransactionCount(const std::string& url, const std::string& address) {
   std::stringstream ss;
   ss << "{\"jsonrpc\":\"2.0\",\"method\":\"eth_getTransactionCount\",\"params\":[\"" << address <<
       "\",\"latest\"" << "],\"id\":1}";
   return curl_post(url, ss.str());
 }
 
-static status eth_getCode(const std::string& url, const std::string& address) {
+inline status eth_getCode(const std::string& url, const std::string& address) {
   std::stringstream ss;
   ss << "{\"jsonrpc\":\"2.0\",\"method\":\"eth_getCode\",\"params\":[\"" << address <<
       "\",\"latest\"" << "],\"id\":1}";
   return curl_post(url, ss.str());
 }
 
-static status eth_getBalance(const std::string& url, const std::string& address) {
+inline status eth_getBalance(const std::string& url, const std::string& address) {
   std::stringstream ss;
   ss << "{\"jsonrpc\":\"2.0\",\"method\":\"eth_getBalance\",\"params\":[\"" << address <<
       "\",\"latest\"" << "],\"id\":1}";
   return curl_post(url, ss.str());
 }
 
-static status eth_gasPrice(const std::string& url) {
+inline status eth_gasPrice(const std::string& url) {
   std::stringstream ss;
   ss << "{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}";
   return curl_post(url, ss.str());
 }
 
-static status eth_getTransactionReceipt(const std::string& url, const std::string& tx_hash) {
+inline status eth_getTransactionReceipt(const std::string& url, const std::string& tx_hash) {
   std::stringstream ss;
   ss << "{\"jsonrpc\":\"2.0\",\"method\":\"eth_getTransactionReceipt\",\"params\":[\"" << tx_hash << "\"],\"id\":1}";
   return curl_post(url, ss.str());
