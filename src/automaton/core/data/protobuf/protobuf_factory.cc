@@ -132,7 +132,7 @@ void protobuf_factory::extract_nested_messages(const Descriptor* d) {
   for (uint32_t i = 0; i < num_msg; i++) {
     const Descriptor* desc = d->nested_type(i);
     schemas.push_back(dynamic_message_factory->GetPrototype(desc));
-    schemas_names[desc->full_name()] = schemas.size() - 1;
+    schemas_names[desc->full_name()] = static_cast<uint32_t>(schemas.size()) - 1;
     extract_nested_messages(desc);
   }
 }
@@ -143,7 +143,7 @@ void protobuf_factory::extract_nested_enums(const Descriptor* d) {
   for (uint32_t i = 0; i < number_enums; i++) {
     const EnumDescriptor* edesc = d->enum_type(i);
     enums.push_back(edesc);
-    enums_names[edesc->full_name()] = enums.size() - 1;
+    enums_names[edesc->full_name()] = static_cast<uint32_t>(enums.size()) - 1;
   }
   uint32_t num_msg = d->nested_type_count();
   for (uint32_t i = 0; i < num_msg; i++) {
@@ -233,7 +233,7 @@ void protobuf_factory::import_from_file_proto(FileDescriptorProto* fdp,
   for (uint32_t i = 0; i < number_messages; i++) {
     const Descriptor* desc = fd->message_type(i);
     schemas.push_back(dynamic_message_factory->GetPrototype(desc));
-    schemas_names[desc->full_name()] = schemas.size() - 1;
+    schemas_names[desc->full_name()] = static_cast<uint32_t>(schemas.size()) - 1;
     extract_nested_messages(desc);
     extract_nested_enums(desc);
   }
@@ -242,7 +242,7 @@ void protobuf_factory::import_from_file_proto(FileDescriptorProto* fdp,
   for (uint32_t i = 0; i < number_enums; i++) {
     const EnumDescriptor* edesc = fd->enum_type(i);
     enums.push_back(edesc);
-    enums_names[edesc->full_name()] = enums.size() - 1;
+    enums_names[edesc->full_name()] = static_cast<uint32_t>(enums.size()) - 1;
   }
 }
 
@@ -302,7 +302,7 @@ std::unique_ptr<msg> protobuf_factory::new_message_by_name(const char* schema_na
 }
 
 uint32_t protobuf_factory::get_schemas_number() const {
-  return schemas.size();
+  return static_cast<uint32_t>(schemas.size());
 }
 
 uint32_t protobuf_factory::get_enums_number() const {
