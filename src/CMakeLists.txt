@@ -26,8 +26,14 @@ if (MSVC)
   add_compile_options(
     /W4
     /wd4100
-    /wd4244
+    /wd4101
     /wd4127
+    /wd4244
+    /wd4245
+    /wd4458
+    /wd4505
+    /wd4702
+    /wd4996
     /WX
   )
 else()
