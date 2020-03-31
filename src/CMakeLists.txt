@@ -38,6 +38,7 @@ else()
 #    -Wjump-misses-init
     -Wformat=2
     -Wno-unused-parameter
+    -Wno-uninitialized
     -Werror
   )
 endif()
