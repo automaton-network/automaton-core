@@ -298,9 +298,3 @@ else()
     DEPENDS ext_gmp
   )
 endif()
-
-FetchContent_GetProperties(JUCE)
-
-if (NOT JUCE_POPULATED)
-  FetchContent_Populate(JUCE)
-endif()
