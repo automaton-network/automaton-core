@@ -54,7 +54,7 @@ jobs:
       uses: microsoft/setup-msbuild@v1.0.0
     - name: configure
       working-directory: ${{ env.build_dir }}
-      run: cmake .. -DCMAKE_BUILD_TYPE=${{ matrix.configuration }} -A ${{ matrix.platform }} -Dautomaton_STATIC_RUNTIME=OFF -Dautomaton_BUILD_DEPENDENCIES=${{ env.build_deps }} -DCMAKE_INSTALL_PREFIX=../local_third_party
+      run: cmake .. -DCMAKE_BUILD_TYPE=${{ matrix.configuration }} -A ${{ matrix.platform }} -Dautomaton_STATIC_RUNTIME=ON -Dautomaton_BUILD_DEPENDENCIES=${{ env.build_deps }} -DCMAKE_INSTALL_PREFIX=../local_third_party
       shell: cmd
     - name: build
       working-directory: ${{ env.build_dir }}
