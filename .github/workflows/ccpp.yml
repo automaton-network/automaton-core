@@ -21,7 +21,7 @@ jobs:
       build_dir: ./src/build
       dist_dir: ./src/local_third_party
       build_deps: OFF
-      automaton_version: v0.1.10a
+      automaton_version: v0.1.11
     steps:
     - uses: actions/checkout@v2
     - name: Check for full rebuild
@@ -54,7 +54,7 @@ jobs:
       uses: microsoft/setup-msbuild@v1.0.0
     - name: configure
       working-directory: ${{ env.build_dir }}
-      run: cmake .. -DCMAKE_BUILD_TYPE=${{ matrix.configuration }} -A ${{ matrix.platform }} -Dautomaton_STATIC_RUNTIME=OFF -Dautomaton_BUILD_DEPENDENCIES=${{ env.build_deps }} -DCMAKE_INSTALL_PREFIX=../local_third_party
+      run: cmake .. -DCMAKE_BUILD_TYPE=${{ matrix.configuration }} -A ${{ matrix.platform }} -Dautomaton_STATIC_RUNTIME=ON -Dautomaton_BUILD_DEPENDENCIES=${{ env.build_deps }} -DCMAKE_INSTALL_PREFIX=../local_third_party
       shell: cmd
     - name: build
       working-directory: ${{ env.build_dir }}
@@ -87,7 +87,7 @@ jobs:
       dist_dir: ./src/local_third_party
       test_contracts_dir: ./contracts/test_contract
       build_deps: OFF
-      automaton_version: v0.1.10a
+      automaton_version: v0.1.11
       CTEST_OUTPUT_ON_FAILURE: 1
     steps:
     - uses: actions/checkout@v2
@@ -158,7 +158,7 @@ jobs:
       lint_dir: ./src/automaton
       dist_dir: ./src/local_third_party
       build_deps: OFF
-      automaton_version: v0.1.10a
+      automaton_version: v0.1.11
       MACOSX_DEPLOYMENT_TARGET: 10.9
     steps:
     - uses: actions/checkout@v2
