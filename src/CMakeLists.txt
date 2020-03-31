@@ -25,16 +25,16 @@ option(automaton_RUN_GANACHE_TESTS "Run tests with local ganache server" OFF)
 if (MSVC)
   add_compile_options(
     /W4
-    /wd4100
-    /wd4101
-    /wd4127
-    /wd4244
-    /wd4245
-    /wd4458
-    /wd4505
-    /wd4702
-    /wd4996
-    /WX
+#    /wd4100
+#    /wd4101
+#    /wd4127
+#    /wd4244
+#    /wd4245
+#    /wd4458
+#    /wd4505
+#    /wd4702
+#    /wd4996
+#    /WX
   )
 else()
   add_compile_options(
