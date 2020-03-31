@@ -775,7 +775,9 @@ bool simulated_acceptor::init() {
       simulation::get_simulator()->add_acceptor(address, shared_from_this());
     }
   } else {
-    LOG(WARNING) << "WARNING: Acceptor creation failed! Could not resolve address and parameters in: " << original_address;
+    LOG(WARNING)
+        << "WARNING: Acceptor creation failed! Could not resolve address and parameters in: "
+        << original_address;
     return false;
   }
   set_state(acceptor::state::not_accepting);
