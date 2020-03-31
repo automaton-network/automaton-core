@@ -29,8 +29,6 @@ inline std::string StackTrace() { return ""; }
 }
 }
 
-#define ERROR DBUG
-
 namespace automaton {
 namespace core {
 namespace io {

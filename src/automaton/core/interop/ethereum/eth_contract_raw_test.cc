@@ -47,7 +47,7 @@ int main() {
 
   auto contract = eth_contract::get_contract(CONTRACT_ADDR);
   if (contract == nullptr) {
-    LOG(ERROR) << "Contract is NULL";
+    LOG(WARNING) << "Contract is NULL";
     return 0;
   }
 

@@ -155,18 +155,18 @@ void protobuf_factory::extract_nested_enums(const Descriptor* d) {
 bool protobuf_factory::contain_invalid_data(const Descriptor* d) {
   CHECK_NOTNULL(d) << "Message descriptor is nullptr";
   if (d->oneof_decl_count() > 0) {
-    LOG(ERROR) << d->name() << " contains OneOf which is not supported";
+    LOG(WARNING) << d->name() << " contains OneOf which is not supported";
     return true;
   }
   uint32_t number_fields = d->field_count();
   for (uint32_t i = 0; i < number_fields; i++) {
     const FieldDescriptor* fd = d->field(i);
     if (fd->is_map()) {
-      LOG(ERROR) << d->name() << " contains Map which is not supported";
+      LOG(WARNING) << d->name() << " contains Map which is not supported";
       return true;
     }
     if (protobuf_type_to_type.find(fd->type()) == protobuf_type_to_type.end()) {
-      LOG(ERROR) << d->full_name() << "." << fd->name() << " is of unsupported type";
+      LOG(WARNING) << d->full_name() << "." << fd->name() << " is of unsupported type";
       return true;
     }
   }
@@ -191,7 +191,7 @@ void protobuf_factory::import_from_file_proto(FileDescriptorProto* fdp,
   if (pool->FindFileByName(name) != nullptr) {
     std::stringstream msg;
     msg << "File with name <" << name << "> already exists.";
-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
+    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
     throw std::runtime_error(msg.str());
   }
 
@@ -203,7 +203,7 @@ void protobuf_factory::import_from_file_proto(FileDescriptorProto* fdp,
     if (pool->FindFileByName(fdp->dependency(i)) == nullptr) {
       std::stringstream msg;
       msg << "Dependency <" << fdp->dependency(i) << "> was not found. Import it first.";
-      LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
+      LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
       throw std::runtime_error(msg.str());
     }
   }
@@ -213,7 +213,7 @@ void protobuf_factory::import_from_file_proto(FileDescriptorProto* fdp,
   if (proto_error_collector_.get_number_errors() > 0) {
     std::stringstream msg;
     msg << "Errors while parsing:\n" << proto_error_collector_.get_all_errors();
-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
+    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
     throw std::runtime_error(msg.str());
   }
 
@@ -225,7 +225,7 @@ void protobuf_factory::import_from_file_proto(FileDescriptorProto* fdp,
     if (contain_invalid_data(desc)) {
       std::stringstream msg;
       msg << "Message contains invalid field type! Invalid data in descriptor: " << desc->name();
-      LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
+      LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
       throw std::runtime_error(msg.str());
     }
   }
@@ -306,14 +306,14 @@ uint32_t protobuf_factory::get_schemas_number() const {
 }
 
 uint32_t protobuf_factory::get_enums_number() const {
-  return enums.size();
+  return static_cast<uint32_t>(enums.size());
 }
 
 uint32_t protobuf_factory::get_enum_id(const string& enum_name) const {
   if (enums_names.find(enum_name) == enums_names.end()) {
     std::stringstream msg;
     msg << "No enum '" << enum_name << '\'';
-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
+    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
     throw std::invalid_argument(msg.str());
   }
   return enums_names.at(enum_name);
@@ -342,7 +342,7 @@ int32_t protobuf_factory::get_enum_value(uint32_t enum_id, const string& value_n
   if (evd == nullptr) {
     std::stringstream msg;
     msg << "No enum value " << value_name;
-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
+    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
     throw std::invalid_argument(msg.str());
   }
   return evd->number();
@@ -380,7 +380,7 @@ bool protobuf_factory::is_repeated(uint32_t schema_id, uint32_t field_tag) const
   }
   std::stringstream msg;
   msg << "No field with tag: " << field_tag;
-  LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
+  LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
   throw std::invalid_argument(msg.str());
 }
 
@@ -409,7 +409,7 @@ schema::field_info protobuf_factory::get_field_info(uint32_t schema_id, uint32_t
   if (index >= static_cast<uint32_t>(desc->field_count())) {
     std::stringstream msg;
     msg << "No field with such index: " << index;
-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
+    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
     throw std::out_of_range(msg.str());
   }
   const FieldDescriptor* fdesc = desc->field(index);
@@ -436,7 +436,7 @@ uint32_t protobuf_factory::get_schema_id(const string& message_name) const {
   if (schemas_names.find(message_name) == schemas_names.end()) {
     std::stringstream msg;
     msg << "No schema '" << message_name << '\'';
-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
+    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
     throw std::invalid_argument(msg.str());
   }
   return schemas_names.at(message_name);
@@ -464,7 +464,7 @@ string protobuf_factory::get_field_type(uint32_t schema_id, uint32_t tag) const 
   }
   std::stringstream msg;
   msg << "No field with tag: " << tag;
-  LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
+  LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
   throw std::invalid_argument(msg.str());
 }
 
@@ -477,14 +477,14 @@ string protobuf_factory::get_message_field_type(uint32_t schema_id, uint32_t fie
     if (fdesc->cpp_type() != FieldDescriptor::CPPTYPE_MESSAGE) {
       std::stringstream msg;
       msg << "Field is not message!";
-      LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
+      LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
       throw std::invalid_argument(msg.str());
     }
     return fdesc->message_type()->full_name();
   }
   std::stringstream msg;
   msg << "No field with tag: " << field_tag;
-  LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
+  LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
   throw std::invalid_argument(msg.str());
 }
 
@@ -497,14 +497,14 @@ string protobuf_factory::get_enum_field_type(uint32_t schema_id, uint32_t field_
     if (fdesc->cpp_type() != FieldDescriptor::CPPTYPE_ENUM) {
       std::stringstream msg;
       msg << "Field is not enum!";
-      LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
+      LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
       throw std::invalid_argument(msg.str());
     }
     return fdesc->enum_type()->full_name();
   }
   std::stringstream msg;
   msg << "No field with tag: " << field_tag;
-  LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
+  LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
   throw std::invalid_argument(msg.str());
 }
 
@@ -519,7 +519,7 @@ uint32_t protobuf_factory::get_field_tag(uint32_t schema_id, const string& name)
   }
   std::stringstream msg;
   msg << "No field with name: " << name;
-  LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
+  LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
   throw std::invalid_argument(msg.str());
 }
 
@@ -537,7 +537,7 @@ void proto_error_collector::AddError(
         // erroneous element.
     ErrorLocation location,  // One of the location constants, above.
     const string& message) {  // Human-readable error message.
-  LOG(ERROR) << "*Error: schema: " << schema << " <" << element_name
+  LOG(WARNING) << "*Error: schema: " << schema << " <" << element_name
       << "> error message:" << message << std::endl;
   errors_number++;
   errors_list += "Error: schema: " + schema + " <" + element_name +
@@ -551,7 +551,7 @@ void proto_error_collector::AddWarning(const string& schema,  // File
         // element.
     ErrorLocation location,  // One of the location constants, above.
     const string& message) {  // Human-readable error message.
-  LOG(ERROR) << "*Warning: schema: " << schema << " <" <<
+  LOG(WARNING) << "*Warning: schema: " << schema << " <" <<
       element_name << "> error message:" << message << std::endl;
   errors_number++;
   errors_list += "Warning: schema: " + schema + " <" + element_name

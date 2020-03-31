@@ -139,7 +139,7 @@ std::string state_impl::get_node_hash(const std::string& path) {
   if (node_index == -1) {
     std::stringstream msg;
     msg << "No node at this path";
-    //  LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
+    //  LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
     throw std::out_of_range(msg.str());
   }
   uint8_t i = 0;
@@ -159,7 +159,7 @@ void state_impl::delete_node_tree(const std::string& path) {
   if (cur_node == -1 || nodes[cur_node].value == "") {
     std::stringstream msg;
     msg << "No set node at path: " << io::bin2hex(path);
-    //  LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
+    //  LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
     throw std::out_of_range(msg.str());
   }
   backup_nodes(nodes[cur_node].parent);
@@ -211,7 +211,7 @@ void state_impl::erase(const std::string& path) {
   if (cur_node == -1 || nodes[cur_node].value == "") {
     std::stringstream msg;
     msg << "No set node at path: " << io::bin2hex(path);
-    //  LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
+    //  LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
     throw std::out_of_range(msg.str());
   }
 

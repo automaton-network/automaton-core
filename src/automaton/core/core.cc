@@ -74,7 +74,7 @@ class rpc_server_handler: public automaton::core::network::http_server::server_h
         cmd += j["method"].get<std::string>();
         msg = j["msg"].get<std::string>();
       } else {
-        LOG(ERROR) << "ERROR in rpc server handler: Invalid request";
+        LOG(WARNING) << "ERROR in rpc server handler: Invalid request";
         *s = http_server::status_code::BAD_REQUEST;
         return "";
       }
@@ -84,14 +84,14 @@ class rpc_server_handler: public automaton::core::network::http_server::server_h
         CryptoPP::StringSource ss(msg, true, new CryptoPP::Base64Decoder(new CryptoPP::StringSink(params)));
       }
       if ((*script)[cmd] == nullptr) {
-        LOG(ERROR) << "ERROR in rpc server handler: Invalid request";
+        LOG(WARNING) << "ERROR in rpc server handler: Invalid request";
         *s = http_server::status_code::BAD_REQUEST;
         return "";
       }
       sol::protected_function_result pfr = (*script)[cmd](params);
       if (!pfr.valid()) {
         sol::error err = pfr;
-        LOG(ERROR) << "ERROR in rpc server handler: " << err.what();
+        LOG(WARNING) << "ERROR in rpc server handler: " << err.what();
         *s = http_server::status_code::INTERNAL_SERVER_ERROR;
         return "";
       }
@@ -99,7 +99,7 @@ class rpc_server_handler: public automaton::core::network::http_server::server_h
       if (s != nullptr) {
         *s = http_server::status_code::OK;
       } else {
-        LOG(ERROR) << "Status code variable is missing";
+        LOG(WARNING) << "Status code variable is missing";
       }
       std::string encoded;
       CryptoPP::StringSource ss(reinterpret_cast<const unsigned char*>(result.c_str()), result.size(), true,
@@ -255,7 +255,7 @@ int main(int argc, char* argv[]) {
       [&](std::string id, std::unordered_map<uint32_t, std::vector<uint32_t> > peers_list) {
     auto net = testnet::get_testnet(id);
     if (net == nullptr) {
-      LOG(ERROR) << "No testnet with id " << id;
+      LOG(WARNING) << "No testnet with id " << id;
     } else {
       net->connect(peers_list);
     }
@@ -264,7 +264,7 @@ int main(int argc, char* argv[]) {
   script.set_function("list_testnet_nodes", [&](std::string id) {
     auto net = testnet::get_testnet(id);
     if (net == nullptr) {
-      LOG(ERROR) << "No testnet with id " << id;
+      LOG(WARNING) << "No testnet with id " << id;
     } else {
       return net->list_nodes();
     }
@@ -274,12 +274,12 @@ int main(int argc, char* argv[]) {
   script.set_function("get_testnet_node_id", [&](std::string testnet_id, uint32_t index) -> std::string {
     auto net = testnet::get_testnet(testnet_id);
     if (net == nullptr) {
-      LOG(ERROR) << "No testnet with id " << testnet_id;
+      LOG(WARNING) << "No testnet with id " << testnet_id;
       return "";
     }
     std::vector<std::string> nodes = net->list_nodes();
     if (index < 1 || index > nodes.size()) {
-      LOG(ERROR) << "No node with index " << index;
+      LOG(WARNING) << "No node with index " << index;
       return "";
     }
     return nodes[index - 1];
@@ -322,7 +322,7 @@ int main(int argc, char* argv[]) {
 
   std::ifstream i("automaton/core/coreinit.json");
   if (!i.is_open()) {
-    LOG(ERROR) << "coreinit.json could not be opened";
+    LOG(WARNING) << "coreinit.json could not be opened";
   } else {
     nlohmann::json j;
     i >> j;
@@ -414,7 +414,7 @@ int main(int argc, char* argv[]) {
 
     if (!pfr.valid()) {
       sol::error err = pfr;
-      LOG(ERROR) << "Error while executing command: " << err.what();
+      LOG(WARNING) << "Error while executing command: " << err.what();
     }
   }
 

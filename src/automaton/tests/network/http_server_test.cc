@@ -42,7 +42,7 @@ class client_handler:public connection::connection_handler {
     if (s.code == automaton::core::common::status::OK) {
       return;
     }
-    LOG(ERROR) << s;
+    LOG(WARNING) << s;
   }
 };
 
@@ -73,7 +73,7 @@ void client() {
     std::this_thread::sleep_for(std::chrono::milliseconds(2000));
     connection_c -> disconnect();
   } else {
-    LOG(ERROR) << "Connection init failed!";
+    LOG(WARNING) << "Connection init failed!";
   }
 }
 

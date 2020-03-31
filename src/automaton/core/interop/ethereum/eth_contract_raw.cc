@@ -62,7 +62,7 @@ void eth_contract::register_contract(const std::string& server, const std::strin
 std::shared_ptr<eth_contract> eth_contract::get_contract(const std::string& address) {
   auto it = contracts.find(address);
   if (it == contracts.end()) {
-    LOG(ERROR) << "No contract with address " << address;
+    LOG(WARNING) << "No contract with address " << address;
     return nullptr;
   }
   return it->second;
@@ -146,14 +146,14 @@ void eth_contract::handle_message(const automaton::core::common::status& s) {
   if (j.find("id") != j.end()) {
     _call_id = j["id"].get<uint32_t>();
   } else {
-    LOG(ERROR) << "Id not found!";
+    LOG(WARNING) << "Id not found!";
     message = "";
     return;
   }
 
   auto it = callbacks.find(_call_id);
   if (it == callbacks.end()) {
-    LOG(ERROR) << "Callback with id" << _call_id << "not found!";
+    LOG(WARNING) << "Callback with id" << _call_id << "not found!";
     message = "";
     return;
   }
@@ -258,7 +258,7 @@ void eth_contract::on_connection_error(connection_id c, const automaton::core::c
   if (s.code == automaton::core::common::status::OK) {
     return;
   }
-  LOG(ERROR) << s;
+  LOG(WARNING) << s;
   callbacks.clear();
 }
 

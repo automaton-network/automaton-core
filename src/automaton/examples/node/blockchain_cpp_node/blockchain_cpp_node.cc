@@ -89,7 +89,7 @@ void blockchain_cpp_node::s_on_blob_received(uint32_t id, const std::string& blo
     b.nonce = m->get_blob(4);
     on_block(id, b);
   } else {
-    LOG(ERROR) << "Received message " << msg_type << " which is not supported!";
+    LOG(WARNING) << "Received message " << msg_type << " which is not supported!";
   }
   delete m;
 }
@@ -115,7 +115,7 @@ void blockchain_cpp_node::s_on_disconnected(uint32_t id) {
 }
 
 void blockchain_cpp_node::s_on_error(uint32_t id, const std::string& message) {
-  LOG(ERROR) << "Error node: " << nodeid << "! " << message;
+  LOG(WARNING) << "Error node: " << nodeid << "! " << message;
 }
 
 void blockchain_cpp_node::s_update(uint64_t time) {

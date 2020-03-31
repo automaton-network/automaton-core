@@ -20,7 +20,7 @@ static std::string fresult(string fname, sol::protected_function_result pfr) {
   if (!pfr.valid()) {
     sol::error err = pfr;
     string what = err.what();
-    LOG(ERROR) << "*** SCRIPT ERROR IN " << fname << "***\n" << what;
+    LOG(WARNING) << "*** SCRIPT WARNING IN " << fname << "***\n" << what;
     return what;
   }
   return "";
@@ -31,18 +31,18 @@ lua_node::lua_node(const std::string& id, const std::string& proto_id): node(id,
 lua_node::~lua_node() {}
 
 void lua_node::init() {
-  std::shared_ptr<automaton::core::smartproto::smart_protocol> proto =
+  std::shared_ptr<automaton::core::smartproto::smart_protocol> _proto =
       automaton::core::smartproto::smart_protocol::get_protocol(protoid);
-  if (!proto) {
+  if (!_proto) {
     throw std::invalid_argument("No such protocol: " + protoid);
   }
-  engine.set_factory(proto->get_factory());
+  engine.set_factory(_proto->get_factory());
   std::vector<std::string> lua_scripts;
-  auto files = proto->get_files("lua_scripts");
+  auto files = _proto->get_files("lua_scripts");
   for (auto it : files) {
     lua_scripts.push_back(it.second);
   }
-  init_bindings(proto->get_schemas(), lua_scripts, proto->get_wire_msgs(), proto->get_commands());
+  init_bindings(_proto->get_schemas(), lua_scripts, _proto->get_wire_msgs(), _proto->get_commands());
 }
 
 void lua_node::init_bindings(vector<schema*> schemas,
@@ -109,13 +109,13 @@ void lua_node::init_bindings(vector<schema*> schemas,
 
 std::string lua_node::process_cmd(const std::string& cmd, const std::string& msg) {
   if (script_on_cmd.count(cmd) != 1) {
-    LOG(ERROR) << "Invalid command! : " << cmd << " (args: " << io::bin2hex(msg) << ")";
+    LOG(WARNING) << "Invalid command! : " << cmd << " (args: " << io::bin2hex(msg) << ")";
     return "";
   }
   sol::protected_function_result pfr;
   script_mutex.lock();
   if (!script_on_cmd[cmd].valid()) {
-    LOG(ERROR) << "Invalid command " << cmd;
+    LOG(WARNING) << "Invalid command " << cmd;
     return "";
   }
   try {
@@ -127,15 +127,15 @@ std::string lua_node::process_cmd(const std::string& cmd, const std::string& msg
       pfr = script_on_cmd[cmd]();
     }
   } catch (const std::exception& e) {
-    LOG(ERROR) << "Error while executing command!!! : " << e.what();
+    LOG(WARNING) << "Error while executing command!!! : " << e.what();
   } catch (...) {
-    LOG(ERROR) << "Error while executing command!!!";
+    LOG(WARNING) << "Error while executing command!!!";
   }
   script_mutex.unlock();
   if (!pfr.valid()) {
     sol::error err = pfr;
     string what = err.what();
-    LOG(ERROR) << "*** SCRIPT ERROR IN " << cmd << "***\n" << what;
+    LOG(WARNING) << "*** SCRIPT WARNING IN " << cmd << "***\n" << what;
     return "";
   }
   std::string result = pfr;
@@ -151,7 +151,7 @@ void lua_node::script(const std::string& command, std::promise<std::string>* res
       }
       return "";
     } catch (const std::exception& e) {
-      LOG(ERROR) << e.what();
+      LOG(WARNING) << e.what();
     }
     return "";
   });
@@ -170,7 +170,7 @@ void lua_node::s_on_blob_received(peer_id p_id, const string& blob) {
       delete m;
       return r;
     } catch (const std::exception& e) {
-      LOG(ERROR) << e.what();
+      LOG(WARNING) << e.what();
     }
     return "";
   });
@@ -181,7 +181,7 @@ void lua_node::s_on_msg_sent(peer_id c, uint32_t id, const common::status& s) {
     try {
       return fresult("sent", script_on_msg_sent(c, id, s.code == status::OK));
     } catch (const std::exception& e) {
-      LOG(ERROR) << e.what();
+      LOG(WARNING) << e.what();
     }
     return "";
   });
@@ -192,7 +192,7 @@ void lua_node::s_on_connected(peer_id p_id) {
     try {
       return fresult("connected", script_on_connected(static_cast<uint32_t>(p_id)));
     } catch (const std::exception& e) {
-      LOG(ERROR) << e.what();
+      LOG(WARNING) << e.what();
     }
     return "";
   });
@@ -203,7 +203,7 @@ void lua_node::s_on_disconnected(peer_id p_id) {
     try {
       return fresult("disconnected", script_on_disconnected(static_cast<uint32_t>(p_id)));
     } catch (const std::exception& e) {
-      LOG(ERROR) << e.what();
+      LOG(WARNING) << e.what();
     }
     return "";
   });
@@ -217,7 +217,7 @@ void lua_node::s_update(uint64_t time) {
       fresult("update", script_on_update(time));
     }
   } catch (const std::exception& e) {
-    LOG(ERROR) << e.what();
+    LOG(WARNING) << e.what();
   }
 }
 
@@ -230,7 +230,7 @@ std::string lua_node::s_debug_html() {
       return "Invalid or missing debug_html() in script.";
     }
   } catch (const std::exception& e) {
-    LOG(ERROR) << e.what();
+    LOG(WARNING) << e.what();
   }
   return "";
 }

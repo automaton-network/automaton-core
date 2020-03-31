@@ -42,7 +42,7 @@ void eth_contract::register_contract(const std::string& server, const std::strin
 std::shared_ptr<eth_contract> eth_contract::get_contract(const std::string& address) {
   auto it = contracts.find(address);
   if (it == contracts.end()) {
-    LOG(ERROR) << "No contract with address " << address;
+    LOG(WARNING) << "No contract with address " << address;
     return nullptr;
   }
   return it->second;
@@ -188,7 +188,7 @@ status eth_contract::call(const std::string& fname, const std::string& params) {
     res = curl_easy_perform(curl);
     if (res != CURLE_OK) {
       size_t len = strlen(curl_err_buf);
-      LOG(ERROR) << "Curl result code != CURLE_OK. Result code: " << res;
+      LOG(WARNING) << "Curl result code != CURLE_OK. Result code: " << res;
       if (len) {
         return status::internal(std::string(curl_err_buf, len));
       }
@@ -197,7 +197,7 @@ status eth_contract::call(const std::string& fname, const std::string& params) {
       return handle_message(fname);
     }
   } else {
-    LOG(ERROR) << "No curl!";
+    LOG(WARNING) << "No curl!";
     return status::internal("No curl!");
   }
 }
@@ -209,7 +209,7 @@ status eth_contract::handle_message(const std::string& fname) {
   try {
     ss >> j;
   } catch (const std::exception& e) {
-    LOG(ERROR) << "Invalid JSON!\n" << e.what();
+    LOG(WARNING) << "Invalid JSON!\n" << e.what();
     return status::internal(e.what());
   }
   message = "";
@@ -217,12 +217,12 @@ status eth_contract::handle_message(const std::string& fname) {
   if (j.find("id") != j.end() && j["id"].is_number()) {
     result_call_id = j["id"].get<uint32_t>();
   } else {
-    LOG(ERROR) << "ID not found!";
+    LOG(WARNING) << "ID not found!";
     return status::internal("ID not found!");
   }
 
   if (result_call_id != call_id) {
-    LOG(ERROR) << "Result ID " << result_call_id << " does not match request ID: " << call_id;
+    LOG(WARNING) << "Result ID " << result_call_id << " does not match request ID: " << call_id;
     return status::internal("Result ID does not match request ID!");
   }
 
@@ -260,7 +260,7 @@ size_t eth_contract::curl_callback(void* contents, size_t size, size_t nmemb, st
         << std::string(reinterpret_cast<char*>(contents), new_length) << "\n ===== EoCH ====";
   }
   catch (std::bad_alloc& e) {
-    LOG(ERROR) << "Bad_alloc while reading data!";
+    LOG(WARNING) << "Bad_alloc while reading data!";
     return 0;
   }
   return new_length;

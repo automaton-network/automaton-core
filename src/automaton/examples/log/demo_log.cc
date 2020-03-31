@@ -45,7 +45,6 @@ int main() {
   LOG(DBUG) << "This is debug log!";
   LOG(INFO) << "This is info log!";
   LOG(WARNING) << "This is warning log!";
-  LOG(ERROR) << "This is error log!";
   VLOG(0) << "This is verbose level 0 log!";
   VLOG(1) << "This is verbose level 1 log!";
   VLOG(2) << "This is verbose level 2 log!";

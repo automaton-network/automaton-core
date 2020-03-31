@@ -48,13 +48,13 @@ std::vector<std::string> smart_protocol::list_protocols() {
 
 bool smart_protocol::load(const std::string& id, const std::string& path) {
   if (protocols.find(id) != protocols.end()) {
-    LOG(ERROR) << "A protocol with this id( " << id << ") is already loaded! ";
+    LOG(WARNING) << "A protocol with this id( " << id << ") is already loaded! ";
     return false;
   }
   std::shared_ptr<smart_protocol> proto(new smart_protocol());
   std::ifstream i(path + "config.json");
   if (!i.is_open()) {
-    LOG(ERROR) << "Error while opening " << path << "config.json";
+    LOG(WARNING) << "Error while opening " << path << "config.json";
     return false;
   } else {
     proto->config_json = std::string(std::istreambuf_iterator<char>(i), {});
