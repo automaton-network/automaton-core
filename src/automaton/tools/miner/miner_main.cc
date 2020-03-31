@@ -53,7 +53,7 @@ int main(int argc, char* argv[]) {
   do {
     std::cout << "beneficiary address: ";
     std::cin >> address_input;
-    std::string address_bin = hex2bin(address_input);
+    address_bin = hex2bin(address_input);
   } while (address_bin.size() >= 32);
 
   for (size_t i = 0; i < address_bin.size(); i++) {

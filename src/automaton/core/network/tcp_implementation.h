@@ -8,12 +8,15 @@
 #include <utility>
 #include <vector>
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wshadow"
 #include <boost/asio/basic_stream_socket.hpp>
 #include <boost/asio/buffer.hpp>
 #include <boost/asio/error.hpp>
 #include <boost/asio/io_service.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/write.hpp>
+#pragma clang diagnostic pop
 
 #include "automaton/core/network/acceptor.h"
 #include "automaton/core/network/connection.h"

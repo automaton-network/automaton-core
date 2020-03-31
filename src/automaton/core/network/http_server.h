@@ -7,8 +7,13 @@
 #include <memory>
 #include <string>
 #include <thread>
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wshadow"
 #include <boost/asio/io_service.hpp>
 #include <boost/asio/ip/tcp.hpp>
+#pragma clang diagnostic pop
+
 #include "automaton/core/io/io.h"
 
 namespace automaton {

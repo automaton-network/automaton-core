@@ -115,8 +115,8 @@ void eth_contract::call(const std::string& from_address, const std::string& fnam
       LOG(DBUG) << "Connection init was successful!";
     } else {
       conn = nullptr;
-      for (auto it = callbacks.begin(); it != callbacks.end(); ++it) {
-        it->second(automaton::core::common::status::internal("Could not connect to server!"), "");
+      for (auto _it = callbacks.begin(); _it != callbacks.end(); ++_it) {
+        _it->second(automaton::core::common::status::internal("Could not connect to server!"), "");
       }
       callbacks.clear();
       return;
@@ -139,21 +139,21 @@ void eth_contract::handle_message(const automaton::core::common::status& s) {
   }
 
   json j;
-  uint32_t call_id;
+  uint32_t _call_id;
   std::stringstream ss(message);
   ss >> j;
 
   if (j.find("id") != j.end()) {
-    call_id = j["id"].get<uint32_t>();
+    _call_id = j["id"].get<uint32_t>();
   } else {
     LOG(ERROR) << "Id not found!";
     message = "";
     return;
   }
 
-  auto it = callbacks.find(call_id);
+  auto it = callbacks.find(_call_id);
   if (it == callbacks.end()) {
-    LOG(ERROR) << "Callback with id" << call_id << "not found!";
+    LOG(ERROR) << "Callback with id" << _call_id << "not found!";
     message = "";
     return;
   }
@@ -224,9 +224,9 @@ void eth_contract::read_body() {
   }
 }
 
-void eth_contract::on_message_received(connection_id c, std::shared_ptr<char> buffer,
+void eth_contract::on_message_received(connection_id c, std::shared_ptr<char> _buffer,
     uint32_t bytes_read, uint32_t mid) {
-  std::string s(buffer.get(), bytes_read);
+  std::string s(_buffer.get(), bytes_read);
   std::cout << "=== RECEIVED ===\n" << s << "\n====" << std::endl;
   switch (mid) {
     case WAITING_HEADER: {

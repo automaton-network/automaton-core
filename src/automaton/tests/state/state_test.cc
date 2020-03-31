@@ -98,13 +98,13 @@ TEST(state_impl, node_hash_add_erase) {
     // Integrity check for all prior key/values.
     std::cout << i << std::endl;
     for (int32_t j = 0; j <= i; j++) {
-      std::string data = std::to_string(j);
-      std::string key = hash_key(j);
+      std::string data2 = std::to_string(j);
+      std::string key2 = hash_key(j);
 
-      if (data != state.get(key)) {
+      if (data2 != state.get(key2)) {
         std::cout << "Setting " << i << " fails at " << j << std::endl;
         std::cout << "Setting key " << bin2hex(keys.top())
-          << " fails " << bin2hex(key) << std::endl;
+          << " fails " << bin2hex(key2) << std::endl;
         throw "!!!";
       }
     }

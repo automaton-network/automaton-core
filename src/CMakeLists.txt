@@ -25,7 +25,21 @@ option(automaton_RUN_GANACHE_TESTS "Run tests with local ganache server" OFF)
 if (MSVC)
   add_compile_options(/W4 /wd4100 /WX)
 else()
-  add_compile_options(-Wall -Wextra -Wno-unused-parameter -Werror)
+  add_compile_options(
+    -Wall
+    -Wextra
+    -Wshadow
+#    -Wduplicated-cond
+#    -Wduplicated-branches
+#    -Wlogical-op
+    -Wnull-dereference
+#    -Wold-style-cast
+#    -Wuseless-cast
+#    -Wjump-misses-init
+    -Wformat=2
+    -Wno-unused-parameter
+    -Werror
+  )
 endif()
 
 

@@ -262,7 +262,6 @@ void simulation::handle_message(uint32_t src, uint32_t dest, const std::string& 
     uint32_t ts = destination->get_time_stamp();
     uint64_t time_of_handling = (t > ts ? t : ts) + 1 + destination->get_lag();
     destination->set_time_stamp(time_of_handling);
-    std::shared_ptr<simulation> sim = get_simulator();
     add_task(time_of_handling, std::bind(&simulation::handle_ack, sim, src, status::ok()));
   } else if (source && source->get_state() == connection::state::connected) {
     add_task(get_time() + 1, std::bind(&simulated_connection::handle_send, source));
@@ -569,13 +568,14 @@ void simulated_connection::handle_read() {
       }
     }
     if (read_some || packet.bytes_read == packet.expect_to_read) {
-      incoming_packet packet = std::move(reading.front());
+      incoming_packet next_packet = std::move(reading.front());
       reading.pop();
       auto self = shared_from_this();
       std::shared_ptr<simulation> sim = simulation::get_simulator();
       sim->add_task(sim->get_time() + 1, std::bind(&simulated_connection::handle_read, self));
-      sim->add_handlers_task([self, packet]() {
-        self->handler->on_message_received(self->id, packet.buffer, packet.bytes_read, packet.id);
+      sim->add_handlers_task([self, next_packet]() {
+        self->handler->on_message_received(self->id,
+            next_packet.buffer, next_packet.bytes_read, next_packet.id);
       });
     }
   }

@@ -67,8 +67,8 @@ static status handle_result(const std::string& result) {
     return status::internal(obj.dump());
   } else if (j.find("result") != j.end()) {
     if (j["result"].is_string()) {
-      std::string result = j["result"].get<std::string>();
-      return status::ok(result.substr(2));
+      std::string new_result = j["result"].get<std::string>();
+      return status::ok(new_result.substr(2));
     }
     return status::ok(j["result"].dump());
   }

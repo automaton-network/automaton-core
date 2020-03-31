@@ -51,7 +51,7 @@ int main() {
   s = contract->call("getOwners", "[0,16]");
   if (s.code == automaton::core::common::status::OK) {
     std::vector<std::string> res;
-    json j = json::parse(s.msg);
+    j = json::parse(s.msg);
     try {
       res = (*j.begin()).get<std::vector<std::string> >();
     } catch (const std::exception& e) {
@@ -67,7 +67,7 @@ int main() {
   s = contract->call("getDifficulties", "[15,5]");
   if (s.code == automaton::core::common::status::OK) {
     std::vector<std::string> res;
-    json j = json::parse(s.msg);
+    j = json::parse(s.msg);
     try {
       res = (*j.begin()).get<std::vector<std::string> >();
     } catch (const std::exception& e) {
@@ -83,7 +83,7 @@ int main() {
   s = contract->call("getLastClaimTimes", "[2,18]");
   if (s.code == automaton::core::common::status::OK) {
     std::vector<std::string> res;
-    json j = json::parse(s.msg);
+    j = json::parse(s.msg);
     try {
       res = (*j.begin()).get<std::vector<std::string> >();
     } catch (const std::exception& e) {
