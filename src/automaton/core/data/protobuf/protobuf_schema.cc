@@ -158,7 +158,7 @@ void protobuf_schema::add_enum_value(uint32_t enum_id, const std::string& value_
 void protobuf_schema::add_nested_message(int32_t message_id, uint32_t sub_message_id) {
   CHECK_BOUNDS(message_id, 0, static_cast<int32_t>(messages.size()) - 1)
       << "message_id out of bounds";
-  CHECK_BOUNDS(sub_message_id, 0, messages.size() - 1) << "sub_message_id out of bounds";
+  CHECK_LT(sub_message_id, messages.size()) << "sub_message_id out of bounds";
   if (messages[message_id] == nullptr || messages[sub_message_id] == nullptr) {
     std::stringstream msg;
     msg << "Message is NULL";
