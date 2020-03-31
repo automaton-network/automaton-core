@@ -1,0 +1,2663 @@
+diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
+index 3b8f8e2..4f99c75 100644
+--- a/src/CMakeLists.txt
++++ b/src/CMakeLists.txt
+@@ -25,9 +25,9 @@ option(automaton_RUN_GANACHE_TESTS "Run tests with local ganache server" OFF)
+ if (MSVC)
+   add_compile_options(
+     /W4
+-#    /wd4100
++    /wd4100
+ #    /wd4101
+-#    /wd4127
++    /wd4127
+ #    /wd4244
+ #    /wd4245
+ #    /wd4458
+diff --git a/src/automaton/core/core.cc b/src/automaton/core/core.cc
+index 5700869..5bcd8b5 100644
+--- a/src/automaton/core/core.cc
++++ b/src/automaton/core/core.cc
+@@ -74,7 +74,7 @@ class rpc_server_handler: public automaton::core::network::http_server::server_h
+         cmd += j["method"].get<std::string>();
+         msg = j["msg"].get<std::string>();
+       } else {
+-        LOG(ERROR) << "ERROR in rpc server handler: Invalid request";
++        LOG(WARNING) << "ERROR in rpc server handler: Invalid request";
+         *s = http_server::status_code::BAD_REQUEST;
+         return "";
+       }
+@@ -84,14 +84,14 @@ class rpc_server_handler: public automaton::core::network::http_server::server_h
+         CryptoPP::StringSource ss(msg, true, new CryptoPP::Base64Decoder(new CryptoPP::StringSink(params)));
+       }
+       if ((*script)[cmd] == nullptr) {
+-        LOG(ERROR) << "ERROR in rpc server handler: Invalid request";
++        LOG(WARNING) << "ERROR in rpc server handler: Invalid request";
+         *s = http_server::status_code::BAD_REQUEST;
+         return "";
+       }
+       sol::protected_function_result pfr = (*script)[cmd](params);
+       if (!pfr.valid()) {
+         sol::error err = pfr;
+-        LOG(ERROR) << "ERROR in rpc server handler: " << err.what();
++        LOG(WARNING) << "ERROR in rpc server handler: " << err.what();
+         *s = http_server::status_code::INTERNAL_SERVER_ERROR;
+         return "";
+       }
+@@ -99,7 +99,7 @@ class rpc_server_handler: public automaton::core::network::http_server::server_h
+       if (s != nullptr) {
+         *s = http_server::status_code::OK;
+       } else {
+-        LOG(ERROR) << "Status code variable is missing";
++        LOG(WARNING) << "Status code variable is missing";
+       }
+       std::string encoded;
+       CryptoPP::StringSource ss(reinterpret_cast<const unsigned char*>(result.c_str()), result.size(), true,
+@@ -255,7 +255,7 @@ int main(int argc, char* argv[]) {
+       [&](std::string id, std::unordered_map<uint32_t, std::vector<uint32_t> > peers_list) {
+     auto net = testnet::get_testnet(id);
+     if (net == nullptr) {
+-      LOG(ERROR) << "No testnet with id " << id;
++      LOG(WARNING) << "No testnet with id " << id;
+     } else {
+       net->connect(peers_list);
+     }
+@@ -264,7 +264,7 @@ int main(int argc, char* argv[]) {
+   script.set_function("list_testnet_nodes", [&](std::string id) {
+     auto net = testnet::get_testnet(id);
+     if (net == nullptr) {
+-      LOG(ERROR) << "No testnet with id " << id;
++      LOG(WARNING) << "No testnet with id " << id;
+     } else {
+       return net->list_nodes();
+     }
+@@ -274,12 +274,12 @@ int main(int argc, char* argv[]) {
+   script.set_function("get_testnet_node_id", [&](std::string testnet_id, uint32_t index) -> std::string {
+     auto net = testnet::get_testnet(testnet_id);
+     if (net == nullptr) {
+-      LOG(ERROR) << "No testnet with id " << testnet_id;
++      LOG(WARNING) << "No testnet with id " << testnet_id;
+       return "";
+     }
+     std::vector<std::string> nodes = net->list_nodes();
+     if (index < 1 || index > nodes.size()) {
+-      LOG(ERROR) << "No node with index " << index;
++      LOG(WARNING) << "No node with index " << index;
+       return "";
+     }
+     return nodes[index - 1];
+@@ -322,7 +322,7 @@ int main(int argc, char* argv[]) {
+ 
+   std::ifstream i("automaton/core/coreinit.json");
+   if (!i.is_open()) {
+-    LOG(ERROR) << "coreinit.json could not be opened";
++    LOG(WARNING) << "coreinit.json could not be opened";
+   } else {
+     nlohmann::json j;
+     i >> j;
+@@ -414,7 +414,7 @@ int main(int argc, char* argv[]) {
+ 
+     if (!pfr.valid()) {
+       sol::error err = pfr;
+-      LOG(ERROR) << "Error while executing command: " << err.what();
++      LOG(WARNING) << "Error while executing command: " << err.what();
+     }
+   }
+ 
+diff --git a/src/automaton/core/data/protobuf/protobuf_factory.cc b/src/automaton/core/data/protobuf/protobuf_factory.cc
+index 8537429..84f30f9 100644
+--- a/src/automaton/core/data/protobuf/protobuf_factory.cc
++++ b/src/automaton/core/data/protobuf/protobuf_factory.cc
+@@ -155,18 +155,18 @@ void protobuf_factory::extract_nested_enums(const Descriptor* d) {
+ bool protobuf_factory::contain_invalid_data(const Descriptor* d) {
+   CHECK_NOTNULL(d) << "Message descriptor is nullptr";
+   if (d->oneof_decl_count() > 0) {
+-    LOG(ERROR) << d->name() << " contains OneOf which is not supported";
++    LOG(WARNING) << d->name() << " contains OneOf which is not supported";
+     return true;
+   }
+   uint32_t number_fields = d->field_count();
+   for (uint32_t i = 0; i < number_fields; i++) {
+     const FieldDescriptor* fd = d->field(i);
+     if (fd->is_map()) {
+-      LOG(ERROR) << d->name() << " contains Map which is not supported";
++      LOG(WARNING) << d->name() << " contains Map which is not supported";
+       return true;
+     }
+     if (protobuf_type_to_type.find(fd->type()) == protobuf_type_to_type.end()) {
+-      LOG(ERROR) << d->full_name() << "." << fd->name() << " is of unsupported type";
++      LOG(WARNING) << d->full_name() << "." << fd->name() << " is of unsupported type";
+       return true;
+     }
+   }
+@@ -191,7 +191,7 @@ void protobuf_factory::import_from_file_proto(FileDescriptorProto* fdp,
+   if (pool->FindFileByName(name) != nullptr) {
+     std::stringstream msg;
+     msg << "File with name <" << name << "> already exists.";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::runtime_error(msg.str());
+   }
+ 
+@@ -203,7 +203,7 @@ void protobuf_factory::import_from_file_proto(FileDescriptorProto* fdp,
+     if (pool->FindFileByName(fdp->dependency(i)) == nullptr) {
+       std::stringstream msg;
+       msg << "Dependency <" << fdp->dependency(i) << "> was not found. Import it first.";
+-      LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++      LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+       throw std::runtime_error(msg.str());
+     }
+   }
+@@ -213,7 +213,7 @@ void protobuf_factory::import_from_file_proto(FileDescriptorProto* fdp,
+   if (proto_error_collector_.get_number_errors() > 0) {
+     std::stringstream msg;
+     msg << "Errors while parsing:\n" << proto_error_collector_.get_all_errors();
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::runtime_error(msg.str());
+   }
+ 
+@@ -225,7 +225,7 @@ void protobuf_factory::import_from_file_proto(FileDescriptorProto* fdp,
+     if (contain_invalid_data(desc)) {
+       std::stringstream msg;
+       msg << "Message contains invalid field type! Invalid data in descriptor: " << desc->name();
+-      LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++      LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+       throw std::runtime_error(msg.str());
+     }
+   }
+@@ -306,14 +306,14 @@ uint32_t protobuf_factory::get_schemas_number() const {
+ }
+ 
+ uint32_t protobuf_factory::get_enums_number() const {
+-  return enums.size();
++  return static_cast<uint32_t>(enums.size());
+ }
+ 
+ uint32_t protobuf_factory::get_enum_id(const string& enum_name) const {
+   if (enums_names.find(enum_name) == enums_names.end()) {
+     std::stringstream msg;
+     msg << "No enum '" << enum_name << '\'';
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   return enums_names.at(enum_name);
+@@ -342,7 +342,7 @@ int32_t protobuf_factory::get_enum_value(uint32_t enum_id, const string& value_n
+   if (evd == nullptr) {
+     std::stringstream msg;
+     msg << "No enum value " << value_name;
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   return evd->number();
+@@ -380,7 +380,7 @@ bool protobuf_factory::is_repeated(uint32_t schema_id, uint32_t field_tag) const
+   }
+   std::stringstream msg;
+   msg << "No field with tag: " << field_tag;
+-  LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++  LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+   throw std::invalid_argument(msg.str());
+ }
+ 
+@@ -409,7 +409,7 @@ schema::field_info protobuf_factory::get_field_info(uint32_t schema_id, uint32_t
+   if (index >= static_cast<uint32_t>(desc->field_count())) {
+     std::stringstream msg;
+     msg << "No field with such index: " << index;
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::out_of_range(msg.str());
+   }
+   const FieldDescriptor* fdesc = desc->field(index);
+@@ -436,7 +436,7 @@ uint32_t protobuf_factory::get_schema_id(const string& message_name) const {
+   if (schemas_names.find(message_name) == schemas_names.end()) {
+     std::stringstream msg;
+     msg << "No schema '" << message_name << '\'';
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   return schemas_names.at(message_name);
+@@ -464,7 +464,7 @@ string protobuf_factory::get_field_type(uint32_t schema_id, uint32_t tag) const
+   }
+   std::stringstream msg;
+   msg << "No field with tag: " << tag;
+-  LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++  LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+   throw std::invalid_argument(msg.str());
+ }
+ 
+@@ -477,14 +477,14 @@ string protobuf_factory::get_message_field_type(uint32_t schema_id, uint32_t fie
+     if (fdesc->cpp_type() != FieldDescriptor::CPPTYPE_MESSAGE) {
+       std::stringstream msg;
+       msg << "Field is not message!";
+-      LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++      LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+       throw std::invalid_argument(msg.str());
+     }
+     return fdesc->message_type()->full_name();
+   }
+   std::stringstream msg;
+   msg << "No field with tag: " << field_tag;
+-  LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++  LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+   throw std::invalid_argument(msg.str());
+ }
+ 
+@@ -497,14 +497,14 @@ string protobuf_factory::get_enum_field_type(uint32_t schema_id, uint32_t field_
+     if (fdesc->cpp_type() != FieldDescriptor::CPPTYPE_ENUM) {
+       std::stringstream msg;
+       msg << "Field is not enum!";
+-      LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++      LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+       throw std::invalid_argument(msg.str());
+     }
+     return fdesc->enum_type()->full_name();
+   }
+   std::stringstream msg;
+   msg << "No field with tag: " << field_tag;
+-  LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++  LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+   throw std::invalid_argument(msg.str());
+ }
+ 
+@@ -519,7 +519,7 @@ uint32_t protobuf_factory::get_field_tag(uint32_t schema_id, const string& name)
+   }
+   std::stringstream msg;
+   msg << "No field with name: " << name;
+-  LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++  LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+   throw std::invalid_argument(msg.str());
+ }
+ 
+@@ -537,7 +537,7 @@ void proto_error_collector::AddError(
+         // erroneous element.
+     ErrorLocation location,  // One of the location constants, above.
+     const string& message) {  // Human-readable error message.
+-  LOG(ERROR) << "*Error: schema: " << schema << " <" << element_name
++  LOG(WARNING) << "*Error: schema: " << schema << " <" << element_name
+       << "> error message:" << message << std::endl;
+   errors_number++;
+   errors_list += "Error: schema: " + schema + " <" + element_name +
+@@ -551,7 +551,7 @@ void proto_error_collector::AddWarning(const string& schema,  // File
+         // element.
+     ErrorLocation location,  // One of the location constants, above.
+     const string& message) {  // Human-readable error message.
+-  LOG(ERROR) << "*Warning: schema: " << schema << " <" <<
++  LOG(WARNING) << "*Warning: schema: " << schema << " <" <<
+       element_name << "> error message:" << message << std::endl;
+   errors_number++;
+   errors_list += "Warning: schema: " + schema + " <" + element_name
+diff --git a/src/automaton/core/data/protobuf/protobuf_msg.cc b/src/automaton/core/data/protobuf/protobuf_msg.cc
+index 48fd0bd..d704e5e 100644
+--- a/src/automaton/core/data/protobuf/protobuf_msg.cc
++++ b/src/automaton/core/data/protobuf/protobuf_msg.cc
+@@ -50,13 +50,13 @@ uint32_t protobuf_msg::get_repeated_field_size(uint32_t field_tag) const {
+   if (fdesc == nullptr) {
+     std::stringstream msg;
+     msg << "No field with tag: " << field_tag;
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   if (!(fdesc->is_repeated())) {
+     std::stringstream msg;
+     msg << "Field is not repeated!";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   return m->GetReflection()->FieldSize(*m, fdesc);
+@@ -79,7 +79,7 @@ bool protobuf_msg::to_json(string* output) const {
+   auto status = MessageToJsonString(*m, output);
+   if (!status.ok()) {
+     // TODO(asen): Needs better error handling
+-    LOG(ERROR) << status.error_message();
++    LOG(WARNING) << status.error_message();
+     return false;
+   }
+   return true;
+@@ -90,7 +90,7 @@ bool protobuf_msg::from_json(const string& input) {
+   auto status = JsonStringToMessage(input, m.get());
+   if (!status.ok()) {
+     // TODO(asen): Needs better error handling
+-    LOG(ERROR) << status.error_message();
++    LOG(WARNING) << status.error_message();
+     return false;
+   }
+   return true;
+@@ -108,19 +108,19 @@ void protobuf_msg::set_blob(uint32_t field_tag, const string& value) {
+   if (fdesc == nullptr) {
+     std::stringstream msg;
+     msg << "No field with tag: " << field_tag;
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   if (fdesc->is_repeated()) {
+     std::stringstream msg;
+     msg << "Field is repeated!";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   if (fdesc->cpp_type() != FieldDescriptor::CPPTYPE_STRING) {
+     std::stringstream msg;
+     msg << "Field is not blob!";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   m->GetReflection()->SetString(m.get(), fdesc, value);
+@@ -133,19 +133,19 @@ string protobuf_msg::get_blob(uint32_t field_tag) const {
+   if (fdesc == nullptr) {
+     std::stringstream msg;
+     msg << "No field with tag: " << field_tag;
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   if (fdesc->is_repeated()) {
+     std::stringstream msg;
+     msg << "Field is repeated!";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   if (fdesc->cpp_type() != FieldDescriptor::CPPTYPE_STRING) {
+     std::stringstream msg;
+     msg << "Field is not blob!";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   return m->GetReflection()->GetString(*m, fdesc);
+@@ -158,19 +158,19 @@ void protobuf_msg::set_repeated_blob(uint32_t field_tag, const string& value, in
+   if (fdesc == nullptr) {
+     std::stringstream msg;
+     msg << "No field with tag: " << field_tag;
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   if (fdesc->cpp_type() != FieldDescriptor::CPPTYPE_STRING) {
+     std::stringstream msg;
+     msg << "Field is not blob!";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   if (!(fdesc->is_repeated())) {
+     std::stringstream msg;
+     msg << "Field is not repeated!";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   const Reflection* reflect = m->GetReflection();
+@@ -188,19 +188,19 @@ string protobuf_msg::get_repeated_blob(uint32_t field_tag, int32_t index) const
+   if (fdesc == nullptr) {
+     std::stringstream msg;
+     msg << "No field with tag: " << field_tag;
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   if (fdesc->cpp_type() != FieldDescriptor::CPPTYPE_STRING) {
+     std::stringstream msg;
+     msg << "Field is not blob!";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   if (!(fdesc->is_repeated())) {
+     std::stringstream msg;
+     msg << "Field is not repeated!";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   const Reflection* reflect = m->GetReflection();
+@@ -209,7 +209,7 @@ string protobuf_msg::get_repeated_blob(uint32_t field_tag, int32_t index) const
+   } else {
+     std::stringstream msg;
+     msg << "Index out of range: " << index;
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::out_of_range(msg.str());
+   }
+ }
+@@ -223,19 +223,19 @@ void protobuf_msg::set_int32(uint32_t field_tag, int32_t value) {
+   if (fdesc == nullptr) {
+     std::stringstream msg;
+     msg << "No field with tag: " << field_tag;
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   if (fdesc->is_repeated()) {
+     std::stringstream msg;
+     msg << "Field is repeated!";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   if (fdesc->cpp_type() != FieldDescriptor::CPPTYPE_INT32) {
+     std::stringstream msg;
+     msg << "Field is not int32!";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   m->GetReflection()->SetInt32(m.get(), fdesc, value);
+@@ -248,19 +248,19 @@ int32_t protobuf_msg::get_int32(uint32_t field_tag) const {
+   if (fdesc == nullptr) {
+     std::stringstream msg;
+     msg << "No field with tag: " << field_tag;
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   if (fdesc->is_repeated()) {
+     std::stringstream msg;
+     msg << "Field is repeated!";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   if (fdesc->cpp_type() != FieldDescriptor::CPPTYPE_INT32) {
+     std::stringstream msg;
+     msg << "Field is not int32!";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   return m->GetReflection()->GetInt32(*m, fdesc);
+@@ -274,19 +274,19 @@ void protobuf_msg::set_repeated_int32(uint32_t field_tag, int32_t value, int32_t
+   if (fdesc == nullptr) {
+     std::stringstream msg;
+     msg << "No field with tag: " << field_tag;
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   if (fdesc->cpp_type() != FieldDescriptor::CPPTYPE_INT32) {
+     std::stringstream msg;
+     msg << "Field is not int32!";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   if (!(fdesc->is_repeated())) {
+     std::stringstream msg;
+     msg << "Field is not repeated!";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   const Reflection* reflect = m->GetReflection();
+@@ -304,19 +304,19 @@ int32_t protobuf_msg::get_repeated_int32(uint32_t field_tag, int32_t index) cons
+   if (fdesc == nullptr) {
+     std::stringstream msg;
+     msg << "No field with tag: " << field_tag;
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   if (fdesc->cpp_type() != FieldDescriptor::CPPTYPE_INT32) {
+     std::stringstream msg;
+     msg << "Field is not int32!";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   if (!(fdesc->is_repeated())) {
+     std::stringstream msg;
+     msg << "Field is not repeated!";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   const Reflection* reflect = m->GetReflection();
+@@ -325,7 +325,7 @@ int32_t protobuf_msg::get_repeated_int32(uint32_t field_tag, int32_t index) cons
+   } else {
+     std::stringstream msg;
+     msg << "Index out of range: " << index;
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::out_of_range(msg.str());
+   }
+ }
+@@ -339,19 +339,19 @@ void protobuf_msg::set_uint32(uint32_t field_tag, uint32_t value) {
+   if (fdesc == nullptr) {
+     std::stringstream msg;
+     msg << "No field with tag: " << field_tag;
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   if (fdesc->is_repeated()) {
+     std::stringstream msg;
+     msg << "Field is repeated!";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   if (fdesc->cpp_type() != FieldDescriptor::CPPTYPE_UINT32) {
+     std::stringstream msg;
+     msg << "Field is not uint32!";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   m->GetReflection()->SetUInt32(m.get(), fdesc, value);
+@@ -364,19 +364,19 @@ uint32_t protobuf_msg::get_uint32(uint32_t field_tag) const {
+   if (fdesc == nullptr) {
+     std::stringstream msg;
+     msg << "No field with tag: " << field_tag;
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   if (fdesc->is_repeated()) {
+     std::stringstream msg;
+     msg << "Field is repeated!";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   if (fdesc->cpp_type() != FieldDescriptor::CPPTYPE_UINT32) {
+     std::stringstream msg;
+     msg << "Field is not uint32!";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   return m->GetReflection()->GetUInt32(*m, fdesc);
+@@ -390,19 +390,19 @@ void protobuf_msg::set_repeated_uint32(uint32_t field_tag, uint32_t value, int32
+   if (fdesc == nullptr) {
+     std::stringstream msg;
+     msg << "No field with tag: " << field_tag;
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   if (fdesc->cpp_type() != FieldDescriptor::CPPTYPE_UINT32) {
+     std::stringstream msg;
+     msg << "Field is not uint32!";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   if (!(fdesc->is_repeated())) {
+     std::stringstream msg;
+     msg << "Field is not repeated!";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   const Reflection* reflect = m->GetReflection();
+@@ -420,19 +420,19 @@ uint32_t protobuf_msg::get_repeated_uint32(uint32_t field_tag, int32_t index) co
+   if (fdesc == nullptr) {
+     std::stringstream msg;
+     msg << "No field with tag: " << field_tag;
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   if (fdesc->cpp_type() != FieldDescriptor::CPPTYPE_UINT32) {
+     std::stringstream msg;
+     msg << "Field is not uint32!";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   if (!(fdesc->is_repeated())) {
+     std::stringstream msg;
+     msg << "Field is not repeated!";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   const Reflection* reflect = m->GetReflection();
+@@ -441,7 +441,7 @@ uint32_t protobuf_msg::get_repeated_uint32(uint32_t field_tag, int32_t index) co
+   } else {
+     std::stringstream msg;
+     msg << "Index out of range: " << index;
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::out_of_range(msg.str());
+   }
+ }
+@@ -455,19 +455,19 @@ void protobuf_msg::set_int64(uint32_t field_tag, int64_t value) {
+   if (fdesc == nullptr) {
+     std::stringstream msg;
+     msg << "No field with tag: " << field_tag;
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   if (fdesc->is_repeated()) {
+     std::stringstream msg;
+     msg << "Field is repeated!";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   if (fdesc->cpp_type() != FieldDescriptor::CPPTYPE_INT64) {
+     std::stringstream msg;
+     msg << "Field is not int64!";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   m->GetReflection()->SetInt64(m.get(), fdesc, value);
+@@ -480,19 +480,19 @@ int64_t protobuf_msg::get_int64(uint32_t field_tag) const {
+   if (fdesc == nullptr) {
+     std::stringstream msg;
+     msg << "No field with tag: " << field_tag;
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   if (fdesc->is_repeated()) {
+     std::stringstream msg;
+     msg << "Field is repeated!";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   if (fdesc->cpp_type() != FieldDescriptor::CPPTYPE_INT64) {
+     std::stringstream msg;
+     msg << "Field is not int64!";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   return m->GetReflection()->GetInt64(*m, fdesc);
+@@ -506,19 +506,19 @@ void protobuf_msg::set_repeated_int64(uint32_t field_tag, int64_t value, int32_t
+   if (fdesc == nullptr) {
+     std::stringstream msg;
+     msg << "No field with tag: " << field_tag;
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   if (fdesc->cpp_type() != FieldDescriptor::CPPTYPE_INT64) {
+     std::stringstream msg;
+     msg << "Field is not int64!";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   if (!(fdesc->is_repeated())) {
+     std::stringstream msg;
+     msg << "Field is not repeated!";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   const Reflection* reflect = m->GetReflection();
+@@ -536,19 +536,19 @@ int64_t protobuf_msg::get_repeated_int64(uint32_t field_tag, int32_t index) cons
+   if (fdesc == nullptr) {
+     std::stringstream msg;
+     msg << "No field with tag: " << field_tag;
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   if (fdesc->cpp_type() != FieldDescriptor::CPPTYPE_INT64) {
+     std::stringstream msg;
+     msg << "Field is not int64!";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   if (!(fdesc->is_repeated())) {
+     std::stringstream msg;
+     msg << "Field is not repeated!";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   const Reflection* reflect = m->GetReflection();
+@@ -557,7 +557,7 @@ int64_t protobuf_msg::get_repeated_int64(uint32_t field_tag, int32_t index) cons
+   } else {
+     std::stringstream msg;
+     msg << "Index out of range: " << index;
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::out_of_range(msg.str());
+   }
+ }
+@@ -571,19 +571,19 @@ void protobuf_msg::set_uint64(uint32_t field_tag, uint64_t value) {
+   if (fdesc == nullptr) {
+     std::stringstream msg;
+     msg << "No field with tag: " << field_tag;
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   if (fdesc->is_repeated()) {
+     std::stringstream msg;
+     msg << "Field is repeated!";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   if (fdesc->cpp_type() != FieldDescriptor::CPPTYPE_UINT64) {
+     std::stringstream msg;
+     msg << "Field is not uint64!";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   m->GetReflection()->SetUInt64(m.get(), fdesc, value);
+@@ -596,19 +596,19 @@ uint64_t protobuf_msg::get_uint64(uint32_t field_tag) const {
+   if (fdesc == nullptr) {
+     std::stringstream msg;
+     msg << "No field with tag: " << field_tag;
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   if (fdesc->is_repeated()) {
+     std::stringstream msg;
+     msg << "Field is repeated!";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   if (fdesc->cpp_type() != FieldDescriptor::CPPTYPE_UINT64) {
+     std::stringstream msg;
+     msg << "Field is not uint64!";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   return m->GetReflection()->GetUInt64(*m, fdesc);
+@@ -621,19 +621,19 @@ void protobuf_msg::set_repeated_uint64(uint32_t field_tag, uint64_t value, int32
+   if (fdesc == nullptr) {
+     std::stringstream msg;
+     msg << "No field with tag: " << field_tag;
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   if (fdesc->cpp_type() != FieldDescriptor::CPPTYPE_UINT64) {
+     std::stringstream msg;
+     msg << "Field is not uint64!";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   if (!(fdesc->is_repeated())) {
+     std::stringstream msg;
+     msg << "Field is not repeated!";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   const Reflection* reflect = m->GetReflection();
+@@ -651,19 +651,19 @@ uint64_t protobuf_msg::get_repeated_uint64(uint32_t field_tag, int32_t index) co
+   if (fdesc == nullptr) {
+     std::stringstream msg;
+     msg << "No field with tag: " << field_tag;
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   if (fdesc->cpp_type() != FieldDescriptor::CPPTYPE_UINT64) {
+     std::stringstream msg;
+     msg << "Field is not uint64!";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   if (!(fdesc->is_repeated())) {
+     std::stringstream msg;
+     msg << "Field is not repeated!";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   const Reflection* reflect = m->GetReflection();
+@@ -672,7 +672,7 @@ uint64_t protobuf_msg::get_repeated_uint64(uint32_t field_tag, int32_t index) co
+   } else {
+     std::stringstream msg;
+     msg << "Index out of range: " << index;
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::out_of_range(msg.str());
+   }
+ }
+@@ -686,19 +686,19 @@ void protobuf_msg::set_boolean(uint32_t field_tag, bool value) {
+   if (fdesc == nullptr) {
+     std::stringstream msg;
+     msg << "No field with tag: " << field_tag;
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   if (fdesc->is_repeated()) {
+     std::stringstream msg;
+     msg << "Field is repeated!";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   if (fdesc->cpp_type() != FieldDescriptor::CPPTYPE_BOOL) {
+     std::stringstream msg;
+     msg << "Field is not boolean!";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   m->GetReflection()->SetBool(m.get(), fdesc, value);
+@@ -711,19 +711,19 @@ bool protobuf_msg::get_boolean(uint32_t field_tag) const {
+   if (fdesc == nullptr) {
+     std::stringstream msg;
+     msg << "No field with tag: " << field_tag;
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   if (fdesc->is_repeated()) {
+     std::stringstream msg;
+     msg << "Field is repeated!";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   if (fdesc->cpp_type() != FieldDescriptor::CPPTYPE_BOOL) {
+     std::stringstream msg;
+     msg << "Field is not bool!";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   return m->GetReflection()->GetBool(*m, fdesc);
+@@ -737,19 +737,19 @@ void protobuf_msg::set_repeated_boolean(uint32_t field_tag, bool value, int32_t
+   if (fdesc == nullptr) {
+     std::stringstream msg;
+     msg << "No field with tag: " << field_tag;
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   if (fdesc->cpp_type() != FieldDescriptor::CPPTYPE_BOOL) {
+     std::stringstream msg;
+     msg << "Field is not boolean!";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   if (!(fdesc->is_repeated())) {
+     std::stringstream msg;
+     msg << "Field is not repeated!";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   const Reflection* reflect = m->GetReflection();
+@@ -767,19 +767,19 @@ bool protobuf_msg::get_repeated_boolean(uint32_t field_tag, int32_t index) const
+   if (fdesc == nullptr) {
+     std::stringstream msg;
+     msg << "No field with tag: " << field_tag;
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   if (fdesc->cpp_type() != FieldDescriptor::CPPTYPE_BOOL) {
+     std::stringstream msg;
+     msg << "Field is not boolean!";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   if (!(fdesc->is_repeated())) {
+     std::stringstream msg;
+     msg << "Field is not repeated!";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   const Reflection* reflect = m->GetReflection();
+@@ -788,7 +788,7 @@ bool protobuf_msg::get_repeated_boolean(uint32_t field_tag, int32_t index) const
+   } else {
+     std::stringstream msg;
+     msg << "Index out of range: " << index;
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::out_of_range(msg.str());
+   }
+ }
+@@ -803,19 +803,19 @@ void protobuf_msg::set_message(uint32_t field_tag, const msg& sub_message) {
+   if (fdesc == nullptr) {
+     std::stringstream msg;
+     msg << "No field with tag: " << field_tag;
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   if (fdesc->is_repeated()) {
+     std::stringstream msg;
+     msg << "Field is repeated!";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   if (fdesc->cpp_type() != FieldDescriptor::CPPTYPE_MESSAGE) {
+     std::stringstream msg;
+     msg << "Field is not message!";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   string message_type = fdesc->message_type()->full_name();  // Error
+@@ -825,7 +825,7 @@ void protobuf_msg::set_message(uint32_t field_tag, const msg& sub_message) {
+     std::stringstream msg;
+     msg << "Type of the given sub message (which is <" << sub_message_type <<
+         ">) doesn't match the field type (which is <" << message_type << ">)";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   const Reflection* reflect = m->GetReflection();
+@@ -844,20 +844,20 @@ std::unique_ptr<msg> protobuf_msg::get_message(uint32_t field_tag) const {
+   if (fdesc == nullptr) {
+     std::stringstream msg;
+     msg << "No field with tag: " << field_tag;
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   if (fdesc->is_repeated()) {
+     std::stringstream msg;
+     msg << "Field is repeated!";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   const Reflection* reflect = m->GetReflection();
+   if (fdesc->cpp_type() != FieldDescriptor::CPPTYPE_MESSAGE) {
+     std::stringstream msg;
+     msg << "Field is not message!";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   if (!(reflect->HasField(*m, fdesc))) {
+@@ -879,26 +879,26 @@ void protobuf_msg::set_repeated_message(uint32_t field_tag, const msg& sub_messa
+   if (fdesc == nullptr) {
+     std::stringstream msg;
+     msg << "No field with tag: " << field_tag;
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   if (fdesc->cpp_type() != FieldDescriptor::CPPTYPE_MESSAGE) {
+     std::stringstream msg;
+     msg << "Field is not message!";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   if (!(fdesc->is_repeated())) {
+     std::stringstream msg;
+     msg << "Field is not repeated";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   auto& sub_m = reinterpret_cast<const protobuf_msg&>(sub_message);
+   if (sub_m.m.get() == nullptr || sub_m.m->GetDescriptor() == nullptr) {
+     std::stringstream msg;
+     msg << "No sub message!";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::runtime_error(msg.str());
+   }
+   string message_type = fdesc->message_type()->full_name();  // Error
+@@ -907,7 +907,7 @@ void protobuf_msg::set_repeated_message(uint32_t field_tag, const msg& sub_messa
+     std::stringstream msg;
+     msg << "Type of the given sub message (which is <" << sub_message_type <<
+         ">) doesn't match the field type (which is <" << message_type << ">)";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   const Reflection* reflect = m->GetReflection();
+@@ -928,19 +928,19 @@ std::unique_ptr<msg> protobuf_msg::get_repeated_message(uint32_t field_tag, int3
+   if (fdesc == nullptr) {
+     std::stringstream msg;
+     msg << "No field with tag: " << field_tag;
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   if (fdesc->cpp_type() != FieldDescriptor::CPPTYPE_MESSAGE) {
+     std::stringstream msg;
+     msg << "Field is not message!";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   if (!(fdesc->is_repeated())) {
+     std::stringstream msg;
+     msg << "Field is not repeated!";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   const Reflection* reflect = m->GetReflection();
+@@ -953,7 +953,7 @@ std::unique_ptr<msg> protobuf_msg::get_repeated_message(uint32_t field_tag, int3
+   } else {
+     std::stringstream msg;
+     msg << "Index out of range: " << index;
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::out_of_range(msg.str());
+   }
+ }
+@@ -965,26 +965,26 @@ void protobuf_msg::set_enum(uint32_t field_tag, int32_t value) {
+   if (fdesc == nullptr) {
+     std::stringstream msg;
+     msg << "No field with tag: " << field_tag;
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   if (fdesc->is_repeated()) {
+     std::stringstream msg;
+     msg << "Field is repeated!";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   if (fdesc->cpp_type() != FieldDescriptor::CPPTYPE_ENUM) {
+     std::stringstream msg;
+     msg << "Field is not enum!";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   const EnumDescriptor* edesc = fdesc->enum_type();
+   if (edesc->FindValueByNumber(value) == nullptr) {
+     std::stringstream msg;
+     msg << "Enum doesn't have value: " << value;
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   m->GetReflection()->SetEnumValue(m.get(), fdesc, value);
+@@ -997,19 +997,19 @@ int32_t protobuf_msg::get_enum(uint32_t field_tag) const {
+   if (fdesc == nullptr) {
+     std::stringstream msg;
+     msg << "No field with tag: " << field_tag;
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   if (fdesc->is_repeated()) {
+     std::stringstream msg;
+     msg << "Field is repeated!";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   if (fdesc->cpp_type() != FieldDescriptor::CPPTYPE_ENUM) {
+     std::stringstream msg;
+     msg << "Field is not enum!";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   return m->GetReflection()->GetEnumValue(*m, fdesc);
+@@ -1022,26 +1022,26 @@ void protobuf_msg::set_repeated_enum(uint32_t field_tag, int32_t value, int32_t
+   if (fdesc == nullptr) {
+     std::stringstream msg;
+     msg << "No field with tag: " << field_tag;
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   if (fdesc->cpp_type() != FieldDescriptor::CPPTYPE_ENUM) {
+     std::stringstream msg;
+     msg << "Field is not enum!";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   if (!(fdesc->is_repeated())) {
+     std::stringstream msg;
+     msg << "Field is not repeated!";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   const EnumDescriptor* edesc = fdesc->enum_type();
+   if (edesc->FindValueByNumber(value) == nullptr) {
+     std::stringstream msg;
+     msg << "Enum doesn't have value: " << value;
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   const Reflection* reflect = m->GetReflection();
+@@ -1059,19 +1059,19 @@ int32_t protobuf_msg::get_repeated_enum(uint32_t field_tag, int32_t index) const
+   if (fdesc == nullptr) {
+     std::stringstream msg;
+     msg << "No field with tag: " << field_tag;
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   if (fdesc->cpp_type() != FieldDescriptor::CPPTYPE_ENUM) {
+     std::stringstream msg;
+     msg << "Field is not enum!";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   if (!(fdesc->is_repeated())) {
+     std::stringstream msg;
+     msg << "Field is not repeated!";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   const Reflection* reflect = m->GetReflection();
+@@ -1080,7 +1080,7 @@ int32_t protobuf_msg::get_repeated_enum(uint32_t field_tag, int32_t index) const
+   } else {
+     std::stringstream msg;
+     msg << "Index out of range: " << index;
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::out_of_range(msg.str());
+   }
+ }
+@@ -1094,7 +1094,7 @@ uint32_t protobuf_msg::get_field_tag(const std::string& name) const {
+   }
+   std::stringstream msg;
+   msg << "No field with name: " << name;
+-  LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++  LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+   throw std::invalid_argument(msg.str());
+ }
+ 
+diff --git a/src/automaton/core/data/protobuf/protobuf_schema.cc b/src/automaton/core/data/protobuf/protobuf_schema.cc
+index dd1757a..c2774f8 100644
+--- a/src/automaton/core/data/protobuf/protobuf_schema.cc
++++ b/src/automaton/core/data/protobuf/protobuf_schema.cc
+@@ -96,7 +96,7 @@ protobuf_schema::protobuf_schema(const std::string& proto_def) {
+   if (io_error_collector_.get_number_errors() > 0) {
+     std::stringstream msg;
+     msg << io_error_collector_.get_all_errors();
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::runtime_error(msg.str());
+   }
+   Parser parser;
+@@ -106,7 +106,7 @@ protobuf_schema::protobuf_schema(const std::string& proto_def) {
+   if (io_error_collector_.get_number_errors() > 0) {
+     std::stringstream msg;
+     msg << "Errors while parsing:\n" << io_error_collector_.get_all_errors();
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::runtime_error(msg.str());
+   }
+   // VLOG(9) << "Parsing complete";
+@@ -126,7 +126,7 @@ void protobuf_schema::add_dependency(const std::string& schema_name) {
+ uint32_t protobuf_schema::create_message(const std::string& message_name) {
+   messages.push_back(new DescriptorProto());
+   messages[messages.size() - 1]->set_name(message_name);
+-  return messages.size() - 1;
++  return static_cast<uint32_t>(messages.size()) - 1;
+ }
+ 
+ uint32_t protobuf_schema::create_enum(const std::string& enum_name) {
+@@ -140,14 +140,14 @@ void protobuf_schema::add_enum_value(uint32_t enum_id, const std::string& value_
+   if (enum_id >= enums.size()) {
+     std::stringstream msg;
+     msg << "No enum with id: " << enum_id;
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::out_of_range(msg.str());
+   }
+   EnumDescriptorProto* edp = enums[enum_id];
+   if (edp == nullptr) {
+     std::stringstream msg;
+     msg << "Enum descriptor proto is NULL";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::runtime_error(msg.str());
+   }
+   EnumValueDescriptorProto* field = edp->add_value();
+@@ -162,7 +162,7 @@ void protobuf_schema::add_nested_message(int32_t message_id, uint32_t sub_messag
+   if (messages[message_id] == nullptr || messages[sub_message_id] == nullptr) {
+     std::stringstream msg;
+     msg << "Message is NULL";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::runtime_error(msg.str());
+   }
+   DescriptorProto* dpr = messages[message_id];
+@@ -176,7 +176,7 @@ void protobuf_schema::add_message(int32_t message_id) {
+   if (messages[message_id] == nullptr) {
+     std::stringstream msg;
+     msg << "Message is NULL";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::runtime_error(msg.str());
+   }
+   DescriptorProto* m = file_descriptor_proto->add_message_type();
+@@ -187,13 +187,13 @@ void protobuf_schema::add_enum(uint32_t enum_id, int32_t message_id) {
+   if (enum_id >= enums.size()) {
+     std::stringstream msg;
+     msg << "No enum with id: " << enum_id;
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::out_of_range(msg.str());
+   }
+   if (enums[enum_id] == nullptr) {
+     std::stringstream msg;
+     msg << "Enum descriptor proto is NULL";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::runtime_error(msg.str());
+   }
+   if (message_id == -1) {
+@@ -203,13 +203,13 @@ void protobuf_schema::add_enum(uint32_t enum_id, int32_t message_id) {
+     if (message_id < 0 || static_cast<uint32_t>(message_id) >= messages.size()) {
+       std::stringstream msg;
+       msg << "No message with id: " << message_id;
+-      LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++      LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+       throw std::out_of_range(msg.str());
+     }
+     if (messages[message_id] == nullptr) {
+       std::stringstream msg;
+       msg << "Message is NULL";
+-      LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++      LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+       throw std::runtime_error(msg.str());
+     }
+     DescriptorProto* dpr = messages[message_id];
+@@ -226,14 +226,14 @@ void protobuf_schema::add_scalar_field(schema::field_info field, int32_t message
+       field.type == schema::unknown) {
+       std::stringstream msg;
+       msg << "Field type is not scalar!";
+-      LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++      LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+       throw std::invalid_argument(msg.str());
+   }
+   DescriptorProto* dpr = messages[message_id];
+   if (dpr == nullptr) {
+     std::stringstream msg;
+     msg << "Descriptor proto is NULL";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::runtime_error(msg.str());
+   }
+   FieldDescriptorProto* field_proto = dpr->add_field();
+@@ -251,14 +251,14 @@ void protobuf_schema::add_enum_field(schema::field_info field, int32_t message_i
+   if (field.type != schema::enum_type) {
+     std::stringstream msg;
+     msg << "Field is not enum!";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());
+   }
+   DescriptorProto* dpr = messages[message_id];
+   if (dpr == nullptr) {
+     std::stringstream msg;
+     msg << "Descriptor proto is NULL";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::runtime_error(msg.str());
+   }
+   FieldDescriptorProto* field_proto = dpr->add_field();
+@@ -277,14 +277,14 @@ void protobuf_schema::add_message_field(schema::field_info field, int32_t messag
+   if (field.type != schema::message_type) {
+     std::stringstream msg;
+     msg << "Field type is not message";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::invalid_argument(msg.str());;
+   }
+   DescriptorProto* dpr = messages[message_id];
+   if (dpr == nullptr) {
+     std::stringstream msg;
+     msg << "Descriptor proto is NULL";
+-    LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::runtime_error(msg.str());
+   }
+   FieldDescriptorProto* field_proto = dpr->add_field();
+diff --git a/src/automaton/core/interop/ethereum/eth_contract_curl.cc b/src/automaton/core/interop/ethereum/eth_contract_curl.cc
+index 406dc91..88dc1f5 100644
+--- a/src/automaton/core/interop/ethereum/eth_contract_curl.cc
++++ b/src/automaton/core/interop/ethereum/eth_contract_curl.cc
+@@ -42,7 +42,7 @@ void eth_contract::register_contract(const std::string& server, const std::strin
+ std::shared_ptr<eth_contract> eth_contract::get_contract(const std::string& address) {
+   auto it = contracts.find(address);
+   if (it == contracts.end()) {
+-    LOG(ERROR) << "No contract with address " << address;
++    LOG(WARNING) << "No contract with address " << address;
+     return nullptr;
+   }
+   return it->second;
+@@ -188,7 +188,7 @@ status eth_contract::call(const std::string& fname, const std::string& params) {
+     res = curl_easy_perform(curl);
+     if (res != CURLE_OK) {
+       size_t len = strlen(curl_err_buf);
+-      LOG(ERROR) << "Curl result code != CURLE_OK. Result code: " << res;
++      LOG(WARNING) << "Curl result code != CURLE_OK. Result code: " << res;
+       if (len) {
+         return status::internal(std::string(curl_err_buf, len));
+       }
+@@ -197,7 +197,7 @@ status eth_contract::call(const std::string& fname, const std::string& params) {
+       return handle_message(fname);
+     }
+   } else {
+-    LOG(ERROR) << "No curl!";
++    LOG(WARNING) << "No curl!";
+     return status::internal("No curl!");
+   }
+ }
+@@ -209,7 +209,7 @@ status eth_contract::handle_message(const std::string& fname) {
+   try {
+     ss >> j;
+   } catch (const std::exception& e) {
+-    LOG(ERROR) << "Invalid JSON!\n" << e.what();
++    LOG(WARNING) << "Invalid JSON!\n" << e.what();
+     return status::internal(e.what());
+   }
+   message = "";
+@@ -217,12 +217,12 @@ status eth_contract::handle_message(const std::string& fname) {
+   if (j.find("id") != j.end() && j["id"].is_number()) {
+     result_call_id = j["id"].get<uint32_t>();
+   } else {
+-    LOG(ERROR) << "ID not found!";
++    LOG(WARNING) << "ID not found!";
+     return status::internal("ID not found!");
+   }
+ 
+   if (result_call_id != call_id) {
+-    LOG(ERROR) << "Result ID " << result_call_id << " does not match request ID: " << call_id;
++    LOG(WARNING) << "Result ID " << result_call_id << " does not match request ID: " << call_id;
+     return status::internal("Result ID does not match request ID!");
+   }
+ 
+@@ -260,7 +260,7 @@ size_t eth_contract::curl_callback(void* contents, size_t size, size_t nmemb, st
+         << std::string(reinterpret_cast<char*>(contents), new_length) << "\n ===== EoCH ====";
+   }
+   catch (std::bad_alloc& e) {
+-    LOG(ERROR) << "Bad_alloc while reading data!";
++    LOG(WARNING) << "Bad_alloc while reading data!";
+     return 0;
+   }
+   return new_length;
+diff --git a/src/automaton/core/interop/ethereum/eth_contract_curl_test.cc b/src/automaton/core/interop/ethereum/eth_contract_curl_test.cc
+index 537960b..5486216 100644
+--- a/src/automaton/core/interop/ethereum/eth_contract_curl_test.cc
++++ b/src/automaton/core/interop/ethereum/eth_contract_curl_test.cc
+@@ -82,7 +82,7 @@ int main() {
+ 
+   auto contract = eth_contract::get_contract(CONTRACT_ADDR);
+   if (contract == nullptr) {
+-    LOG(ERROR) << "Contract is NULL";
++    LOG(WARNING) << "Contract is NULL";
+     curl_global_cleanup();
+     return 0;
+   }
+diff --git a/src/automaton/core/interop/ethereum/eth_contract_raw.cc b/src/automaton/core/interop/ethereum/eth_contract_raw.cc
+index 0e87252..8867a16 100644
+--- a/src/automaton/core/interop/ethereum/eth_contract_raw.cc
++++ b/src/automaton/core/interop/ethereum/eth_contract_raw.cc
+@@ -62,7 +62,7 @@ void eth_contract::register_contract(const std::string& server, const std::strin
+ std::shared_ptr<eth_contract> eth_contract::get_contract(const std::string& address) {
+   auto it = contracts.find(address);
+   if (it == contracts.end()) {
+-    LOG(ERROR) << "No contract with address " << address;
++    LOG(WARNING) << "No contract with address " << address;
+     return nullptr;
+   }
+   return it->second;
+@@ -146,14 +146,14 @@ void eth_contract::handle_message(const automaton::core::common::status& s) {
+   if (j.find("id") != j.end()) {
+     _call_id = j["id"].get<uint32_t>();
+   } else {
+-    LOG(ERROR) << "Id not found!";
++    LOG(WARNING) << "Id not found!";
+     message = "";
+     return;
+   }
+ 
+   auto it = callbacks.find(_call_id);
+   if (it == callbacks.end()) {
+-    LOG(ERROR) << "Callback with id" << _call_id << "not found!";
++    LOG(WARNING) << "Callback with id" << _call_id << "not found!";
+     message = "";
+     return;
+   }
+@@ -258,7 +258,7 @@ void eth_contract::on_connection_error(connection_id c, const automaton::core::c
+   if (s.code == automaton::core::common::status::OK) {
+     return;
+   }
+-  LOG(ERROR) << s;
++  LOG(WARNING) << s;
+   callbacks.clear();
+ }
+ 
+diff --git a/src/automaton/core/interop/ethereum/eth_contract_raw_test.cc b/src/automaton/core/interop/ethereum/eth_contract_raw_test.cc
+index cefa63c..fc2558a 100644
+--- a/src/automaton/core/interop/ethereum/eth_contract_raw_test.cc
++++ b/src/automaton/core/interop/ethereum/eth_contract_raw_test.cc
+@@ -47,7 +47,7 @@ int main() {
+ 
+   auto contract = eth_contract::get_contract(CONTRACT_ADDR);
+   if (contract == nullptr) {
+-    LOG(ERROR) << "Contract is NULL";
++    LOG(WARNING) << "Contract is NULL";
+     return 0;
+   }
+ 
+diff --git a/src/automaton/core/interop/ethereum/eth_transaction.cc b/src/automaton/core/interop/ethereum/eth_transaction.cc
+index 67ac42d..ab59c1f 100644
+--- a/src/automaton/core/interop/ethereum/eth_transaction.cc
++++ b/src/automaton/core/interop/ethereum/eth_transaction.cc
+@@ -75,13 +75,13 @@ std::string recover_address(const unsigned char* rsv, const unsigned char* messa
+   secp256k1_context* context = secp256k1_context_create(SECP256K1_CONTEXT_SIGN | SECP256K1_CONTEXT_VERIFY);
+   secp256k1_ecdsa_recoverable_signature signature;
+   if (!secp256k1_ecdsa_recoverable_signature_parse_compact(context, &signature, (unsigned char*)rsv, v)) {
+-    LOG(ERROR) << "Cannot parse signature!";
++    LOG(WARNING) << "Cannot parse signature!";
+     secp256k1_context_destroy(context);
+     return "";
+   }
+   secp256k1_pubkey* pubkey = new secp256k1_pubkey();
+   if (!secp256k1_ecdsa_recover(context, pubkey, &signature, (unsigned char*) message_hash)) {
+-    LOG(ERROR) << "Cannot recover signature!";
++    LOG(WARNING) << "Cannot recover signature!";
+     delete pubkey;
+     secp256k1_context_destroy(context);
+     return "";
+diff --git a/src/automaton/core/io/io.cc b/src/automaton/core/io/io.cc
+index b47ff97..d5ac07f 100644
+--- a/src/automaton/core/io/io.cc
++++ b/src/automaton/core/io/io.cc
+@@ -34,7 +34,7 @@ std::string get_file_contents(const char* filename) {
+     in.close();
+     return(contents);
+   }
+-  LOG(ERROR) << "Could not read file contents for " << filename;
++  LOG(WARNING) << "Could not read file contents for " << filename;
+   throw(errno);
+ }
+ 
+diff --git a/src/automaton/core/io/io.h b/src/automaton/core/io/io.h
+index 18cb4d2..abd652e 100644
+--- a/src/automaton/core/io/io.h
++++ b/src/automaton/core/io/io.h
+@@ -29,8 +29,6 @@ inline std::string StackTrace() { return ""; }
+ }
+ }
+ 
+-#define ERROR DBUG
+-
+ namespace automaton {
+ namespace core {
+ namespace io {
+diff --git a/src/automaton/core/network/http_server.cc b/src/automaton/core/network/http_server.cc
+index 1e6e39c..349bad2 100644
+--- a/src/automaton/core/network/http_server.cc
++++ b/src/automaton/core/network/http_server.cc
+@@ -65,7 +65,7 @@ void http_server::handle_accept(http_session* new_session, const boost::system::
+       boost::bind(&http_server::handle_accept, this, new_session,
+         boost::asio::placeholders::error));
+   } else {
+-    LOG(ERROR) << "Server error in handle_accept, deleting connection";
++    LOG(WARNING) << "Server error in handle_accept, deleting connection";
+     delete new_session;
+   }
+ }
+@@ -77,7 +77,7 @@ void http_server::run() {
+       io_service.run();
+     }
+     catch (std::exception& e) {
+-      LOG(ERROR) << "HTTP server error: " << e.what();
++      LOG(WARNING) << "HTTP server error: " << e.what();
+     }
+     LOG(INFO) << "server stopped.";
+   });
+@@ -114,9 +114,9 @@ void http_session::read_header() {
+             header = header + std::string(buffer, bytes_transferred);
+             read_header();
+           } else if (error == boost::asio::error::eof) {
+-            LOG(ERROR) << "Client has closed the connection";
++            LOG(WARNING) << "Client has closed the connection";
+           } else {
+-            LOG(ERROR) << "Server error while reading body, deleting connection";
++            LOG(WARNING) << "Server error while reading body, deleting connection";
+             delete this;
+           }
+     });
+@@ -154,9 +154,9 @@ void http_session::read_body(uint32_t body_size) {
+           body = body + std::string(buffer, bytes_transferred);
+           read_body(body_size);
+         } else if (error == boost::asio::error::eof) {
+-          LOG(ERROR) << "Client has closed the connection";
++          LOG(WARNING) << "Client has closed the connection";
+         } else {
+-          LOG(ERROR) << "Server error while reading body, deleting connection";
++          LOG(WARNING) << "Server error while reading body, deleting connection";
+           delete this;
+         }
+     });
+@@ -174,10 +174,10 @@ void http_session::read_body(uint32_t body_size) {
+           if (!error) {
+             read_header();
+           } else if (error == boost::asio::error::eof) {
+-            LOG(ERROR) << "Client has closed the connection";
++            LOG(WARNING) << "Client has closed the connection";
+             delete this;
+           } else {
+-            LOG(ERROR) << "Server error while returning response to client, deleting connection";
++            LOG(WARNING) << "Server error while returning response to client, deleting connection";
+             delete this;
+           }
+     });
+diff --git a/src/automaton/core/network/simulated_connection.cc b/src/automaton/core/network/simulated_connection.cc
+index 6e6357c..c7c955b 100644
+--- a/src/automaton/core/network/simulated_connection.cc
++++ b/src/automaton/core/network/simulated_connection.cc
+@@ -159,12 +159,12 @@ void simulation::handle_request(uint32_t src, uint32_t dest) {
+   std::shared_ptr<simulated_connection> source = std::dynamic_pointer_cast<simulated_connection>(get_connection(src));
+   std::shared_ptr<simulated_acceptor> acceptor_ = std::dynamic_pointer_cast<simulated_acceptor>(get_acceptor(dest));
+   if (!source) {
+-    LOG(ERROR) << "Connection request from unexisting peer: " << src;
++    LOG(WARNING) << "Connection request from unexisting peer: " << src;
+     // TODO(kari): accept/refuse and then error
+   }
+   uint64_t time_of_handling = get_time() + source->get_lag() + 1;
+   if (!acceptor_ || acceptor_->get_state() != acceptor::state::accepting) {
+-    LOG(ERROR) << "No such peer: " << dest;
++    LOG(WARNING) << "No such peer: " << dest;
+     std::weak_ptr<connection::connection_handler> c_handler = source->get_handler();
+     std::shared_ptr<simulation> sim = simulation::get_simulator();
+     auto c_id = source->get_id();
+@@ -218,7 +218,7 @@ void simulation::handle_request(uint32_t src, uint32_t dest) {
+       std::shared_ptr<simulation> sim = get_simulator();
+       add_task(time_of_handling, std::bind(&simulation::handle_accept, sim, src));
+     } else {
+-      LOG(ERROR) << "Error while initializing connection";
++      LOG(WARNING) << "Error while initializing connection";
+     }
+   } else {
+     // LOG(DBUG) << "refused";
+@@ -234,7 +234,7 @@ void simulation::handle_message(uint32_t src, uint32_t dest, const std::string&
+   std::shared_ptr<simulation> sim = get_simulator();
+   std::shared_ptr<simulated_connection> source = std::dynamic_pointer_cast<simulated_connection>(get_connection(src));
+   if (!destination || destination->get_state() != connection::state::connected) {
+-    LOG(ERROR) << "ERROR in handling send! Peer has disconnected or does not exist!";
++    LOG(WARNING) << "WARNING in handling send! Peer has disconnected or does not exist!";
+     if (source) {
+       uint32_t t = get_time();
+       uint32_t ts = source->get_time_stamp();
+@@ -348,9 +348,9 @@ uint32_t simulation::process(uint64_t time_) {
+         try {
+           t();
+         } catch (const std::exception& e) {
+-          LOG(ERROR) << e.what();
++          LOG(WARNING) << e.what();
+         } catch (...) {
+-          LOG(ERROR) << "Error occured";
++          LOG(WARNING) << "Error occured";
+         }
+         tasks_mutex.lock();
+       }
+@@ -371,9 +371,9 @@ void simulation::process_handlers() {
+     try {
+       t();
+     } catch (const std::exception& e) {
+-      LOG(ERROR) << e.what();
++      LOG(WARNING) << e.what();
+     } catch (...) {
+-      LOG(ERROR) << "Error occured";
++      LOG(WARNING) << "Error occured";
+     }
+     handlers_tasks_mutex.lock();
+   }
+@@ -388,7 +388,7 @@ uint64_t simulation::get_time() {
+ void simulation::set_time(uint64_t time_) {
+   std::lock_guard<std::mutex> lock(time_mutex);
+   if (time_ < simulation_time) {
+-    LOG(ERROR) << "Trying to set time < current time";
++    LOG(WARNING) << "Trying to set time < current time";
+   } else {
+     simulation_time = time_;
+   }
+@@ -473,7 +473,7 @@ simulated_connection::~simulated_connection() {
+ bool simulated_connection::init() {
+   connection_state = connection::state::disconnected;
+   if (!parse_address(original_address, &parameters, &remote_address)) {
+-    LOG(ERROR) << "ERROR: Connection creation failed! Could not resolve address and parameters in: "
++    LOG(WARNING) << "WARNING: Connection creation failed! Could not resolve address and parameters in: "
+         << original_address;
+     return false;
+   }
+@@ -483,12 +483,12 @@ bool simulated_connection::init() {
+ void simulated_connection::async_send(const std::string& message, uint32_t msg_id = 0) {
+   // LOG(DBUG) << id << " <async_send>";
+   if (message.size() < 1) {
+-    LOG(ERROR) << "Send called but no message: id -> " << msg_id;
++    LOG(WARNING) << "Send called but no message: id -> " << msg_id;
+     // LOG(DBUG) << id << " </async_send>";
+     return;
+   }
+   if (get_state() == disconnected) {
+-    LOG(ERROR) << "Cannot send message! Call connect first!";
++    LOG(WARNING) << "Cannot send message! Call connect first!";
+     // LOG(DBUG) << id << " </async_send>";
+     return;
+   }
+@@ -593,7 +593,7 @@ void simulated_connection::async_read(std::shared_ptr<char> buffer, uint32_t buf
+   */
+   // TODO(kari): If disconnected, return
+   if (num_bytes > buffer_size) {
+-    LOG(ERROR) << id << " ERROR: Buffer size " << buffer_size << " is smaller than needed (" <<
++    LOG(WARNING) << id << " WARNING: Buffer size " << buffer_size << " is smaller than needed (" <<
+         num_bytes << ")! Reading aborted!";
+     return;
+   }
+@@ -656,7 +656,7 @@ uint32_t simulated_connection::get_lag() const {
+ 
+ void simulated_connection::connect() {
+   if (!remote_address) {
+-    LOG(ERROR) << id << " Cannot connect: No address to connect to!";
++    LOG(WARNING) << id << " Cannot connect: No address to connect to!";
+     return;
+   }
+   // LOG(DBUG) << id << " <connect>";
+@@ -769,13 +769,13 @@ simulated_acceptor::~simulated_acceptor() {
+ bool simulated_acceptor::init() {
+   if (parse_address(original_address, &parameters, &address)) {
+     if (!address) {
+-      LOG(ERROR) << "ERROR: Acceptor creation failed! Acceptor address should be > 0";
++      LOG(WARNING) << "WARNING: Acceptor creation failed! Acceptor address should be > 0";
+       return false;
+     } else {
+       simulation::get_simulator()->add_acceptor(address, shared_from_this());
+     }
+   } else {
+-    LOG(ERROR) << "ERROR: Acceptor creation failed! Could not resolve address and parameters in: " << original_address;
++    LOG(WARNING) << "WARNING: Acceptor creation failed! Could not resolve address and parameters in: " << original_address;
+     return false;
+   }
+   set_state(acceptor::state::not_accepting);
+@@ -796,7 +796,7 @@ bool simulated_acceptor::parse_address(const std::string& address_, acceptor_par
+ 
+ void simulated_acceptor::start_accepting() {
+   if (!address) {
+-    LOG(ERROR) << "This should never happen! Acceptor's address is not valid! Could not accept";
++    LOG(WARNING) << "This should never happen! Acceptor's address is not valid! Could not accept";
+   }
+   set_state(acceptor::state::accepting);
+ }
+diff --git a/src/automaton/core/network/tcp_implementation.cc b/src/automaton/core/network/tcp_implementation.cc
+index 7e5fd71..348b257 100644
+--- a/src/automaton/core/network/tcp_implementation.cc
++++ b/src/automaton/core/network/tcp_implementation.cc
+@@ -51,7 +51,7 @@ tcp_connection::tcp_connection(connection_id id, const std::string& address_,
+   if (!tcp_initialized) {
+     std::stringstream msg;
+     msg << "TCP is not initialized! Call tcp_init() first!";
+-    LOG(ERROR) << address << " -> " <<  msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << address << " -> " <<  msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::runtime_error(msg.str());
+   }
+ }
+@@ -100,7 +100,7 @@ bool tcp_connection::init() {
+       parse_address(address, &ip, &port);
+       boost::asio::ip::tcp::resolver::iterator it = resolver.resolve(ip, port, boost_error_code);
+       if (boost_error_code) {
+-        LOG(ERROR) << address << " -> " <<  boost_error_code.message();
++        LOG(WARNING) << address << " -> " <<  boost_error_code.message();
+         return false;
+       } else {
+         asio_endpoint = *it;
+@@ -108,11 +108,11 @@ bool tcp_connection::init() {
+         return true;
+       }
+     } catch (...) {
+-      LOG(ERROR) << address << " -> " << "Exception";
++      LOG(WARNING) << address << " -> " << "Exception";
+       return false;
+     }
+   } else {
+-    LOG(ERROR) << address << " -> " <<  "Not initialized! tcp_init() must be called first";
++    LOG(WARNING) << address << " -> " <<  "Not initialized! tcp_init() must be called first";
+     return false;
+   }
+ }
+@@ -131,7 +131,7 @@ void tcp_connection::connect() {
+             if (boost_error_code) {
+               self->disconnect();
+               // set_state(connection::state::disconnected);
+-              LOG(ERROR) << addr << " -> " <<  boost_error_code.message();
++              LOG(WARNING) << addr << " -> " <<  boost_error_code.message();
+               c_handler->on_connection_error(cid, status::unknown(boost_error_code.message()));
+             } else {
+               self->set_state(connection::state::connected);
+@@ -142,7 +142,7 @@ void tcp_connection::connect() {
+   } else {
+     std::stringstream s;
+     s << address << " -> " <<  "Not initialized! tcp_init() must be called first";
+-    LOG(ERROR) << s.str();
++    LOG(WARNING) << s.str();
+     handler->on_connection_error(id, status::unknown(s.str()));
+     // TODO(kari): what to do here? needs to be connected
+   }
+@@ -161,7 +161,7 @@ void tcp_connection::async_send(const std::string& msg, uint32_t message_id) {
+         size_t bytes_transferred) {
+       // LOG(DBUG) << "ASYNC SEND CALLBACK " << bytes_transferred;
+       if (boost_error_code) {
+-        LOG(ERROR) << addr << " -> " <<  boost_error_code.message();
++        LOG(WARNING) << addr << " -> " <<  boost_error_code.message();
+         if (boost_error_code == boost::asio::error::broken_pipe) {
+           c_handler->on_message_sent(cid, message_id, status::aborted(boost_error_code.message()));
+           // TODO(kari): ?? handle
+@@ -178,15 +178,15 @@ void tcp_connection::async_send(const std::string& msg, uint32_t message_id) {
+       delete message;
+     });
+   } else if (!tcp_initialized) {
+-    LOG(ERROR) << address << " -> " <<  "Not initialized";
++    LOG(WARNING) << address << " -> " <<  "Not initialized";
+     handler->on_message_sent(id, message_id, status::internal("Not initialized"));
+     // TODO(kari): what to do here? needs to be connected
+   } else if (msg.size() <= 0) {
+-    LOG(ERROR) << address << " -> " <<  "Message too short";
++    LOG(WARNING) << address << " -> " <<  "Message too short";
+     handler->on_message_sent(id, message_id, status::invalid_argument("Message too short"));
+     // TODO(kari): what to do here? needs to be connected
+   } else {
+-    LOG(ERROR) << address << " -> " <<  "Socket closed or not yet connected";
++    LOG(WARNING) << address << " -> " <<  "Socket closed or not yet connected";
+     handler->on_message_sent(id, message_id, status::internal("Socket closed or not yet connected"));
+   }
+ }
+@@ -204,7 +204,7 @@ void tcp_connection::async_read(std::shared_ptr<char> buffer, uint32_t buffer_si
+           size_t bytes_transferred) {
+         if (boost_error_code) {
+           if (boost_error_code == boost::asio::error::eof) {
+-            LOG(ERROR) << addr << " -> " <<  "Peer has closed the connection";
++            LOG(WARNING) << addr << " -> " <<  "Peer has closed the connection";
+             c_handler->on_connection_error(cid, status::aborted("Peer has closed the connection"));
+             self->disconnect();
+             return;
+@@ -212,7 +212,7 @@ void tcp_connection::async_read(std::shared_ptr<char> buffer, uint32_t buffer_si
+             c_handler->on_connection_error(cid, status::aborted("Operation cancelled!"));
+             return;
+           } else {
+-            LOG(ERROR) << addr << " -> " <<  boost_error_code.message();
++            LOG(WARNING) << addr << " -> " <<  boost_error_code.message();
+             c_handler->on_connection_error(cid, status::unknown(boost_error_code.message()));
+             // TODO(kari): what errors and when should read be called?
+           }
+@@ -236,7 +236,7 @@ void tcp_connection::async_read(std::shared_ptr<char> buffer, uint32_t buffer_si
+           } else if (boost_error_code == boost::asio::error::operation_aborted) {
+             return;
+           } else {
+-            LOG(ERROR) << addr << " -> " <<  boost_error_code.message();
++            LOG(WARNING) << addr << " -> " <<  boost_error_code.message();
+             c_handler->on_connection_error(cid, status::unknown(boost_error_code.message()));
+             // TODO(kari): what errors and when should read be called?
+           }
+@@ -246,11 +246,11 @@ void tcp_connection::async_read(std::shared_ptr<char> buffer, uint32_t buffer_si
+       });
+     }
+   } else if (!tcp_initialized) {
+-    LOG(ERROR) << address << " -> " <<  "Not initialized";
++    LOG(WARNING) << address << " -> " <<  "Not initialized";
+     handler->on_connection_error(id, status::internal("Not initialized"));
+     // TODO(kari): what to do here? needs to be connected
+   } else {
+-    LOG(ERROR) << address << " -> " <<  "Socket closed";
++    LOG(WARNING) << address << " -> " <<  "Socket closed";
+     handler->on_connection_error(id, status::internal("Socket closed"));
+   }
+ }
+@@ -304,7 +304,7 @@ tcp_acceptor::tcp_acceptor(acceptor_id id, const std::string& address, std::shar
+   if (!tcp_initialized) {
+     std::stringstream msg;
+     msg << "TCP is not initialized! Call tcp_init() first!";
+-    LOG(ERROR) << address << " -> " <<  msg.str() << '\n' << el::base::debug::StackTrace();
++    LOG(WARNING) << address << " -> " <<  msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::runtime_error(msg.str());
+   }
+ }
+@@ -334,14 +334,14 @@ bool tcp_acceptor::init() {
+     parse_address(address, &ip, &port);
+     boost::asio::ip::tcp::resolver::iterator it = resolver.resolve(ip, port, boost_error_code);
+     if (boost_error_code) {
+-      LOG(ERROR) << address << " -> " <<  boost_error_code.message();
++      LOG(WARNING) << address << " -> " <<  boost_error_code.message();
+       return false;
+     } else {
+       boost::system::error_code ecc;
+       asio_acceptor.open(((boost::asio::ip::tcp::endpoint)*it).protocol());
+       asio_acceptor.bind(*it, ecc);
+       if (ecc) {
+-        LOG(ERROR) << address << " -> " <<  ecc.message();
++        LOG(WARNING) << address << " -> " <<  ecc.message();
+         return false;
+       } else {
+         std::stringstream s;
+@@ -352,7 +352,7 @@ bool tcp_acceptor::init() {
+       }
+     }
+   } else {
+-    LOG(ERROR) << address << " -> " <<  "Not initialized! tcp_init() must be called first";
++    LOG(WARNING) << address << " -> " <<  "Not initialized! tcp_init() must be called first";
+     return false;
+   }
+ }
+@@ -394,7 +394,7 @@ void tcp_acceptor::start_accepting() {
+             // LOG(DBUG) << "end of async_accept 0";
+             return;
+           }
+-          LOG(ERROR) << boost_error_code.message();
++          LOG(WARNING) << boost_error_code.message();
+           // LOG(DBUG) << "async_accept calling on_error";
+           a_handler->on_acceptor_error(self->get_id(), status::unknown(boost_error_code.message()));
+           // TODO(kari): start listen again? depends on the errors
+@@ -403,11 +403,11 @@ void tcp_acceptor::start_accepting() {
+         // LOG(DBUG) << "end of async_accept";
+       });
+   } else if (!tcp_initialized) {
+-    LOG(ERROR) <<  "Not initialized";
++    LOG(WARNING) <<  "Not initialized";
+     handler->on_acceptor_error(id, status::internal("Not initialized"));
+     // TODO(kari): what to do here? needs to be connected
+   } else {
+-    LOG(ERROR) <<  "Acceptor closed";
++    LOG(WARNING) <<  "Acceptor closed";
+     handler->on_acceptor_error(id, status::internal("Acceptor closed!"));
+   }
+ }
+@@ -457,7 +457,7 @@ void tcp_init() {
+     try {
+       asio_io_service.run();
+     } catch (const std::exception& ex) {
+-      LOG(ERROR) << el::base::debug::StackTrace();
++      LOG(WARNING) << el::base::debug::StackTrace();
+       LOG(FATAL) << "ASIO THREAD EXCEPTION: " << ex.what();
+     } catch (...) {
+       LOG(FATAL) << "EXCEPTION!!!!";
+diff --git a/src/automaton/core/node/lua_node/lua_node.cc b/src/automaton/core/node/lua_node/lua_node.cc
+index 9b26716..ef2a0ce 100644
+--- a/src/automaton/core/node/lua_node/lua_node.cc
++++ b/src/automaton/core/node/lua_node/lua_node.cc
+@@ -20,7 +20,7 @@ static std::string fresult(string fname, sol::protected_function_result pfr) {
+   if (!pfr.valid()) {
+     sol::error err = pfr;
+     string what = err.what();
+-    LOG(ERROR) << "*** SCRIPT ERROR IN " << fname << "***\n" << what;
++    LOG(WARNING) << "*** SCRIPT WARNING IN " << fname << "***\n" << what;
+     return what;
+   }
+   return "";
+@@ -31,18 +31,18 @@ lua_node::lua_node(const std::string& id, const std::string& proto_id): node(id,
+ lua_node::~lua_node() {}
+ 
+ void lua_node::init() {
+-  std::shared_ptr<automaton::core::smartproto::smart_protocol> proto =
++  std::shared_ptr<automaton::core::smartproto::smart_protocol> _proto =
+       automaton::core::smartproto::smart_protocol::get_protocol(protoid);
+-  if (!proto) {
++  if (!_proto) {
+     throw std::invalid_argument("No such protocol: " + protoid);
+   }
+-  engine.set_factory(proto->get_factory());
++  engine.set_factory(_proto->get_factory());
+   std::vector<std::string> lua_scripts;
+-  auto files = proto->get_files("lua_scripts");
++  auto files = _proto->get_files("lua_scripts");
+   for (auto it : files) {
+     lua_scripts.push_back(it.second);
+   }
+-  init_bindings(proto->get_schemas(), lua_scripts, proto->get_wire_msgs(), proto->get_commands());
++  init_bindings(_proto->get_schemas(), lua_scripts, _proto->get_wire_msgs(), _proto->get_commands());
+ }
+ 
+ void lua_node::init_bindings(vector<schema*> schemas,
+@@ -109,13 +109,13 @@ void lua_node::init_bindings(vector<schema*> schemas,
+ 
+ std::string lua_node::process_cmd(const std::string& cmd, const std::string& msg) {
+   if (script_on_cmd.count(cmd) != 1) {
+-    LOG(ERROR) << "Invalid command! : " << cmd << " (args: " << io::bin2hex(msg) << ")";
++    LOG(WARNING) << "Invalid command! : " << cmd << " (args: " << io::bin2hex(msg) << ")";
+     return "";
+   }
+   sol::protected_function_result pfr;
+   script_mutex.lock();
+   if (!script_on_cmd[cmd].valid()) {
+-    LOG(ERROR) << "Invalid command " << cmd;
++    LOG(WARNING) << "Invalid command " << cmd;
+     return "";
+   }
+   try {
+@@ -127,15 +127,15 @@ std::string lua_node::process_cmd(const std::string& cmd, const std::string& msg
+       pfr = script_on_cmd[cmd]();
+     }
+   } catch (const std::exception& e) {
+-    LOG(ERROR) << "Error while executing command!!! : " << e.what();
++    LOG(WARNING) << "Error while executing command!!! : " << e.what();
+   } catch (...) {
+-    LOG(ERROR) << "Error while executing command!!!";
++    LOG(WARNING) << "Error while executing command!!!";
+   }
+   script_mutex.unlock();
+   if (!pfr.valid()) {
+     sol::error err = pfr;
+     string what = err.what();
+-    LOG(ERROR) << "*** SCRIPT ERROR IN " << cmd << "***\n" << what;
++    LOG(WARNING) << "*** SCRIPT WARNING IN " << cmd << "***\n" << what;
+     return "";
+   }
+   std::string result = pfr;
+@@ -151,7 +151,7 @@ void lua_node::script(const std::string& command, std::promise<std::string>* res
+       }
+       return "";
+     } catch (const std::exception& e) {
+-      LOG(ERROR) << e.what();
++      LOG(WARNING) << e.what();
+     }
+     return "";
+   });
+@@ -170,7 +170,7 @@ void lua_node::s_on_blob_received(peer_id p_id, const string& blob) {
+       delete m;
+       return r;
+     } catch (const std::exception& e) {
+-      LOG(ERROR) << e.what();
++      LOG(WARNING) << e.what();
+     }
+     return "";
+   });
+@@ -181,7 +181,7 @@ void lua_node::s_on_msg_sent(peer_id c, uint32_t id, const common::status& s) {
+     try {
+       return fresult("sent", script_on_msg_sent(c, id, s.code == status::OK));
+     } catch (const std::exception& e) {
+-      LOG(ERROR) << e.what();
++      LOG(WARNING) << e.what();
+     }
+     return "";
+   });
+@@ -192,7 +192,7 @@ void lua_node::s_on_connected(peer_id p_id) {
+     try {
+       return fresult("connected", script_on_connected(static_cast<uint32_t>(p_id)));
+     } catch (const std::exception& e) {
+-      LOG(ERROR) << e.what();
++      LOG(WARNING) << e.what();
+     }
+     return "";
+   });
+@@ -203,7 +203,7 @@ void lua_node::s_on_disconnected(peer_id p_id) {
+     try {
+       return fresult("disconnected", script_on_disconnected(static_cast<uint32_t>(p_id)));
+     } catch (const std::exception& e) {
+-      LOG(ERROR) << e.what();
++      LOG(WARNING) << e.what();
+     }
+     return "";
+   });
+@@ -217,7 +217,7 @@ void lua_node::s_update(uint64_t time) {
+       fresult("update", script_on_update(time));
+     }
+   } catch (const std::exception& e) {
+-    LOG(ERROR) << e.what();
++    LOG(WARNING) << e.what();
+   }
+ }
+ 
+@@ -230,7 +230,7 @@ std::string lua_node::s_debug_html() {
+       return "Invalid or missing debug_html() in script.";
+     }
+   } catch (const std::exception& e) {
+-    LOG(ERROR) << e.what();
++    LOG(WARNING) << e.what();
+   }
+   return "";
+ }
+diff --git a/src/automaton/core/node/node.cc b/src/automaton/core/node/node.cc
+index 4ac7f7d..4da21ff 100644
+--- a/src/automaton/core/node/node.cc
++++ b/src/automaton/core/node/node.cc
+@@ -67,12 +67,12 @@ bool node::launch_node(const string& node_type, const string& node_id, const str
+   if (n == nodes.end()) {
+     std::shared_ptr<node> new_node = create(node_type, node_id, protocol_id);
+     if (new_node == nullptr) {
+-      LOG(ERROR) << "Creating node failed!";
++      LOG(WARNING) << "Creating node failed!";
+       return false;
+     }
+     bool res = new_node->set_acceptor(address);
+     if (!res) {
+-      LOG(ERROR) << "Setting acceptor at address " << address << " failed!";
++      LOG(WARNING) << "Setting acceptor at address " << address << " failed!";
+       std::cout << "!!! set acceptor failed" << std::endl;
+       return false;
+     }
+@@ -203,7 +203,7 @@ void node::dump_logs(const string& html_file) {
+   ofstream f;
+   f.open(html_file, ios_base::trunc);
+   if (!f.is_open()) {
+-    LOG(ERROR) << "Error while opening " << html_file;
++    LOG(WARNING) << "Error while opening " << html_file;
+     return;
+   }
+   f << R"(
+@@ -323,16 +323,16 @@ void node::send_message(peer_id p_id, const core::data::msg& msg, uint32_t msg_i
+     msg_blob.insert(0, 1, static_cast<char>(wire_id));
+     send_blob(p_id, msg_blob, msg_id);
+   } else {
+-    LOG(ERROR) << "Could not serialize message!";
++    LOG(WARNING) << "Could not serialize message!";
+   }
+ }
+ 
+ void node::send_blob(peer_id p_id, const string& blob, uint32_t msg_id) {
+   // LOG(DBUG) << (acceptor_ ? acceptor_->get_address() : "N/A") <<
+       // " sending message " << core::io::bin2hex(blob) << " to peer " << p_id;
+-  uint32_t blob_size = blob.size();
++  uint32_t blob_size = static_cast<uint32_t>(blob.size());
+   if (blob_size > MAX_MESSAGE_SIZE) {
+-    LOG(ERROR) << "Message size is " << blob_size << " and is too big! Max message size is " << MAX_MESSAGE_SIZE;
++    LOG(WARNING) << "Message size is " << blob_size << " and is too big! Max message size is " << MAX_MESSAGE_SIZE;
+     on_message_sent(p_id, msg_id, common::status::failed_precondition("Message size is too big!"));
+     return;
+   }
+@@ -345,13 +345,13 @@ void node::send_blob(peer_id p_id, const string& blob, uint32_t msg_id) {
+   // VLOG(9) << "LOCK " << this << " " << (acceptor_ ? acceptor_->get_address() : "N/A") << " peer " << p_id;
+   lock_guard<mutex> lock(peers_mutex);
+   if (connected_peers.find(p_id) == connected_peers.end()) {
+-    LOG(ERROR) << "Peer " << p_id << " is not connected! Call connect first!";
++    LOG(WARNING) << "Peer " << p_id << " is not connected! Call connect first!";
+     on_message_sent(p_id, msg_id, common::status::canceled("Peer is not connected!"));
+     return;
+   }
+   auto it = known_peers.find(p_id);
+   if (it == known_peers.end()) {
+-    LOG(ERROR) << "Trying to send message to unknown peer " << p_id;
++    LOG(WARNING) << "Trying to send message to unknown peer " << p_id;
+     on_message_sent(p_id, msg_id, common::status::failed_precondition("Unknown peer!"));
+     return;
+   }
+@@ -360,7 +360,7 @@ void node::send_blob(peer_id p_id, const string& blob, uint32_t msg_id) {
+       it->second.connection->async_send(new_message, msg_id);
+     }
+   } else {
+-    LOG(ERROR) << "No connection in peer " << p_id;
++    LOG(WARNING) << "No connection in peer " << p_id;
+     on_message_sent(p_id, msg_id, common::status::not_found("Not connected!"));
+   }
+   // VLOG(9) << "UNLOCK " << this << " " << (acceptor_ ? acceptor_->get_address() : "N/A") << " peer " << p_id;
+@@ -377,7 +377,7 @@ bool node::connect(peer_id p_id) {
+   auto it = known_peers.find(p_id);
+   if (it != known_peers.end()) {
+     if (it->second.connection == nullptr) {
+-      LOG(ERROR) << "Connection does not exist!";
++      LOG(WARNING) << "Connection does not exist!";
+       // VLOG(9) << "UNLOCK " << this << " " << (acceptor_ ? acceptor_->get_address() : "N/A") << " peer " << p_id;
+       return false;
+     }
+@@ -387,7 +387,7 @@ bool node::connect(peer_id p_id) {
+       return true;
+     }
+   } else {
+-    LOG(ERROR) << "No such peer " << p_id;
++    LOG(WARNING) << "No such peer " << p_id;
+   }
+   // VLOG(9) << "UNLOCK " << this << " " << (acceptor_ ? acceptor_->get_address() : "N/A") << " peer " << p_id;
+   return false;
+@@ -409,7 +409,7 @@ bool node::disconnect(peer_id p_id) {
+       // not in known peers
+     }
+   } else {
+-    LOG(ERROR) << "Peer " << p_id << " is not connected!";
++    LOG(WARNING) << "Peer " << p_id << " is not connected!";
+   }
+   // VLOG(9) << "UNLOCK " << this << " " << (acceptor_ ? acceptor_->get_address() : "N/A") << " peer " << p_id;
+   peers_mutex.unlock();
+@@ -421,21 +421,21 @@ bool node::set_acceptor(const string& address) {
+   try {
+     string protocol, addr;
+     if (!address_parser(address, &protocol, &addr)) {
+-      LOG(ERROR) << "Address was not parsed!";
++      LOG(WARNING) << "Address was not parsed!";
+       return false;
+     }
+     auto self = shared_from_this();
+     new_acceptor = std::shared_ptr<acceptor>(acceptor::create(protocol, 1, addr, self, self));
+     if (new_acceptor && !new_acceptor->init()) {
+-      LOG(ERROR) << "Acceptor initialization failed! Acceptor was not created! " << address;
++      LOG(WARNING) << "Acceptor initialization failed! Acceptor was not created! " << address;
+       return false;
+     }
+   } catch (std::exception& e) {
+-    LOG(ERROR) << "Adding acceptor failed! " << address << " Error: " << e.what();
++    LOG(WARNING) << "Adding acceptor failed! " << address << " Error: " << e.what();
+     return false;
+   }
+   if (new_acceptor == nullptr) {
+-    LOG(ERROR) << "Acceptor was not created!";
++    LOG(WARNING) << "Acceptor was not created!";
+     return false;
+   }
+   acceptor_ = new_acceptor;
+@@ -453,7 +453,7 @@ peer_id node::add_peer(const string& address) {
+   lock_guard<mutex> lock(peers_mutex);
+   for (auto it = known_peers.begin(); it != known_peers.end(); ++it) {
+     if (it->second.address == address) {
+-      LOG(ERROR) << "Already have peer " << address;
++      LOG(WARNING) << "Already have peer " << address;
+       // VLOG(9) << "UNLOCK " << this << " " << (acceptor_ ? acceptor_->get_address() : "N/A") << " addr " << address;
+       return it->first;
+     }
+@@ -467,16 +467,16 @@ peer_id node::add_peer(const string& address) {
+   try {
+     string protocol, addr;
+     if (!address_parser(address, &protocol, &addr)) {
+-      LOG(ERROR) << "Address was not parsed! " << address;
++      LOG(WARNING) << "Address was not parsed! " << address;
+     } else {
+       std::shared_ptr<node> self = shared_from_this();
+       new_connection = connection::create(protocol, info.id, addr, self);
+       if (new_connection != nullptr && !new_connection->init()) {
+-        LOG(ERROR) << "Connection initialization failed! Connection was not created!";
++        LOG(WARNING) << "Connection initialization failed! Connection was not created!";
+       }
+     }
+   } catch (std::exception& e) {
+-    LOG(ERROR) << e.what();
++    LOG(WARNING) << e.what();
+   }
+   if (new_connection == nullptr) {
+     LOG(WARNING) << "No new connection";
+@@ -542,9 +542,9 @@ bool node::address_parser(const string& s, string* protocol, string* address) {
+     *address = match[2];
+     return true;
+   } else {
+-    LOG(ERROR) << "match size: " << match.size();
++    LOG(WARNING) << "match size: " << match.size();
+     for (uint32_t i = 0; i < match.size(); i++) {
+-      LOG(ERROR) << "match " << i << " -> " << match[i];
++      LOG(WARNING) << "match " << i << " -> " << match[i];
+     }
+     *protocol = "";
+     *address = "";
+@@ -557,7 +557,7 @@ void node::on_message_received(peer_id c, std::shared_ptr<char> buffer, uint32_t
+   switch (mid) {
+     case WAITING_HEADER: {
+       if (bytes_read != HEADER_SIZE) {
+-        LOG(ERROR) << "Wrong header size received";
++        LOG(WARNING) << "Wrong header size received";
+         s_on_error(c, "Wrong header size received");
+         disconnect(c);
+         return;
+@@ -570,7 +570,7 @@ void node::on_message_received(peer_id c, std::shared_ptr<char> buffer, uint32_t
+       message_size += ((buffer.get()[0] & 0x000000ff) << 16);
+       // LOG(DBUG) << "MESSAGE SIZE: " << message_size;
+       if (!message_size || message_size > MAX_MESSAGE_SIZE) {
+-        LOG(ERROR) << "Invalid message size!";
++        LOG(WARNING) << "Invalid message size!";
+         s_on_error(c, "Invalid message size!");
+         disconnect(c);
+         return;
+@@ -631,7 +631,7 @@ void node::on_connected(peer_id c) {
+   peers_mutex.lock();
+   auto it = known_peers.find(c);
+   if (it == known_peers.end()) {
+-    LOG(ERROR) << "Connected to unknown peer " << c << " THIS SHOULD NEVER HAPPEN";
++    LOG(WARNING) << "Connected to unknown peer " << c << " THIS SHOULD NEVER HAPPEN";
+     // VLOG(9) << "UNLOCK " << this << " " << (acceptor_ ? acceptor_->get_address() : "N/A") << " peer " << c
+         // << (it->second.address);
+     peers_mutex.unlock();
+@@ -658,7 +658,7 @@ void node::on_disconnected(peer_id c) {
+     peers_mutex.unlock();
+     s_on_disconnected(c);
+   } else {
+-    LOG(ERROR) << "No such peer " << c;
++    LOG(WARNING) << "No such peer " << c;
+     // VLOG(9) << "UNLOCK " << this << " " << (acceptor_ ? acceptor_->get_address() : "N/A") << " peer " << c;
+     peers_mutex.unlock();
+   }
+@@ -678,7 +678,7 @@ bool node::on_requested(acceptor_id a, const string& address, peer_id* id) {
+   lock_guard<mutex> lock(peers_mutex);
+   for (auto it = known_peers.begin(); it != known_peers.end(); ++it) {
+     if (it->second.address == address) {
+-      LOG(ERROR) << "Already have peer " << address;
++      LOG(WARNING) << "Already have peer " << address;
+       // VLOG(9) << "UNLOCK " << this << " " << (acceptor_ ? acceptor_->get_address() : "N/A") << " addr " << address;
+       return false;
+     }
+@@ -704,7 +704,7 @@ void node::on_connected(acceptor_id a, std::shared_ptr<network::connection> c, c
+   if (it == known_peers.end()) {
+     // VLOG(9) << "UNLOCK " << this << " " << (acceptor_ ? acceptor_->get_address() : "N/A") << " addr " << address;
+     peers_mutex.unlock();
+-    LOG(ERROR) << "Connected to unknown peer " << id << " (" << address << ')' << " THIS SHOULD NEVER HAPPEN";
++    LOG(WARNING) << "Connected to unknown peer " << id << " (" << address << ')' << " THIS SHOULD NEVER HAPPEN";
+     return;
+   }
+   it->second.connection = std::shared_ptr<network::connection> (c);
+diff --git a/src/automaton/core/script/bind_data.cc b/src/automaton/core/script/bind_data.cc
+index de7e73b..c01090d 100644
+--- a/src/automaton/core/script/bind_data.cc
++++ b/src/automaton/core/script/bind_data.cc
+@@ -19,9 +19,9 @@ void engine::bind_data() {
+   auto msg_type = create_simple_usertype<msg>();
+ 
+   msg_type.set(sol::meta_function::index,
+-    [this](sol::this_state L, msg& m, std::string key) -> sol::object {
++    [this](sol::this_state _L, msg& m, std::string key) -> sol::object {
+       VLOG(9) << "Getting key: " << key;
+-      sol::state_view lua(L);
++      sol::state_view lua(_L);
+       auto tag_id = m.get_field_tag(key);
+       auto fi = m.get_field_info_by_tag(tag_id);
+       auto ftype = fi.type;
+@@ -33,9 +33,9 @@ void engine::bind_data() {
+             for (uint32_t i = 0; i < n; i++) {
+               result.add(m.get_repeated_int32(tag_id, i));
+             }
+-            return sol::make_object(L, result);
++            return sol::make_object(_L, result);
+           } else {
+-            return sol::make_object(L, m.get_int32(tag_id));
++            return sol::make_object(_L, m.get_int32(tag_id));
+           }
+         }
+         case schema::int64: {
+@@ -45,9 +45,9 @@ void engine::bind_data() {
+             for (uint32_t i = 0; i < n; i++) {
+               result.add(m.get_repeated_int64(tag_id, i));
+             }
+-            return sol::make_object(L, result);
++            return sol::make_object(_L, result);
+           } else {
+-            return sol::make_object(L, m.get_int64(tag_id));
++            return sol::make_object(_L, m.get_int64(tag_id));
+           }
+         }
+         case schema::uint32: {
+@@ -57,9 +57,9 @@ void engine::bind_data() {
+             for (uint32_t i = 0; i < n; i++) {
+               result.add(m.get_repeated_uint32(tag_id, i));
+             }
+-            return sol::make_object(L, result);
++            return sol::make_object(_L, result);
+           } else {
+-            return sol::make_object(L, m.get_uint32(tag_id));
++            return sol::make_object(_L, m.get_uint32(tag_id));
+           }
+         }
+         case schema::uint64: {
+@@ -71,7 +71,7 @@ void engine::bind_data() {
+             }
+             return result;
+           } else {
+-            return sol::make_object(L, m.get_uint64(tag_id));
++            return sol::make_object(_L, m.get_uint64(tag_id));
+           }
+         }
+         case schema::blob: {
+@@ -81,9 +81,9 @@ void engine::bind_data() {
+             for (uint32_t i = 0; i < n; i++) {
+               result.add(m.get_repeated_blob(tag_id, i));
+             }
+-            return sol::make_object(L, result);
++            return sol::make_object(_L, result);
+           } else {
+-            return sol::make_object(L, m.get_blob(tag_id));
++            return sol::make_object(_L, m.get_blob(tag_id));
+           }
+         }
+         case schema::message_type: {
+@@ -93,16 +93,16 @@ void engine::bind_data() {
+             for (uint32_t i = 0; i < n; i++) {
+               result.add(m.get_repeated_message(tag_id, i));
+             }
+-            return sol::make_object(L, result);
++            return sol::make_object(_L, result);
+           } else {
+-            return sol::make_object(L, m.get_message(tag_id));
++            return sol::make_object(_L, m.get_message(tag_id));
+           }
+         }
+         default: {
+-          return sol::make_object(L, sol::lua_nil);
++          return sol::make_object(_L, sol::lua_nil);
+         }
+       }
+-      return sol::make_object(L, sol::lua_nil);
++      return sol::make_object(_L, sol::lua_nil);
+     });
+ 
+   msg_type.set(sol::meta_function::new_index,
+@@ -168,7 +168,7 @@ void engine::bind_data() {
+           break;
+         }
+         default: {
+-          LOG(ERROR) << "WAT?";
++          LOG(WARNING) << "WAT?";
+         }
+       }
+     });
+diff --git a/src/automaton/core/script/registry.cc b/src/automaton/core/script/registry.cc
+index 59f1849..dd37c70 100644
+--- a/src/automaton/core/script/registry.cc
++++ b/src/automaton/core/script/registry.cc
+@@ -20,7 +20,7 @@ void module::add_function(const std::string function_name, module_static_functio
+   if (functions_.count(function_name) > 0) {
+     std::stringstream ss;
+     ss << "Module " << name() << " already has function named " << function_name;
+-    LOG(ERROR) << ss.str();
++    LOG(WARNING) << ss.str();
+     throw ss.str();
+   }
+ 
+@@ -77,7 +77,7 @@ void module::bind_schemas() {
+       } catch (...) {
+         std::stringstream ss;
+         ss << "Could not locate concept schema for " << concept.name;
+-        LOG(ERROR) << ss.str();
++        LOG(WARNING) << ss.str();
+         throw ss.str();
+       }
+     }
+@@ -96,7 +96,7 @@ void module::add_implementation(const std::string implementation,
+   if (implementations_.count(implementation) > 0) {
+     std::stringstream ss;
+     ss << "Module " << name() << " already has implementation for " << implementation;
+-    LOG(ERROR) << ss.str();
++    LOG(WARNING) << ss.str();
+     throw ss.str();
+   }
+   implementation_info info;
+@@ -122,7 +122,7 @@ void module::check_implementation(const std::string implementation) {
+   } catch (...) {
+     std::stringstream ss;
+     ss << "Could not locate constructor message schema for " << full_scope_implementation;
+-    LOG(ERROR) << ss.str();
++    LOG(WARNING) << ss.str();
+     throw ss.str();
+   }
+ }
+@@ -275,7 +275,7 @@ std::unique_ptr<common::obj> registry::create(const data::msg& m) {
+     if (modules_.count(module_name) == 0) {
+       std::stringstream msg;
+       msg << "No such module " << module_name;
+-      LOG(ERROR) << msg.str();
++      LOG(WARNING) << msg.str();
+       throw std::invalid_argument(msg.str());
+     }
+     auto& mod = modules_.at(module_name);
+@@ -283,7 +283,7 @@ std::unique_ptr<common::obj> registry::create(const data::msg& m) {
+     if (impls.count(object_type) == 0) {
+       std::stringstream msg;
+       msg << "No factory found for object type " << object_type << " in module " << module_name;
+-      LOG(ERROR) << msg.str();
++      LOG(WARNING) << msg.str();
+       throw std::invalid_argument(msg.str());
+     }
+     return impls.at(object_type).func(m);
+diff --git a/src/automaton/core/smartproto/smart_protocol.cc b/src/automaton/core/smartproto/smart_protocol.cc
+index 190184d..543ad88 100644
+--- a/src/automaton/core/smartproto/smart_protocol.cc
++++ b/src/automaton/core/smartproto/smart_protocol.cc
+@@ -48,13 +48,13 @@ std::vector<std::string> smart_protocol::list_protocols() {
+ 
+ bool smart_protocol::load(const std::string& id, const std::string& path) {
+   if (protocols.find(id) != protocols.end()) {
+-    LOG(ERROR) << "A protocol with this id( " << id << ") is already loaded! ";
++    LOG(WARNING) << "A protocol with this id( " << id << ") is already loaded! ";
+     return false;
+   }
+   std::shared_ptr<smart_protocol> proto(new smart_protocol());
+   std::ifstream i(path + "config.json");
+   if (!i.is_open()) {
+-    LOG(ERROR) << "Error while opening " << path << "config.json";
++    LOG(WARNING) << "Error while opening " << path << "config.json";
+     return false;
+   } else {
+     proto->config_json = std::string(std::istreambuf_iterator<char>(i), {});
+diff --git a/src/automaton/core/state/state_impl.cc b/src/automaton/core/state/state_impl.cc
+index e418229..57fb71f 100644
+--- a/src/automaton/core/state/state_impl.cc
++++ b/src/automaton/core/state/state_impl.cc
+@@ -139,7 +139,7 @@ std::string state_impl::get_node_hash(const std::string& path) {
+   if (node_index == -1) {
+     std::stringstream msg;
+     msg << "No node at this path";
+-    //  LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    //  LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::out_of_range(msg.str());
+   }
+   uint8_t i = 0;
+@@ -159,7 +159,7 @@ void state_impl::delete_node_tree(const std::string& path) {
+   if (cur_node == -1 || nodes[cur_node].value == "") {
+     std::stringstream msg;
+     msg << "No set node at path: " << io::bin2hex(path);
+-    //  LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    //  LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::out_of_range(msg.str());
+   }
+   backup_nodes(nodes[cur_node].parent);
+@@ -211,7 +211,7 @@ void state_impl::erase(const std::string& path) {
+   if (cur_node == -1 || nodes[cur_node].value == "") {
+     std::stringstream msg;
+     msg << "No set node at path: " << io::bin2hex(path);
+-    //  LOG(ERROR) << msg.str() << '\n' << el::base::debug::StackTrace();
++    //  LOG(WARNING) << msg.str() << '\n' << el::base::debug::StackTrace();
+     throw std::out_of_range(msg.str());
+   }
+ 
+diff --git a/src/automaton/core/testnet/testnet.cc b/src/automaton/core/testnet/testnet.cc
+index d29566d..9aedb8e 100644
+--- a/src/automaton/core/testnet/testnet.cc
++++ b/src/automaton/core/testnet/testnet.cc
+@@ -20,13 +20,13 @@ bool testnet::create_testnet(const std::string& node_type, const std::string& id
+     std::vector<uint32_t> > peer_list) {
+   auto it = testnets.find(id);
+   if (it != testnets.end()) {
+-    LOG(ERROR) << "Testnet with id " << id << " already exists!";
++    LOG(WARNING) << "Testnet with id " << id << " already exists!";
+     return false;
+   }
+   auto net = std::unique_ptr<testnet>(new testnet(node_type, id, smart_protocol_id, ntype, number_nodes));
+   bool initialised = net->init();
+   if (!initialised) {
+-    LOG(ERROR) << "Testnet " << id << " initialization failed!";
++    LOG(WARNING) << "Testnet " << id << " initialization failed!";
+     return false;
+   }
+   net->connect(peer_list);
+@@ -81,7 +81,7 @@ void testnet::connect(const std::unordered_map<uint32_t, std::vector<uint32_t> >
+     nid << id << it->first;
+     std::shared_ptr<automaton::core::node::node> n = automaton::core::node::node::get_node(nid.str());
+     if (n == nullptr) {
+-      LOG(ERROR) << "No such node: " << nid.str();
++      LOG(WARNING) << "No such node: " << nid.str();
+       continue;
+     }
+     const std::vector<uint32_t>& peers = it->second;
+@@ -136,7 +136,7 @@ p -> number of peers
+ std::unordered_map<uint32_t, std::vector<uint32_t> > create_connections_vector(uint32_t n, uint32_t p) {
+   std::unordered_map<uint32_t, std::vector<uint32_t> > result;
+   if (p >= ((n + 1) / 2)) {
+-    LOG(ERROR) << "'p' is too big! Setting 'p' to max valid number of peers for 'n' = " << n << " : " <<
++    LOG(WARNING) << "'p' is too big! Setting 'p' to max valid number of peers for 'n' = " << n << " : " <<
+         ((n + 1) / 2 - 1);
+     return result;
+   }
+@@ -154,7 +154,7 @@ std::unordered_map<uint32_t, std::vector<uint32_t> > create_rnd_connections_vect
+   std::unordered_map<uint32_t, std::vector<uint32_t> > result;
+   uint32_t k;
+   if (p >= ((n + 1) / 2)) {
+-    LOG(ERROR) << "'p' is too big! Setting 'p' to max valid number of peers for 'n' = " << n << " : " <<
++    LOG(WARNING) << "'p' is too big! Setting 'p' to max valid number of peers for 'n' = " << n << " : " <<
+         ((n + 1) / 2 - 1);
+     return result;
+   }
+diff --git a/src/automaton/examples/log/demo_log.cc b/src/automaton/examples/log/demo_log.cc
+index 0606c88..5ded07a 100644
+--- a/src/automaton/examples/log/demo_log.cc
++++ b/src/automaton/examples/log/demo_log.cc
+@@ -45,7 +45,6 @@ int main() {
+   LOG(DBUG) << "This is debug log!";
+   LOG(INFO) << "This is info log!";
+   LOG(WARNING) << "This is warning log!";
+-  LOG(ERROR) << "This is error log!";
+   VLOG(0) << "This is verbose level 0 log!";
+   VLOG(1) << "This is verbose level 1 log!";
+   VLOG(2) << "This is verbose level 2 log!";
+diff --git a/src/automaton/examples/node/blockchain_cpp_node/blockchain_cpp_node.cc b/src/automaton/examples/node/blockchain_cpp_node/blockchain_cpp_node.cc
+index a56a5f1..fdc9bf8 100644
+--- a/src/automaton/examples/node/blockchain_cpp_node/blockchain_cpp_node.cc
++++ b/src/automaton/examples/node/blockchain_cpp_node/blockchain_cpp_node.cc
+@@ -89,7 +89,7 @@ void blockchain_cpp_node::s_on_blob_received(uint32_t id, const std::string& blo
+     b.nonce = m->get_blob(4);
+     on_block(id, b);
+   } else {
+-    LOG(ERROR) << "Received message " << msg_type << " which is not supported!";
++    LOG(WARNING) << "Received message " << msg_type << " which is not supported!";
+   }
+   delete m;
+ }
+@@ -115,7 +115,7 @@ void blockchain_cpp_node::s_on_disconnected(uint32_t id) {
+ }
+ 
+ void blockchain_cpp_node::s_on_error(uint32_t id, const std::string& message) {
+-  LOG(ERROR) << "Error node: " << nodeid << "! " << message;
++  LOG(WARNING) << "Error node: " << nodeid << "! " << message;
+ }
+ 
+ void blockchain_cpp_node::s_update(uint64_t time) {
+diff --git a/src/automaton/tests/interop/contract_functions_test.cc b/src/automaton/tests/interop/contract_functions_test.cc
+index 1ce8066..09e1cdb 100644
+--- a/src/automaton/tests/interop/contract_functions_test.cc
++++ b/src/automaton/tests/interop/contract_functions_test.cc
+@@ -41,7 +41,7 @@ int main() {
+ 
+   auto contract = eth_contract::get_contract(CONTRACT_ADDR);
+   if (contract == nullptr) {
+-    LOG(ERROR) << "Contract is NULL";
++    LOG(WARNING) << "Contract is NULL";
+     curl_global_cleanup();
+     return 0;
+   }
+diff --git a/src/automaton/tests/network/http_server_test.cc b/src/automaton/tests/network/http_server_test.cc
+index dc961f1..018f7cf 100644
+--- a/src/automaton/tests/network/http_server_test.cc
++++ b/src/automaton/tests/network/http_server_test.cc
+@@ -42,7 +42,7 @@ class client_handler:public connection::connection_handler {
+     if (s.code == automaton::core::common::status::OK) {
+       return;
+     }
+-    LOG(ERROR) << s;
++    LOG(WARNING) << s;
+   }
+ };
+ 
+@@ -73,7 +73,7 @@ void client() {
+     std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+     connection_c -> disconnect();
+   } else {
+-    LOG(ERROR) << "Connection init failed!";
++    LOG(WARNING) << "Connection init failed!";
+   }
+ }
+ 
+diff --git a/src/automaton/tests/network/sim_test.cc b/src/automaton/tests/network/sim_test.cc
+index 299c816..df345fd 100644
+--- a/src/automaton/tests/network/sim_test.cc
++++ b/src/automaton/tests/network/sim_test.cc
+@@ -51,7 +51,7 @@ class handler: public connection::connection_handler {
+     if (s.code == status::OK) {
+       return;
+     }
+-    LOG(ERROR) << s << " (connection " << c << ")";
++    LOG(WARNING) << s << " (connection " << c << ")";
+   }
+ };
+ 
+@@ -72,7 +72,7 @@ class lis_handler: public acceptor::acceptor_handler {
+     c->async_read(buffer, 256, 0);
+   }
+   void on_acceptor_error(acceptor_id a, const status& s) {
+-    LOG(ERROR) << s;
++    LOG(WARNING) << s;
+   }
+ };
+ 
+@@ -106,7 +106,7 @@ void func() {
+     connection_c -> async_send("C5", 8);
+     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+   } else {
+-    LOG(ERROR) << "Connection init failed!";
++    LOG(WARNING) << "Connection init failed!";
+   }
+ }
+ 
+@@ -118,7 +118,7 @@ int main() {
+     LOG(DBUG) << "Acceptor init was successful!";
+     acceptorB->start_accepting();
+   } else {
+-    LOG(ERROR) << "Acceptor init failed!";
++    LOG(WARNING) << "Acceptor init failed!";
+   }
+   std::thread t(func);
+   for (uint32_t i = 1; i <= 6000; i+=100) {
+diff --git a/src/automaton/tests/network/tcp_test.cc b/src/automaton/tests/network/tcp_test.cc
+index 5c50e2b..52adc9b 100644
+--- a/src/automaton/tests/network/tcp_test.cc
++++ b/src/automaton/tests/network/tcp_test.cc
+@@ -55,7 +55,7 @@ class handler: public connection::connection_handler {
+     if (s.code == status::OK) {
+       return;
+     }
+-    LOG(ERROR) << s << " (connection " << c << ")";
++    LOG(WARNING) << s << " (connection " << c << ")";
+   }
+ };
+ 
+@@ -76,7 +76,7 @@ class lis_handler: public acceptor::acceptor_handler {
+     c->async_read(buffer, 256, 0);
+   }
+   void on_acceptor_error(acceptor_id a, const status& s) {
+-    LOG(ERROR) << "Acceptor ERROR " << s;
++    LOG(WARNING) << "Acceptor ERROR " << s;
+   }
+ };
+ 
+@@ -109,7 +109,7 @@ void func() {
+     connection_c -> async_send("C5", 8);
+     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+   } else {
+-    LOG(ERROR) << "Connection init failed!";
++    LOG(WARNING) << "Connection init failed!";
+   }
+ }
+ 
+@@ -123,7 +123,7 @@ int main() {
+     acceptorB->start_accepting();
+     LOG(DBUG) << acceptorB.use_count() << " -> " << acceptorB->get_state();
+   } else {
+-    LOG(ERROR) << "Acceptor init failed!";
++    LOG(WARNING) << "Acceptor init failed!";
+   }
+   std::thread t(func);
+ 

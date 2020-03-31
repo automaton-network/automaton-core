@@ -51,7 +51,7 @@ tcp_connection::tcp_connection(connection_id id, const std::string& address_,
   if (!tcp_initialized) {
     std::stringstream msg;
     msg << "TCP is not initialized! Call tcp_init() first!";
-    LOG(ERROR) << address << " -> " <<  msg.str() << '\n' << el::base::debug::StackTrace();
+    LOG(WARNING) << address << " -> " <<  msg.str() << '\n' << el::base::debug::StackTrace();
     throw std::runtime_error(msg.str());
   }
 }
@@ -100,7 +100,7 @@ bool tcp_connection::init() {
       parse_address(address, &ip, &port);
       boost::asio::ip::tcp::resolver::iterator it = resolver.resolve(ip, port, boost_error_code);
       if (boost_error_code) {
-        LOG(ERROR) << address << " -> " <<  boost_error_code.message();
+        LOG(WARNING) << address << " -> " <<  boost_error_code.message();
         return false;
       } else {
         asio_endpoint = *it;
@@ -108,11 +108,11 @@ bool tcp_connection::init() {
         return true;
       }
     } catch (...) {
-      LOG(ERROR) << address << " -> " << "Exception";
+      LOG(WARNING) << address << " -> " << "Exception";
       return false;
     }
   } else {
-    LOG(ERROR) << address << " -> " <<  "Not initialized! tcp_init() must be called first";
+    LOG(WARNING) << address << " -> " <<  "Not initialized! tcp_init() must be called first";
     return false;
   }
 }
@@ -131,7 +131,7 @@ void tcp_connection::connect() {
             if (boost_error_code) {
               self->disconnect();
               // set_state(connection::state::disconnected);
-              LOG(ERROR) << addr << " -> " <<  boost_error_code.message();
+              LOG(WARNING) << addr << " -> " <<  boost_error_code.message();
               c_handler->on_connection_error(cid, status::unknown(boost_error_code.message()));
             } else {
               self->set_state(connection::state::connected);
@@ -142,7 +142,7 @@ void tcp_connection::connect() {
   } else {
     std::stringstream s;
     s << address << " -> " <<  "Not initialized! tcp_init() must be called first";
-    LOG(ERROR) << s.str();
+    LOG(WARNING) << s.str();
     handler->on_connection_error(id, status::unknown(s.str()));
     // TODO(kari): what to do here? needs to be connected
   }
@@ -161,7 +161,7 @@ void tcp_connection::async_send(const std::string& msg, uint32_t message_id) {
         size_t bytes_transferred) {
       // LOG(DBUG) << "ASYNC SEND CALLBACK " << bytes_transferred;
       if (boost_error_code) {
-        LOG(ERROR) << addr << " -> " <<  boost_error_code.message();
+        LOG(WARNING) << addr << " -> " <<  boost_error_code.message();
         if (boost_error_code == boost::asio::error::broken_pipe) {
           c_handler->on_message_sent(cid, message_id, status::aborted(boost_error_code.message()));
           // TODO(kari): ?? handle
@@ -178,15 +178,15 @@ void tcp_connection::async_send(const std::string& msg, uint32_t message_id) {
       delete message;
     });
   } else if (!tcp_initialized) {
-    LOG(ERROR) << address << " -> " <<  "Not initialized";
+    LOG(WARNING) << address << " -> " <<  "Not initialized";
     handler->on_message_sent(id, message_id, status::internal("Not initialized"));
     // TODO(kari): what to do here? needs to be connected
   } else if (msg.size() <= 0) {
-    LOG(ERROR) << address << " -> " <<  "Message too short";
+    LOG(WARNING) << address << " -> " <<  "Message too short";
     handler->on_message_sent(id, message_id, status::invalid_argument("Message too short"));
     // TODO(kari): what to do here? needs to be connected
   } else {
-    LOG(ERROR) << address << " -> " <<  "Socket closed or not yet connected";
+    LOG(WARNING) << address << " -> " <<  "Socket closed or not yet connected";
     handler->on_message_sent(id, message_id, status::internal("Socket closed or not yet connected"));
   }
 }
@@ -204,7 +204,7 @@ void tcp_connection::async_read(std::shared_ptr<char> buffer, uint32_t buffer_si
           size_t bytes_transferred) {
         if (boost_error_code) {
           if (boost_error_code == boost::asio::error::eof) {
-            LOG(ERROR) << addr << " -> " <<  "Peer has closed the connection";
+            LOG(WARNING) << addr << " -> " <<  "Peer has closed the connection";
             c_handler->on_connection_error(cid, status::aborted("Peer has closed the connection"));
             self->disconnect();
             return;
@@ -212,7 +212,7 @@ void tcp_connection::async_read(std::shared_ptr<char> buffer, uint32_t buffer_si
             c_handler->on_connection_error(cid, status::aborted("Operation cancelled!"));
             return;
           } else {
-            LOG(ERROR) << addr << " -> " <<  boost_error_code.message();
+            LOG(WARNING) << addr << " -> " <<  boost_error_code.message();
             c_handler->on_connection_error(cid, status::unknown(boost_error_code.message()));
             // TODO(kari): what errors and when should read be called?
           }
@@ -236,7 +236,7 @@ void tcp_connection::async_read(std::shared_ptr<char> buffer, uint32_t buffer_si
           } else if (boost_error_code == boost::asio::error::operation_aborted) {
             return;
           } else {
-            LOG(ERROR) << addr << " -> " <<  boost_error_code.message();
+            LOG(WARNING) << addr << " -> " <<  boost_error_code.message();
             c_handler->on_connection_error(cid, status::unknown(boost_error_code.message()));
             // TODO(kari): what errors and when should read be called?
           }
@@ -246,11 +246,11 @@ void tcp_connection::async_read(std::shared_ptr<char> buffer, uint32_t buffer_si
       });
     }
   } else if (!tcp_initialized) {
-    LOG(ERROR) << address << " -> " <<  "Not initialized";
+    LOG(WARNING) << address << " -> " <<  "Not initialized";
     handler->on_connection_error(id, status::internal("Not initialized"));
     // TODO(kari): what to do here? needs to be connected
   } else {
-    LOG(ERROR) << address << " -> " <<  "Socket closed";
+    LOG(WARNING) << address << " -> " <<  "Socket closed";
     handler->on_connection_error(id, status::internal("Socket closed"));
   }
 }
@@ -304,7 +304,7 @@ tcp_acceptor::tcp_acceptor(acceptor_id id, const std::string& address, std::shar
   if (!tcp_initialized) {
     std::stringstream msg;
     msg << "TCP is not initialized! Call tcp_init() first!";
-    LOG(ERROR) << address << " -> " <<  msg.str() << '\n' << el::base::debug::StackTrace();
+    LOG(WARNING) << address << " -> " <<  msg.str() << '\n' << el::base::debug::StackTrace();
     throw std::runtime_error(msg.str());
   }
 }
@@ -334,14 +334,14 @@ bool tcp_acceptor::init() {
     parse_address(address, &ip, &port);
     boost::asio::ip::tcp::resolver::iterator it = resolver.resolve(ip, port, boost_error_code);
     if (boost_error_code) {
-      LOG(ERROR) << address << " -> " <<  boost_error_code.message();
+      LOG(WARNING) << address << " -> " <<  boost_error_code.message();
       return false;
     } else {
       boost::system::error_code ecc;
       asio_acceptor.open(((boost::asio::ip::tcp::endpoint)*it).protocol());
       asio_acceptor.bind(*it, ecc);
       if (ecc) {
-        LOG(ERROR) << address << " -> " <<  ecc.message();
+        LOG(WARNING) << address << " -> " <<  ecc.message();
         return false;
       } else {
         std::stringstream s;
@@ -352,7 +352,7 @@ bool tcp_acceptor::init() {
       }
     }
   } else {
-    LOG(ERROR) << address << " -> " <<  "Not initialized! tcp_init() must be called first";
+    LOG(WARNING) << address << " -> " <<  "Not initialized! tcp_init() must be called first";
     return false;
   }
 }
@@ -394,7 +394,7 @@ void tcp_acceptor::start_accepting() {
             // LOG(DBUG) << "end of async_accept 0";
             return;
           }
-          LOG(ERROR) << boost_error_code.message();
+          LOG(WARNING) << boost_error_code.message();
           // LOG(DBUG) << "async_accept calling on_error";
           a_handler->on_acceptor_error(self->get_id(), status::unknown(boost_error_code.message()));
           // TODO(kari): start listen again? depends on the errors
@@ -403,11 +403,11 @@ void tcp_acceptor::start_accepting() {
         // LOG(DBUG) << "end of async_accept";
       });
   } else if (!tcp_initialized) {
-    LOG(ERROR) <<  "Not initialized";
+    LOG(WARNING) <<  "Not initialized";
     handler->on_acceptor_error(id, status::internal("Not initialized"));
     // TODO(kari): what to do here? needs to be connected
   } else {
-    LOG(ERROR) <<  "Acceptor closed";
+    LOG(WARNING) <<  "Acceptor closed";
     handler->on_acceptor_error(id, status::internal("Acceptor closed!"));
   }
 }
@@ -457,7 +457,7 @@ void tcp_init() {
     try {
       asio_io_service.run();
     } catch (const std::exception& ex) {
-      LOG(ERROR) << el::base::debug::StackTrace();
+      LOG(WARNING) << el::base::debug::StackTrace();
       LOG(FATAL) << "ASIO THREAD EXCEPTION: " << ex.what();
     } catch (...) {
       LOG(FATAL) << "EXCEPTION!!!!";

@@ -20,13 +20,13 @@ bool testnet::create_testnet(const std::string& node_type, const std::string& id
     std::vector<uint32_t> > peer_list) {
   auto it = testnets.find(id);
   if (it != testnets.end()) {
-    LOG(ERROR) << "Testnet with id " << id << " already exists!";
+    LOG(WARNING) << "Testnet with id " << id << " already exists!";
     return false;
   }
   auto net = std::unique_ptr<testnet>(new testnet(node_type, id, smart_protocol_id, ntype, number_nodes));
   bool initialised = net->init();
   if (!initialised) {
-    LOG(ERROR) << "Testnet " << id << " initialization failed!";
+    LOG(WARNING) << "Testnet " << id << " initialization failed!";
     return false;
   }
   net->connect(peer_list);
@@ -81,7 +81,7 @@ void testnet::connect(const std::unordered_map<uint32_t, std::vector<uint32_t> >
     nid << id << it->first;
     std::shared_ptr<automaton::core::node::node> n = automaton::core::node::node::get_node(nid.str());
     if (n == nullptr) {
-      LOG(ERROR) << "No such node: " << nid.str();
+      LOG(WARNING) << "No such node: " << nid.str();
       continue;
     }
     const std::vector<uint32_t>& peers = it->second;
@@ -136,7 +136,7 @@ p -> number of peers
 std::unordered_map<uint32_t, std::vector<uint32_t> > create_connections_vector(uint32_t n, uint32_t p) {
   std::unordered_map<uint32_t, std::vector<uint32_t> > result;
   if (p >= ((n + 1) / 2)) {
-    LOG(ERROR) << "'p' is too big! Setting 'p' to max valid number of peers for 'n' = " << n << " : " <<
+    LOG(WARNING) << "'p' is too big! Setting 'p' to max valid number of peers for 'n' = " << n << " : " <<
         ((n + 1) / 2 - 1);
     return result;
   }
@@ -154,7 +154,7 @@ std::unordered_map<uint32_t, std::vector<uint32_t> > create_rnd_connections_vect
   std::unordered_map<uint32_t, std::vector<uint32_t> > result;
   uint32_t k;
   if (p >= ((n + 1) / 2)) {
-    LOG(ERROR) << "'p' is too big! Setting 'p' to max valid number of peers for 'n' = " << n << " : " <<
+    LOG(WARNING) << "'p' is too big! Setting 'p' to max valid number of peers for 'n' = " << n << " : " <<
         ((n + 1) / 2 - 1);
     return result;
   }

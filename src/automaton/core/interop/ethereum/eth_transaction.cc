@@ -75,13 +75,13 @@ std::string recover_address(const unsigned char* rsv, const unsigned char* messa
   secp256k1_context* context = secp256k1_context_create(SECP256K1_CONTEXT_SIGN | SECP256K1_CONTEXT_VERIFY);
   secp256k1_ecdsa_recoverable_signature signature;
   if (!secp256k1_ecdsa_recoverable_signature_parse_compact(context, &signature, (unsigned char*)rsv, v)) {
-    LOG(ERROR) << "Cannot parse signature!";
+    LOG(WARNING) << "Cannot parse signature!";
     secp256k1_context_destroy(context);
     return "";
   }
   secp256k1_pubkey* pubkey = new secp256k1_pubkey();
   if (!secp256k1_ecdsa_recover(context, pubkey, &signature, (unsigned char*) message_hash)) {
-    LOG(ERROR) << "Cannot recover signature!";
+    LOG(WARNING) << "Cannot recover signature!";
     delete pubkey;
     secp256k1_context_destroy(context);
     return "";

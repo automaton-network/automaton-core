@@ -55,7 +55,7 @@ class handler: public connection::connection_handler {
     if (s.code == status::OK) {
       return;
     }
-    LOG(ERROR) << s << " (connection " << c << ")";
+    LOG(WARNING) << s << " (connection " << c << ")";
   }
 };
 
@@ -76,7 +76,7 @@ class lis_handler: public acceptor::acceptor_handler {
     c->async_read(buffer, 256, 0);
   }
   void on_acceptor_error(acceptor_id a, const status& s) {
-    LOG(ERROR) << "Acceptor ERROR " << s;
+    LOG(WARNING) << "Acceptor ERROR " << s;
   }
 };
 
@@ -109,7 +109,7 @@ void func() {
     connection_c -> async_send("C5", 8);
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
   } else {
-    LOG(ERROR) << "Connection init failed!";
+    LOG(WARNING) << "Connection init failed!";
   }
 }
 
@@ -123,7 +123,7 @@ int main() {
     acceptorB->start_accepting();
     LOG(DBUG) << acceptorB.use_count() << " -> " << acceptorB->get_state();
   } else {
-    LOG(ERROR) << "Acceptor init failed!";
+    LOG(WARNING) << "Acceptor init failed!";
   }
   std::thread t(func);
 

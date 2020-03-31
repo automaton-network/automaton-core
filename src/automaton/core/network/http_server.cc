@@ -65,7 +65,7 @@ void http_server::handle_accept(http_session* new_session, const boost::system::
       boost::bind(&http_server::handle_accept, this, new_session,
         boost::asio::placeholders::error));
   } else {
-    LOG(ERROR) << "Server error in handle_accept, deleting connection";
+    LOG(WARNING) << "Server error in handle_accept, deleting connection";
     delete new_session;
   }
 }
@@ -77,7 +77,7 @@ void http_server::run() {
       io_service.run();
     }
     catch (std::exception& e) {
-      LOG(ERROR) << "HTTP server error: " << e.what();
+      LOG(WARNING) << "HTTP server error: " << e.what();
     }
     LOG(INFO) << "server stopped.";
   });
@@ -114,9 +114,9 @@ void http_session::read_header() {
             header = header + std::string(buffer, bytes_transferred);
             read_header();
           } else if (error == boost::asio::error::eof) {
-            LOG(ERROR) << "Client has closed the connection";
+            LOG(WARNING) << "Client has closed the connection";
           } else {
-            LOG(ERROR) << "Server error while reading body, deleting connection";
+            LOG(WARNING) << "Server error while reading body, deleting connection";
             delete this;
           }
     });
@@ -154,9 +154,9 @@ void http_session::read_body(uint32_t body_size) {
           body = body + std::string(buffer, bytes_transferred);
           read_body(body_size);
         } else if (error == boost::asio::error::eof) {
-          LOG(ERROR) << "Client has closed the connection";
+          LOG(WARNING) << "Client has closed the connection";
         } else {
-          LOG(ERROR) << "Server error while reading body, deleting connection";
+          LOG(WARNING) << "Server error while reading body, deleting connection";
           delete this;
         }
     });
@@ -174,10 +174,10 @@ void http_session::read_body(uint32_t body_size) {
           if (!error) {
             read_header();
           } else if (error == boost::asio::error::eof) {
-            LOG(ERROR) << "Client has closed the connection";
+            LOG(WARNING) << "Client has closed the connection";
             delete this;
           } else {
-            LOG(ERROR) << "Server error while returning response to client, deleting connection";
+            LOG(WARNING) << "Server error while returning response to client, deleting connection";
             delete this;
           }
     });

@@ -19,9 +19,9 @@ void engine::bind_data() {
   auto msg_type = create_simple_usertype<msg>();
 
   msg_type.set(sol::meta_function::index,
-    [this](sol::this_state L, msg& m, std::string key) -> sol::object {
+    [this](sol::this_state _L, msg& m, std::string key) -> sol::object {
       VLOG(9) << "Getting key: " << key;
-      sol::state_view lua(L);
+      sol::state_view lua(_L);
       auto tag_id = m.get_field_tag(key);
       auto fi = m.get_field_info_by_tag(tag_id);
       auto ftype = fi.type;
@@ -33,9 +33,9 @@ void engine::bind_data() {
             for (uint32_t i = 0; i < n; i++) {
               result.add(m.get_repeated_int32(tag_id, i));
             }
-            return sol::make_object(L, result);
+            return sol::make_object(_L, result);
           } else {
-            return sol::make_object(L, m.get_int32(tag_id));
+            return sol::make_object(_L, m.get_int32(tag_id));
           }
         }
         case schema::int64: {
@@ -45,9 +45,9 @@ void engine::bind_data() {
             for (uint32_t i = 0; i < n; i++) {
               result.add(m.get_repeated_int64(tag_id, i));
             }
-            return sol::make_object(L, result);
+            return sol::make_object(_L, result);
           } else {
-            return sol::make_object(L, m.get_int64(tag_id));
+            return sol::make_object(_L, m.get_int64(tag_id));
           }
         }
         case schema::uint32: {
@@ -57,9 +57,9 @@ void engine::bind_data() {
             for (uint32_t i = 0; i < n; i++) {
               result.add(m.get_repeated_uint32(tag_id, i));
             }
-            return sol::make_object(L, result);
+            return sol::make_object(_L, result);
           } else {
-            return sol::make_object(L, m.get_uint32(tag_id));
+            return sol::make_object(_L, m.get_uint32(tag_id));
           }
         }
         case schema::uint64: {
@@ -71,7 +71,7 @@ void engine::bind_data() {
             }
             return result;
           } else {
-            return sol::make_object(L, m.get_uint64(tag_id));
+            return sol::make_object(_L, m.get_uint64(tag_id));
           }
         }
         case schema::blob: {
@@ -81,9 +81,9 @@ void engine::bind_data() {
             for (uint32_t i = 0; i < n; i++) {
               result.add(m.get_repeated_blob(tag_id, i));
             }
-            return sol::make_object(L, result);
+            return sol::make_object(_L, result);
           } else {
-            return sol::make_object(L, m.get_blob(tag_id));
+            return sol::make_object(_L, m.get_blob(tag_id));
           }
         }
         case schema::message_type: {
@@ -93,16 +93,16 @@ void engine::bind_data() {
             for (uint32_t i = 0; i < n; i++) {
               result.add(m.get_repeated_message(tag_id, i));
             }
-            return sol::make_object(L, result);
+            return sol::make_object(_L, result);
           } else {
-            return sol::make_object(L, m.get_message(tag_id));
+            return sol::make_object(_L, m.get_message(tag_id));
           }
         }
         default: {
-          return sol::make_object(L, sol::lua_nil);
+          return sol::make_object(_L, sol::lua_nil);
         }
       }
-      return sol::make_object(L, sol::lua_nil);
+      return sol::make_object(_L, sol::lua_nil);
     });
 
   msg_type.set(sol::meta_function::new_index,
@@ -168,7 +168,7 @@ void engine::bind_data() {
           break;
         }
         default: {
-          LOG(ERROR) << "WAT?";
+          LOG(WARNING) << "WAT?";
         }
       }
     });

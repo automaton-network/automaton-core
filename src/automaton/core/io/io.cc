@@ -34,7 +34,7 @@ std::string get_file_contents(const char* filename) {
     in.close();
     return(contents);
   }
-  LOG(ERROR) << "Could not read file contents for " << filename;
+  LOG(WARNING) << "Could not read file contents for " << filename;
   throw(errno);
 }
 

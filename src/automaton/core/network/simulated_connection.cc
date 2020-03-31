@@ -159,12 +159,12 @@ void simulation::handle_request(uint32_t src, uint32_t dest) {
   std::shared_ptr<simulated_connection> source = std::dynamic_pointer_cast<simulated_connection>(get_connection(src));
   std::shared_ptr<simulated_acceptor> acceptor_ = std::dynamic_pointer_cast<simulated_acceptor>(get_acceptor(dest));
   if (!source) {
-    LOG(ERROR) << "Connection request from unexisting peer: " << src;
+    LOG(WARNING) << "Connection request from unexisting peer: " << src;
     // TODO(kari): accept/refuse and then error
   }
   uint64_t time_of_handling = get_time() + source->get_lag() + 1;
   if (!acceptor_ || acceptor_->get_state() != acceptor::state::accepting) {
-    LOG(ERROR) << "No such peer: " << dest;
+    LOG(WARNING) << "No such peer: " << dest;
     std::weak_ptr<connection::connection_handler> c_handler = source->get_handler();
     std::shared_ptr<simulation> sim = simulation::get_simulator();
     auto c_id = source->get_id();
@@ -218,7 +218,7 @@ void simulation::handle_request(uint32_t src, uint32_t dest) {
       std::shared_ptr<simulation> sim = get_simulator();
       add_task(time_of_handling, std::bind(&simulation::handle_accept, sim, src));
     } else {
-      LOG(ERROR) << "Error while initializing connection";
+      LOG(WARNING) << "Error while initializing connection";
     }
   } else {
     // LOG(DBUG) << "refused";
@@ -234,7 +234,7 @@ void simulation::handle_message(uint32_t src, uint32_t dest, const std::string& 
   std::shared_ptr<simulation> sim = get_simulator();
   std::shared_ptr<simulated_connection> source = std::dynamic_pointer_cast<simulated_connection>(get_connection(src));
   if (!destination || destination->get_state() != connection::state::connected) {
-    LOG(ERROR) << "ERROR in handling send! Peer has disconnected or does not exist!";
+    LOG(WARNING) << "WARNING in handling send! Peer has disconnected or does not exist!";
     if (source) {
       uint32_t t = get_time();
       uint32_t ts = source->get_time_stamp();
@@ -348,9 +348,9 @@ uint32_t simulation::process(uint64_t time_) {
         try {
           t();
         } catch (const std::exception& e) {
-          LOG(ERROR) << e.what();
+          LOG(WARNING) << e.what();
         } catch (...) {
-          LOG(ERROR) << "Error occured";
+          LOG(WARNING) << "Error occured";
         }
         tasks_mutex.lock();
       }
@@ -371,9 +371,9 @@ void simulation::process_handlers() {
     try {
       t();
     } catch (const std::exception& e) {
-      LOG(ERROR) << e.what();
+      LOG(WARNING) << e.what();
     } catch (...) {
-      LOG(ERROR) << "Error occured";
+      LOG(WARNING) << "Error occured";
     }
     handlers_tasks_mutex.lock();
   }
@@ -388,7 +388,7 @@ uint64_t simulation::get_time() {
 void simulation::set_time(uint64_t time_) {
   std::lock_guard<std::mutex> lock(time_mutex);
   if (time_ < simulation_time) {
-    LOG(ERROR) << "Trying to set time < current time";
+    LOG(WARNING) << "Trying to set time < current time";
   } else {
     simulation_time = time_;
   }
@@ -473,7 +473,7 @@ simulated_connection::~simulated_connection() {
 bool simulated_connection::init() {
   connection_state = connection::state::disconnected;
   if (!parse_address(original_address, &parameters, &remote_address)) {
-    LOG(ERROR) << "ERROR: Connection creation failed! Could not resolve address and parameters in: "
+    LOG(WARNING) << "WARNING: Connection creation failed! Could not resolve address and parameters in: "
         << original_address;
     return false;
   }
@@ -483,12 +483,12 @@ bool simulated_connection::init() {
 void simulated_connection::async_send(const std::string& message, uint32_t msg_id = 0) {
   // LOG(DBUG) << id << " <async_send>";
   if (message.size() < 1) {
-    LOG(ERROR) << "Send called but no message: id -> " << msg_id;
+    LOG(WARNING) << "Send called but no message: id -> " << msg_id;
     // LOG(DBUG) << id << " </async_send>";
     return;
   }
   if (get_state() == disconnected) {
-    LOG(ERROR) << "Cannot send message! Call connect first!";
+    LOG(WARNING) << "Cannot send message! Call connect first!";
     // LOG(DBUG) << id << " </async_send>";
     return;
   }
@@ -593,7 +593,7 @@ void simulated_connection::async_read(std::shared_ptr<char> buffer, uint32_t buf
   */
   // TODO(kari): If disconnected, return
   if (num_bytes > buffer_size) {
-    LOG(ERROR) << id << " ERROR: Buffer size " << buffer_size << " is smaller than needed (" <<
+    LOG(WARNING) << id << " WARNING: Buffer size " << buffer_size << " is smaller than needed (" <<
         num_bytes << ")! Reading aborted!";
     return;
   }
@@ -656,7 +656,7 @@ uint32_t simulated_connection::get_lag() const {
 
 void simulated_connection::connect() {
   if (!remote_address) {
-    LOG(ERROR) << id << " Cannot connect: No address to connect to!";
+    LOG(WARNING) << id << " Cannot connect: No address to connect to!";
     return;
   }
   // LOG(DBUG) << id << " <connect>";
@@ -769,13 +769,13 @@ simulated_acceptor::~simulated_acceptor() {
 bool simulated_acceptor::init() {
   if (parse_address(original_address, &parameters, &address)) {
     if (!address) {
-      LOG(ERROR) << "ERROR: Acceptor creation failed! Acceptor address should be > 0";
+      LOG(WARNING) << "WARNING: Acceptor creation failed! Acceptor address should be > 0";
       return false;
     } else {
       simulation::get_simulator()->add_acceptor(address, shared_from_this());
     }
   } else {
-    LOG(ERROR) << "ERROR: Acceptor creation failed! Could not resolve address and parameters in: " << original_address;
+    LOG(WARNING) << "WARNING: Acceptor creation failed! Could not resolve address and parameters in: " << original_address;
     return false;
   }
   set_state(acceptor::state::not_accepting);
@@ -796,7 +796,7 @@ bool simulated_acceptor::parse_address(const std::string& address_, acceptor_par
 
 void simulated_acceptor::start_accepting() {
   if (!address) {
-    LOG(ERROR) << "This should never happen! Acceptor's address is not valid! Could not accept";
+    LOG(WARNING) << "This should never happen! Acceptor's address is not valid! Could not accept";
   }
   set_state(acceptor::state::accepting);
 }

@@ -20,7 +20,7 @@ void module::add_function(const std::string function_name, module_static_functio
   if (functions_.count(function_name) > 0) {
     std::stringstream ss;
     ss << "Module " << name() << " already has function named " << function_name;
-    LOG(ERROR) << ss.str();
+    LOG(WARNING) << ss.str();
     throw ss.str();
   }
 
@@ -77,7 +77,7 @@ void module::bind_schemas() {
       } catch (...) {
         std::stringstream ss;
         ss << "Could not locate concept schema for " << concept.name;
-        LOG(ERROR) << ss.str();
+        LOG(WARNING) << ss.str();
         throw ss.str();
       }
     }
@@ -96,7 +96,7 @@ void module::add_implementation(const std::string implementation,
   if (implementations_.count(implementation) > 0) {
     std::stringstream ss;
     ss << "Module " << name() << " already has implementation for " << implementation;
-    LOG(ERROR) << ss.str();
+    LOG(WARNING) << ss.str();
     throw ss.str();
   }
   implementation_info info;
@@ -122,7 +122,7 @@ void module::check_implementation(const std::string implementation) {
   } catch (...) {
     std::stringstream ss;
     ss << "Could not locate constructor message schema for " << full_scope_implementation;
-    LOG(ERROR) << ss.str();
+    LOG(WARNING) << ss.str();
     throw ss.str();
   }
 }
@@ -275,7 +275,7 @@ std::unique_ptr<common::obj> registry::create(const data::msg& m) {
     if (modules_.count(module_name) == 0) {
       std::stringstream msg;
       msg << "No such module " << module_name;
-      LOG(ERROR) << msg.str();
+      LOG(WARNING) << msg.str();
       throw std::invalid_argument(msg.str());
     }
     auto& mod = modules_.at(module_name);
@@ -283,7 +283,7 @@ std::unique_ptr<common::obj> registry::create(const data::msg& m) {
     if (impls.count(object_type) == 0) {
       std::stringstream msg;
       msg << "No factory found for object type " << object_type << " in module " << module_name;
-      LOG(ERROR) << msg.str();
+      LOG(WARNING) << msg.str();
       throw std::invalid_argument(msg.str());
     }
     return impls.at(object_type).func(m);
