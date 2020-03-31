@@ -592,11 +592,11 @@ inline std::string decode_param(type t, const std::string& data, size_t pos) {
     } else if (tp.s_type == string || tp.s_type == dynamic_size_bytes || tp.s_array_type == dynamic) {
       for (int32_t i = 1; i < len; ++i) {
         std::string s = data.substr(pos + (32 * (i - 1)), 32);
-        size_t offset = u256_to_u64(s);
+        size_t offset = static_cast<size_t>(u256_to_u64(s));
         ss << decode_param(tp, data, pos + offset) << ",";
       }
-      std::string s = data.substr(pos + (32 * (len - 1)), 32);
-      size_t offset = u256_to_u64(s);
+      std::string s = data.substr(pos + static_cast<size_t>((32 * (len - 1))), 32);
+      size_t offset = static_cast<size_t>(u256_to_u64(s));
       ss << decode_param(tp, data, pos + offset);
     } else {
       LOG(WARNING) << "Invalid type!";
@@ -606,7 +606,7 @@ inline std::string decode_param(type t, const std::string& data, size_t pos) {
     return ss.str();
   } else if (t.s_type == dynamic_size_bytes || t.s_type == string) {
     std::string s = data.substr(pos, 32);
-    size_t len = u256_to_u64(s);
+    size_t len = static_cast<size_t>(u256_to_u64(s));
     pos += 32;
     std::string res = data.substr(pos, len);
     if (t.s_type == string) {
@@ -616,7 +616,7 @@ inline std::string decode_param(type t, const std::string& data, size_t pos) {
   } else if (t.s_type == numerical) {
     std::string res = data.substr(pos, 32);
     if (t.str == "bool") {
-      size_t k = u256_to_u64(res);
+      size_t k = static_cast<size_t>(u256_to_u64(res));
       return k > 0 ? "true" : "false";
     } else if (t.str.find("int") != std::string::npos) {
       bool is_signed = t.str[0] != 'u';
