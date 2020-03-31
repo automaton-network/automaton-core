@@ -54,7 +54,7 @@ class persistent_blobstore : public blobstore{
   uint32_t* storage;
   boost::iostreams::mapped_file mmf;
   bool is_mapped = false;
-  size_t header_size;
+  // size_t header_size;
   uint64_t cur_version = 10000;
   uint64_t header_version;
   std::string file_path;

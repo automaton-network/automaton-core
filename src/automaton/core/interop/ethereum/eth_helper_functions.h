@@ -547,7 +547,7 @@ static std::string encode(const std::string& signatures_json, const std::string&
   }
   std::string result = std::string(buffer, tail_pos);
   delete [] buffer;
-  return std::move(result);
+  return result;
 }
 
 static std::string decode_param(type t, const std::string& data, uint64_t pos) {

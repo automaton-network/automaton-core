@@ -11,10 +11,10 @@ namespace core {
 namespace storage {
 
   persistent_storage::persistent_storage()
-    : capacity(0)
+    : cur_version(10000)
+    , is_mapped(false)
     , header_size(1024)
-    , cur_version(10000)
-    , is_mapped(false) {
+    , capacity(0) {
 }
 
 persistent_storage::~persistent_storage() {

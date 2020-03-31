@@ -10,12 +10,12 @@ namespace core {
 namespace storage {
 
 persistent_blobstore::persistent_blobstore()
-    : next_free(1024/4)
-    , capacity(1024)
-    , header_size(1024)
+    : is_mapped(false)
+    // , header_size(1024)
     , cur_version(10000)
-    , is_mapped(false) {
-  // TODO(Samir): Remove from constructor and do it when creating blob
+    , next_free(1024/4)
+    , capacity(1024) {
+  // TODO(samir): Remove from constructor and do it when creating blob
   // storage = new uint32_t[1ULL << 28];
   // capacity = 1ULL << 28;
 }
@@ -84,7 +84,7 @@ bool persistent_blobstore::free(const uint32_t id) {
   if (id+1 >= capacity) {
     throw std::out_of_range("Object out of range");
   }
-  // TODO(Samir): Change storage to unt8_t. Mark deleted nodes with *= -1
+  // TODO(samir): Change storage to unt8_t. Mark deleted nodes with *= -1
   storage[id] *= -1;
   return 1;
 }

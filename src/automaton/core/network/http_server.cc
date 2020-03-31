@@ -106,8 +106,8 @@ void http_session::start() {
 }
 
 void http_session::read_header() {
-  uint32_t pos = header.find(CRLF);
-  if (pos == -1) {
+  auto pos = header.find(CRLF);
+  if (pos == std::string::npos) {
     socket_.async_read_some(boost::asio::buffer(buffer, kBufferSize),
         [this](const boost::system::error_code& error, size_t bytes_transferred) {
           if (!error) {
