@@ -14,6 +14,8 @@ Table of Contents
 
   * [License](#license)
   * [Building Automaton](#building-automaton)
+    * [Linux] (#linux)
+    * [Windows] (#windows)
   * [Getting Started](#getting-started)
 
 ## License
