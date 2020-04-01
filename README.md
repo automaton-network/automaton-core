@@ -1,4 +1,5 @@
-# <img title="Automaton" width="231" height="39" src="media/automaton-logo-black-on-white-8x8.svg">
+# <img title="Automaton" width="231" height="39" src="media/automaton-logo-black-on-white-8x8.svg"> [<img title="Discord" width="32" height="32" src="media/social/svg/discord.svg">](https://discord.gg/f3GRjhF) [<img title="Telegram" width="32" height="32" src="media/social/svg/telegram.svg">](https://t.me/automaton_network)
+
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
 [![All Contributors](https://img.shields.io/badge/all_contributors-10-orange.svg?style=flat-square)](#contributors-)
@@ -33,12 +34,6 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
-
-## Social
-
-[<img title="Discord" width="64" height="64" src="media/Discord-Logo-Color.svg">](https://discord.gg/f3GRjhF)
-
-[<img title="Telegram" width="48" height="48" src="media/Telegram_Logo.svg">](https://t.me/automaton_network)
 
 ## Building Automaton
 
