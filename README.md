@@ -34,10 +34,11 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
-## Contact
+## Social
 
 Telegram: https://t.me/automaton_network
-Discord: https://discord.gg/f3GRjhF
+
+<a link="https://discord.gg/f3GRjhF"><img title="Discord" width="64" height="64" src="media/Discord-Logo-Color.svg"></a>
 
 ## Building Automaton
 
