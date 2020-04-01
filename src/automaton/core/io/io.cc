@@ -2,6 +2,9 @@
 
 #include <sys/stat.h>
 
+#define __STDC_WANT_LIB_EXT1__ 1
+#include <time.h>
+
 #include <algorithm>
 #include <cerrno>
 #include <fstream>
