@@ -26,7 +26,7 @@ jobs:
       dist_dir: ./src/local_third_party
       build_deps: OFF
       static_runtime: ON
-      automaton_version: v0.1.11
+      automaton_version: v0.1.11a
     steps:
     - uses: actions/checkout@v2
     - name: Check for full rebuild
@@ -37,7 +37,6 @@ jobs:
     - name: Check for runtime link option
       if: matrix.runtime_link == 'MD'
       run: |
-        echo "::set-env name=build_deps::ON"
         echo "::set-env name=static_runtime::OFF"
       shell: bash
     - name: Get tag information
@@ -59,8 +58,8 @@ jobs:
       if: startsWith(env.build_deps, 'OFF')
       working-directory: ${{ env.dist_dir }}
       run: |
-        curl -L -O https://github.com/automaton-network/automaton/releases/download/${{ env.automaton_version }}/automaton-Windows-${{ matrix.configuration }}-${{ matrix.platform }}-${{ env.automaton_version }}.zip
-        unzip automaton-Windows-${{ matrix.configuration }}-${{ matrix.platform }}-${{ env.automaton_version }}.zip -x "include/automaton/*"
+        curl -L -O https://github.com/automaton-network/automaton/releases/download/${{ env.automaton_version }}/automaton-Windows-${{ matrix.configuration }}-${{ matrix.runtime_link }}-${{ matrix.platform }}-${{ env.automaton_version }}.zip
+        unzip automaton-Windows-${{ matrix.configuration }}-${{ matrix.runtime_link }}-${{ matrix.platform }}-${{ env.automaton_version }}.zip -x "include/automaton/*"
     - name: Add msbuild to PATH
       uses: microsoft/setup-msbuild@v1.0.0
     - name: configure
@@ -98,7 +97,7 @@ jobs:
       dist_dir: ./src/local_third_party
       test_contracts_dir: ./contracts/test_contract
       build_deps: OFF
-      automaton_version: v0.1.11
+      automaton_version: v0.1.11a
       CTEST_OUTPUT_ON_FAILURE: 1
     steps:
     - uses: actions/checkout@v2
@@ -169,7 +168,7 @@ jobs:
       lint_dir: ./src/automaton
       dist_dir: ./src/local_third_party
       build_deps: OFF
-      automaton_version: v0.1.11
+      automaton_version: v0.1.11a
       MACOSX_DEPLOYMENT_TARGET: 10.9
     steps:
     - uses: actions/checkout@v2
