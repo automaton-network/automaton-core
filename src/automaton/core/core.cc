@@ -1,3 +1,5 @@
+#pragma warning( disable : 4266 )
+
 #include <boost/config/warning_disable.hpp>
 
 #include <curl/curl.h>
