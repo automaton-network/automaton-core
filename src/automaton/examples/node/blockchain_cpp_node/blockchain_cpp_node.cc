@@ -141,7 +141,7 @@ std::string blockchain_cpp_node::s_debug_html() {
     block b = it.second;
     std::string short_hash = hashstr(hash);
     // check if this is in current blockchain
-    if (hash == blockchain[b.height - 1]) {
+    if (hash == blockchain[static_cast<size_t>(b.height) - 1]) {
       clr = "'#cce0ff', font: {face:'Play'}";
     } else {
       clr = "'#f2e6d9', font: {color:'#333', face:'Play'}";
@@ -261,8 +261,8 @@ void blockchain_cpp_node::on_block(uint32_t p_id, const block& b) {
       // Check if blocks[block.prev_hash] is part of the main chain and replace if necessary.
       int64_t block_height = blockchain.size() - 1;
       std::string longest_chain_hash = b.prev_hash;
-      while (block_height > 0 && blockchain[block_height - 1] != longest_chain_hash) {
-        blockchain[block_height - 1] = longest_chain_hash;
+      while (block_height > 0 && blockchain[static_cast<size_t>(block_height) - 1] != longest_chain_hash) {
+        blockchain[static_cast<size_t>(block_height) - 1] = longest_chain_hash;
         longest_chain_hash = blocks[longest_chain_hash].prev_hash;
         --block_height;
       }
@@ -382,7 +382,7 @@ void blockchain_cpp_node::send_blocks(uint32_t p_id, uint32_t starting_block) {
     log(get_peer_name(p_id), ss.str());
   }
   for (uint64_t i = starting_block - 1; i < blockchain.size(); ++i) {
-    send_block(p_id, blockchain[i]);
+    send_block(p_id, blockchain[static_cast<size_t>(i)]);
   }
 }
 
@@ -443,7 +443,7 @@ block blockchain_cpp_node::get_blockchain_top() {
 std::unordered_map<std::string, uint32_t> blockchain_cpp_node::collect_balances() {
   std::unordered_map<std::string, uint32_t> balances;
   for (uint64_t i = 0; i < blockchain.size(); ++i) {
-    block b = get_block(blockchain[i]);
+    block b = get_block(blockchain[static_cast<size_t>(i)]);
     balances[b.miner]++;
   }
   return balances;
