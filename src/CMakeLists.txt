@@ -38,7 +38,7 @@ macro(set_warnings_level target)
       /WX
     )
   else()
-    add_compile_options(
+    target_compile_options(
       ${target} PRIVATE
       -Wall
       -Wextra
