@@ -19,7 +19,7 @@ int main(int argc, char* argv[]) {
     pb_factory.import_schema(&loaded_schema, "test", "");
   }
   catch (std::runtime_error& e) {
-    // std::cout << e.what() << std::endl;
+    LOG(WARNING) << e.what();
     google::protobuf::ShutdownProtobufLibrary();
     return 0;
   }

@@ -294,15 +294,15 @@ void state_persistent::commit_changes() {
   // Erase backups
   backup.clear();
   if (free_locations.empty()) {
-    permanent_nodes_count = nodes.size();
+    permanent_nodes_count = static_cast<uint32_t>(nodes.size());
     return;
   }
   // If we have fragmented, move not deleted elements from
   // the end of the vector into them
   auto it_low = free_locations.begin();
   auto rit_high = free_locations.rbegin();
-  uint32_t empty_elements = free_locations.size();
-  uint32_t last_element = nodes.size() - 1;
+  uint32_t empty_elements = static_cast<uint32_t>(free_locations.size());
+  uint32_t last_element = static_cast<uint32_t>(nodes.size()) - 1;
   // Copy elements and skip if element is deleted
   while (*it_low != *rit_high) {
   // auto it_last_element = free_locations.find(last_element);
@@ -320,7 +320,7 @@ void state_persistent::commit_changes() {
   nodes[*it_low] = nodes[last_element];
 
   nodes.resize(nodes.size() - empty_elements);
-  permanent_nodes_count = nodes.size();
+  permanent_nodes_count = static_cast<uint32_t>(nodes.size());
   free_locations.clear();
 }
 
@@ -347,7 +347,7 @@ void state_persistent::print_subtrie(std::string path, std::string formated_path
 }
 
 uint32_t state_persistent::size() {
-  return nodes.size();
+  return static_cast<uint32_t>(nodes.size());
 }
 
 // TODO(Samir): Remove all calls to substring
@@ -417,7 +417,7 @@ uint32_t state_persistent::add_node(uint32_t from, unsigned char to) {
   uint32_t new_node;
   // Add node to the end of the vector if the are no fragmented location
   if (free_locations.empty()) {
-    new_node = nodes.size();
+    new_node = static_cast<uint32_t>(nodes.size());
     nodes.push_back(node());
   } else {
     auto it_fragmented_locations =  free_locations.begin();
@@ -450,23 +450,24 @@ void state_persistent::calculate_hash(uint32_t cur_node) {
   std::string str_value = nodes[cur_node].get_value(bs);
   value =
       reinterpret_cast<const uint8_t*>(str_value.data());
-  len = nodes[cur_node].get_value(bs).length();
+  len = static_cast<uint32_t>(nodes[cur_node].get_value(bs).length());
   hasher->update(value, len);
 
   // Hash the prefix
   std::string str_prefix = nodes[cur_node].get_prefix(bs);
   prefix =
       reinterpret_cast<const uint8_t*>(str_prefix.data());
-  len = nodes[cur_node].get_prefix(bs).length();
+  len = static_cast<uint32_t>(nodes[cur_node].get_prefix(bs).length());
   hasher->update(prefix, len);
   // Hash the children hashes
-  for (int i = 0; i < 256; i++) {
+  for (int _i = 0; _i < 256; _i++) {
+    uint8_t i = static_cast<uint8_t>(_i);
     if (nodes[cur_node].get_child(i, bs)) {
       uint32_t child = nodes[cur_node].get_child(i, bs);
 
       std::string str_child_hash = nodes[child].get_hash(bs);
       child_hash = reinterpret_cast<const uint8_t*>(str_child_hash.data());
-      len = nodes[child].get_hash(bs).length();
+      len = static_cast<uint32_t>(nodes[child].get_hash(bs).length());
       hasher->update(child_hash, len);
     }
   }
@@ -532,19 +533,19 @@ uint32_t state_persistent::node::get_child(uint8_t child, storage::blobstore * _
 }
 
 void state_persistent::node::set_parent(uint32_t parent, storage::blobstore * _bs) {
-  parent_ = _bs->store(sizeof(uint32_t), reinterpret_cast<uint8_t*>(&parent));
+  parent_ = static_cast<uint32_t>(_bs->store(sizeof(uint32_t), reinterpret_cast<uint8_t*>(&parent)));
 }
 
 void state_persistent::node::set_prefix(const std::string prefix, storage::blobstore * _bs) {
-  prefix_ = _bs->store(prefix.length(), reinterpret_cast<const uint8_t*>(prefix.data()));
+  prefix_ = _bs->store(static_cast<uint32_t>(prefix.length()), reinterpret_cast<const uint8_t*>(prefix.data()));
 }
 
 void state_persistent::node::set_hash(const std::string hash, storage::blobstore * _bs) {
-  hash_ = _bs->store(hash.length(), reinterpret_cast<const uint8_t*>(hash.data()));
+  hash_ = _bs->store(static_cast<uint32_t>(hash.length()), reinterpret_cast<const uint8_t*>(hash.data()));
 }
 
 void state_persistent::node::set_value(const std::string value, storage::blobstore * _bs) {
-  value_ = _bs->store(value.length(),
+  value_ = _bs->store(static_cast<uint32_t>(value.length()),
     reinterpret_cast<const uint8_t*>(value.data()));
 }
 

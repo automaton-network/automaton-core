@@ -20,7 +20,7 @@ struct blob {
 
   void set(size_t key, int value) {
     CHECK_GT(key, buffer.size());
-    buffer[key] = value;
+    buffer[key] = static_cast<uint8_t>(value);
   }
 
   uint8_t get(size_t key) {

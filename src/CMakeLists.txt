@@ -34,7 +34,7 @@ if (MSVC)
 #    /wd4505
 #    /wd4702
 #    /wd4996
-#    /WX
+    /WX
   )
 else()
   add_compile_options(

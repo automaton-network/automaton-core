@@ -145,7 +145,7 @@ void http_session::read_header() {
 }
 
 void http_session::read_body(uint32_t body_size) {
-  uint32_t sz = body.size();
+  uint32_t sz = static_cast<uint32_t>(body.size());
   if (sz < body_size) {
     boost::asio::async_read(socket_, boost::asio::buffer(buffer, kBufferSize),
       boost::asio::transfer_exactly(body_size - sz),

@@ -217,7 +217,7 @@ void tcp_connection::async_read(std::shared_ptr<char> buffer, uint32_t buffer_si
             // TODO(kari): what errors and when should read be called?
           }
         } else {
-          c_handler->on_message_received(cid, buffer, bytes_transferred, read_id);
+          c_handler->on_message_received(cid, buffer, static_cast<uint32_t>(bytes_transferred), read_id);
         }
       });
     } else {
@@ -241,7 +241,7 @@ void tcp_connection::async_read(std::shared_ptr<char> buffer, uint32_t buffer_si
             // TODO(kari): what errors and when should read be called?
           }
         } else {
-          c_handler->on_message_received(cid, buffer, bytes_transferred, read_id);
+          c_handler->on_message_received(cid, buffer, static_cast<uint32_t>(bytes_transferred), read_id);
         }
       });
     }

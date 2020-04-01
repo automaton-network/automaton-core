@@ -130,9 +130,9 @@ void blockchain_cpp_node::s_update(uint64_t time) {
 }
 
 std::string blockchain_cpp_node::s_debug_html() {
-  std::stringstream nodes, edges;
+  std::stringstream ss_nodes, ss_edges;
   // GENESIS_HASH
-  nodes <<
+  ss_nodes <<
       "{id: '" << hashstr(GENESIS_HASH) << "', shape: 'box', label: 'GENESIS', color: '#D2B4DE', level: 0}";
 
   std::string clr;
@@ -150,8 +150,8 @@ std::string blockchain_cpp_node::s_debug_html() {
     ss << ",\n{id: '" << short_hash << "', shape: 'box', label: '" << short_hash << "', color: "<< clr <<
         ", level: " << b.height << ", title: '" << "mined by " << b.miner << "<br>HASH: " << bin2hex(hash) <<
         "<br>HEIGHT: " << b.height <<"'}";
-    nodes << ss.str();
-    edges << "{from: '" << hashstr(b.prev_hash) << "', to: '" << short_hash << "', arrows:'to'}" << ",\n";
+    ss_nodes << ss.str();
+    ss_edges << "{from: '" << hashstr(b.prev_hash) << "', to: '" << short_hash << "', arrows:'to'}" << ",\n";
   }
 
   std::unordered_map<std::string, uint32_t> balances = collect_balances();
@@ -176,12 +176,12 @@ R"HTML(<script type="text/javascript" charset="utf-8" src="https://code.jquery.c
   // create an array with nodes
   var nodes = new vis.DataSet([
 )HTML"
-  << nodes.str() <<
+  << ss_nodes.str() <<
 R"(]);
   // create an array with edges
   var edges = new vis.DataSet([
 )"
-  << edges.str() <<
+  << ss_edges.str() <<
 R"HTML(]);
 
   // create a network
@@ -266,7 +266,7 @@ void blockchain_cpp_node::on_block(uint32_t p_id, const block& b) {
         longest_chain_hash = blocks[longest_chain_hash].prev_hash;
         --block_height;
       }
-      gossip(p_id, block_height + 1);
+      gossip(p_id, static_cast<uint32_t>(block_height) + 1);
     }
   }
 }
@@ -428,7 +428,7 @@ std::string blockchain_cpp_node::node_stats(uint32_t last_blocks = 0) {
   std::stringstream ss;
   int32_t starting_block = 0;
   if (last_blocks < blockchain.size() && last_blocks > 0) {
-    starting_block = blockchain.size() - last_blocks;
+    starting_block = static_cast<int32_t>(blockchain.size()) - static_cast<int32_t>(last_blocks);
   }
   for (uint32_t i = starting_block; i < blockchain.size(); ++i) {
     ss << bin2hex(blockchain[i]) << "\n";

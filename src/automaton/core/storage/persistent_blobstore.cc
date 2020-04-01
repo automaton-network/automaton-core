@@ -81,11 +81,11 @@ bool persistent_blobstore::free(const uint32_t id) {
   if (is_mapped == false) {
     throw std::logic_error("not mapped");;
   }
-  if (id+1 >= capacity) {
+  if (id + 1 >= capacity) {
     throw std::out_of_range("Object out of range");
   }
   // TODO(samir): Change storage to unt8_t. Mark deleted nodes with *= -1
-  storage[id] *= -1;
+  storage[id] = storage[id] * (-1);
   return 1;
 }
 

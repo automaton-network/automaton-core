@@ -38,7 +38,7 @@ simulation::simulation():simulation_time(0), simulation_running(false) {
       std::shared_ptr<connection::connection_handler> connections_handler) {
     return std::shared_ptr<acceptor>(new simulated_acceptor(id, address, handler, connections_handler));
   });
-  std::srand(time(NULL));
+  std::srand(static_cast<unsigned>(std::time(nullptr)));
 }
 
 simulation::~simulation() {
@@ -197,7 +197,7 @@ void simulation::handle_request(uint32_t src, uint32_t dest) {
       source->remote_connection_id = new_connection->local_connection_id;
       new_connection->set_state(connection::state::connected);
       new_connection->remote_connection_id = source->local_connection_id;
-      new_connection->set_time_stamp(time_of_handling);
+      new_connection->set_time_stamp(static_cast<uint32_t>(time_of_handling));
       std::weak_ptr<acceptor::acceptor_handler> a_handler = acceptor_->get_handler();
       auto a_id = acceptor_->get_id();
       add_handlers_task([a_handler, a_id, new_connection, source_address]() {
@@ -236,7 +236,7 @@ void simulation::handle_message(uint32_t src, uint32_t dest, const std::string& 
   if (!destination || destination->get_state() != connection::state::connected) {
     LOG(WARNING) << "WARNING in handling send! Peer has disconnected or does not exist!";
     if (source) {
-      uint32_t t = get_time();
+      uint32_t t = static_cast<uint32_t>(get_time());
       uint32_t ts = source->get_time_stamp();
       uint64_t time_of_handling = (t > ts ? t : ts) + 1 + source->get_lag();
       add_task(time_of_handling, std::bind(&simulation::handle_ack, sim, src, status::internal("Broken pipe")));
@@ -258,10 +258,10 @@ void simulation::handle_message(uint32_t src, uint32_t dest, const std::string& 
   source->sending_q_mutex.lock();
   if (source->sending.size() && source->sending.front().message.size() == source->sending.front().bytes_send) {
     source->sending_q_mutex.unlock();
-    uint32_t t = get_time();
+    uint32_t t = static_cast<uint32_t>(get_time());
     uint32_t ts = destination->get_time_stamp();
     uint64_t time_of_handling = (t > ts ? t : ts) + 1 + destination->get_lag();
-    destination->set_time_stamp(time_of_handling);
+    destination->set_time_stamp(static_cast<uint32_t>(time_of_handling));
     add_task(time_of_handling, std::bind(&simulation::handle_ack, sim, src, status::ok()));
   } else if (source && source->get_state() == connection::state::connected) {
     add_task(get_time() + 1, std::bind(&simulated_connection::handle_send, source));
@@ -532,12 +532,12 @@ void simulated_connection::handle_send() {
   } else {
       message = packet.message.substr(packet.bytes_send, parameters.bandwidth);
   }
-  packet.bytes_send += message.size();
+  packet.bytes_send += static_cast<int32_t>(message.size());
   std::shared_ptr<simulation> sim = simulation::get_simulator();
-  uint32_t t = sim->get_time();
+  uint32_t t = static_cast<uint32_t>(sim->get_time());
   uint32_t ts = get_time_stamp();
   uint64_t time_of_handling = (t > ts ? t : ts) + 1 + get_lag();
-  set_time_stamp(time_of_handling);
+  set_time_stamp(static_cast<uint32_t>(time_of_handling));
   sim->add_task(time_of_handling,
       std::bind(&simulation::handle_message, sim, local_connection_id, remote_connection_id, message));
   // LOG(DBUG) << "</handle_send 2>";
@@ -559,7 +559,7 @@ void simulated_connection::handle_read() {
       std::string& message = receive_buffer.front();
       if (left_to_read >= message.size()) {
         std::memcpy(packet.buffer.get() + packet.bytes_read, message.data(), message.size());
-        packet.bytes_read += message.size();
+        packet.bytes_read += static_cast<uint32_t>(message.size());
         receive_buffer.pop();
       } else {
         std::memcpy(packet.buffer.get() + packet.bytes_read, message.data(), left_to_read);
@@ -663,10 +663,10 @@ void simulated_connection::connect() {
   connection_state = connection::state::connecting;
   std::shared_ptr<simulation> sim = simulation::get_simulator();
   sim->add_connection(shared_from_this());
-  uint32_t t = sim->get_time();
+  uint32_t t = static_cast<uint32_t>(sim->get_time());
   uint32_t ts = get_time_stamp();
   uint64_t time_of_handling = (t > ts ? t : ts) + 1 + get_lag();
-  set_time_stamp(time_of_handling);
+  set_time_stamp(static_cast<uint32_t>(time_of_handling));
   // LOG(DEBUG) << id << " </connect>";
 
   sim->add_task(time_of_handling, std::bind(&simulation::handle_request, sim, local_connection_id, remote_address));
@@ -679,10 +679,10 @@ void simulated_connection::disconnect() {
     }
     connection_state = connection::state::disconnected;
     std::shared_ptr<simulation> sim = simulation::get_simulator();
-    uint32_t t = sim->get_time();
+    uint32_t t = static_cast<uint32_t>(sim->get_time());
     uint32_t ts = get_time_stamp();
     uint64_t time_of_handling = (t > ts ? t : ts) + 1 + get_lag();
-    set_time_stamp(time_of_handling);
+    set_time_stamp(static_cast<uint32_t>(time_of_handling));
     sim->remove_connection(local_connection_id);
     local_connection_id = 0;
     auto self = shared_from_this();
@@ -746,7 +746,7 @@ void simulated_connection::cancel_operations() {
     });
     sending.pop();
   }
-  uint32_t n = reading.size();
+  uint32_t n = static_cast<uint32_t>(reading.size());
   while (n--) {
     sim->add_handlers_task([c_handler, c_id]() {
       c_handler->on_connection_error(c_id, status::aborted("Operation read cancelled!"));
