@@ -1,4 +1,4 @@
-#pragma warning( disable : 4266 )
+#pragma warning( disable : 4266 4826 )
 
 #include <boost/config/warning_disable.hpp>
 
