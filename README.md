@@ -36,14 +36,9 @@ THE SOFTWARE.
 
 ## Social
 
-Discord:
+[<img title="Discord" width="64" height="64" src="media/Discord-Logo-Color.svg">](https://discord.gg/f3GRjhF)
 
-<!-- [![Discord](media/Discord-Logo-Color.svg)](https://discord.gg/f3GRjhF) -->
-[<img title="Discord" width="48" height="48" src="media/Discord-Logo-Color.svg">](https://discord.gg/f3GRjhF)
-
-Telegram:
-
-<a link="https://t.me/automaton_network"><img title="Telegram" width="48" height="48" src="media/Telegram_Logo.svg"></a>
+[<img title="Telegram" width="48" height="48" src="media/Telegram_Logo.svg">](https://t.me/automaton_network)
 
 ## Building Automaton
 
