@@ -205,7 +205,7 @@ macro(automaton_configure_debugger_directory target_name)
 endmacro()
 
 add_executable(automaton-core-cli automaton/core/core.cc)
-set_warnings_level(automaton-core-cli)
+# set_warnings_level(automaton-core-cli)
 
 target_compile_definitions(
   automaton-core-cli PUBLIC
