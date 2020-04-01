@@ -1,0 +1,20 @@
+name: C/C++ Lint
+
+on:
+  push:
+    paths:
+      - 'src/**'
+      - '.github/workflows/ccpp.yml'
+  pull_request:
+    paths:
+      - 'src/**'
+      - '.github/workflows/ccpp.yml'
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run lint checks
+        run: ./lint.sh
+        working-directory: ./src/automaton

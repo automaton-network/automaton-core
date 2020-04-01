@@ -209,10 +209,3 @@ jobs:
         prerelease: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  lint:
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Run lint checks
-        run: ./lint.sh
-        working-directory: ./src/automaton
