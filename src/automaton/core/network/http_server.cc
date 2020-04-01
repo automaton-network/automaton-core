@@ -5,8 +5,6 @@
 #include <string>
 #include <thread>
 
-#include <boost/config/warning_disable.hpp>
-
 #include <boost/asio/basic_stream_socket.hpp>
 #include <boost/asio/buffer.hpp>
 #include <boost/asio/error.hpp>

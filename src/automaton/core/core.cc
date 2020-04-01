@@ -1,7 +1,3 @@
-#pragma warning( disable : 4266 4826 )
-
-#include <boost/config/warning_disable.hpp>
-
 #include <curl/curl.h>
 #include <cryptopp/base64.h>
 #include <cryptopp/filters.h>
