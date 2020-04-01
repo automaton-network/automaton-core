@@ -38,7 +38,8 @@ THE SOFTWARE.
 
 Discord:
 
-[![Discord](media/Discord-Logo-Color.svg)](https://discord.gg/f3GRjhF)
+<!-- [![Discord](media/Discord-Logo-Color.svg)](https://discord.gg/f3GRjhF) -->
+[<img title="Discord" width="48" height="48" src="media/Discord-Logo-Color.svg">](https://discord.gg/f3GRjhF)
 
 Telegram:
 
