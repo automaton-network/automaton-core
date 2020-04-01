@@ -76,15 +76,15 @@ jobs:
       run: ctest -j4 -C ${{ matrix.configuration }}
       shell: cmd
     - name: Archive
-      if: startsWith(github.ref, 'refs/tags/v') && github.event_name != 'schedule' && matrix.runtime_link != 'MD'
+      if: startsWith(github.ref, 'refs/tags/v') && github.event_name != 'schedule'
       working-directory: ${{ env.dist_dir }}
-      run: zip -r ../../automaton-Windows-${{ matrix.configuration}}-${{ matrix.platform}}-${{ steps.tag.outputs.result }}.zip .
+      run: zip -r ../../automaton-Windows-${{ matrix.configuration}}-${{ matrix.runtime_link}}-${{ matrix.platform}}-${{ steps.tag.outputs.result }}.zip .
       shell: cmd
     - name: Release
       uses: softprops/action-gh-release@v1
-      if: startsWith(github.ref, 'refs/tags/v') && github.event_name != 'schedule' && matrix.runtime_link != 'MD'
+      if: startsWith(github.ref, 'refs/tags/v') && github.event_name != 'schedule'
       with:
-        files: automaton-Windows-${{ matrix.configuration }}-${{ matrix.platform}}-${{ steps.tag.outputs.result }}.zip
+        files: automaton-Windows-${{ matrix.configuration }}-${{ matrix.runtime_link}}-${{ matrix.platform}}-${{ steps.tag.outputs.result }}.zip
         prerelease: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
