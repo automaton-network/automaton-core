@@ -27,14 +27,15 @@ macro(set_warnings_level target)
       ${target} PRIVATE
       /W4
       /wd4100
-  #    /wd4101
+#     /wd4101
       /wd4127
-  #    /wd4244
-  #    /wd4245
-  #    /wd4458
-  #    /wd4505
-  #    /wd4702
-  #    /wd4996
+#     /wd4244
+#     /wd4245
+      /wd4266
+#     /wd4458
+#     /wd4505
+#     /wd4702
+#     /wd4996
       /WX
     )
   else()
@@ -43,17 +44,17 @@ macro(set_warnings_level target)
       -Wall
       -Wextra
       -Wshadow
-  #    -Wduplicated-cond
-  #    -Wduplicated-branches
-  #    -Wlogical-op
+#     -Wduplicated-cond
+#     -Wduplicated-branches
+#     -Wlogical-op
       -Wnull-dereference
-  #    -Wold-style-cast
-  #    -Wuseless-cast
-  #    -Wjump-misses-init
+#     -Wold-style-cast
+#     -Wuseless-cast
+#     -Wjump-misses-init
       -Wformat=2
       -Wno-unused-parameter
       -Wno-uninitialized
-  #    -Werror
+#     -Werror
     )
   endif()
 endmacro()
