@@ -38,7 +38,7 @@ THE SOFTWARE.
 
 Telegram:
 
-<a link="https://t.me/automaton_network"><img title="Telegram" width="64" height="64" src="media/Telegram-Logo.svg"></a>
+<a link="https://t.me/automaton_network"><img title="Telegram" width="64" height="64" src="media/Telegram_Logo.svg"></a>
 
 Discord:
 
