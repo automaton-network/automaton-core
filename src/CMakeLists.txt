@@ -35,6 +35,7 @@ macro(set_warnings_level target)
 #     /wd4458
 #     /wd4505
 #     /wd4702
+      /wd4826
 #     /wd4996
       /WX
     )
