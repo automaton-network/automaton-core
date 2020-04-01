@@ -25,12 +25,9 @@ int main(int argc, char* argv[]) {
     } else {
       return 0;
     }
-  }
-  catch (std::exception& e) {
+  } catch (std::exception& e) {
     std::cout << e.what() << std::endl;
     google::protobuf::ShutdownProtobufLibrary();
     return 200;
   }
-  google::protobuf::ShutdownProtobufLibrary();
-  return 100;
 }
