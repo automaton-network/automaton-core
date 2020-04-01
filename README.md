@@ -18,7 +18,7 @@ Table of Contents
 
 ## License
 
-#### Everything in this repo is licensed under the MIT License.
+#### Automaton Core is licensed under the MIT License.
 
 Check the [LICENSE](LICENSE) file for more details.
 
@@ -35,6 +35,7 @@ THE SOFTWARE.
 ## Contact
 
 Telegram: https://t.me/automaton_network
+Discord: https://discord.gg/f3GRjhF
 
 ## Building Automaton
 
