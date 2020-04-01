@@ -9,6 +9,9 @@ on:
     paths:
       - 'src/**'
       - '.github/workflows/ccpp.yml'
+  schedule:
+    # Every day at 1am UTC
+    - cron: '0 1 * * *'
 
 jobs:
   windows:
@@ -17,20 +20,28 @@ jobs:
       matrix:
         configuration: [Debug, Release]
         platform: [Win32, x64]
+        runtime_link: [MD, MT]
     env:
       build_dir: ./src/build
       dist_dir: ./src/local_third_party
       build_deps: OFF
+      static_runtime: ON
       automaton_version: v0.1.11
     steps:
     - uses: actions/checkout@v2
     - name: Check for full rebuild
-      if: startsWith(github.ref, 'refs/tags/v')
+      if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'schedule'
       run: |
-           echo "::set-env name=build_deps::ON"
+        echo "::set-env name=build_deps::ON"
+      shell: bash
+    - name: Check for runtime link option
+      if: matrix.runtime_link == 'MD'
+      run: |
+        echo "::set-env name=build_deps::ON"
+        echo "::set-env name=static_runtime::OFF"
       shell: bash
     - name: Get tag information
-      if: startsWith(github.ref, 'refs/tags/v')
+      if: startsWith(github.ref, 'refs/tags/v') && github.event_name != 'schedule'
       id: tag
       uses: actions/github-script@0.9.0
       with:
@@ -54,7 +65,7 @@ jobs:
       uses: microsoft/setup-msbuild@v1.0.0
     - name: configure
       working-directory: ${{ env.build_dir }}
-      run: cmake .. -DCMAKE_BUILD_TYPE=${{ matrix.configuration }} -A ${{ matrix.platform }} -Dautomaton_STATIC_RUNTIME=ON -Dautomaton_BUILD_DEPENDENCIES=${{ env.build_deps }} -DCMAKE_INSTALL_PREFIX=../local_third_party
+      run: cmake .. -DCMAKE_BUILD_TYPE=${{ matrix.configuration }} -A ${{ matrix.platform }} -Dautomaton_STATIC_RUNTIME=${{ env.static_runtime }} -Dautomaton_BUILD_DEPENDENCIES=${{ env.build_deps }} -DCMAKE_INSTALL_PREFIX=../local_third_party
       shell: cmd
     - name: build
       working-directory: ${{ env.build_dir }}
@@ -65,15 +76,15 @@ jobs:
       run: ctest -j4 -C ${{ matrix.configuration }}
       shell: cmd
     - name: Archive
-      if: startsWith(github.ref, 'refs/tags/v')
+      if: startsWith(github.ref, 'refs/tags/v') && github.event_name != 'schedule'
       working-directory: ${{ env.dist_dir }}
-      run: zip -r ../../automaton-Windows-${{ matrix.configuration}}-${{ matrix.platform}}-${{ steps.tag.outputs.result }}.zip .
+      run: zip -r ../../automaton-Windows-${{ matrix.configuration}}-${{ matrix.runtime_link}}-${{ matrix.platform}}-${{ steps.tag.outputs.result }}.zip .
       shell: cmd
     - name: Release
       uses: softprops/action-gh-release@v1
-      if: startsWith(github.ref, 'refs/tags/v')
+      if: startsWith(github.ref, 'refs/tags/v') && github.event_name != 'schedule'
       with:
-        files: automaton-Windows-${{ matrix.configuration }}-${{ matrix.platform}}-${{ steps.tag.outputs.result }}.zip
+        files: automaton-Windows-${{ matrix.configuration }}-${{ matrix.runtime_link}}-${{ matrix.platform}}-${{ steps.tag.outputs.result }}.zip
         prerelease: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -92,12 +103,12 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Check for full rebuild
-      if: startsWith(github.ref, 'refs/tags/v')
+      if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'schedule'
       run: |
            echo "::set-env name=build_deps::ON"
       shell: bash
     - name: Get tag information
-      if: startsWith(github.ref, 'refs/tags/v')
+      if: startsWith(github.ref, 'refs/tags/v') && github.event_name != 'schedule'
       id: tag
       uses: actions/github-script@0.9.0
       with:
@@ -137,12 +148,12 @@ jobs:
       working-directory: ${{ env.build_dir }}
       run: ctest -j4 -C ${{ matrix.configuration }} --build-run-dir=..
     - name: Archive
-      if: startsWith(github.ref, 'refs/tags/v')
+      if: startsWith(github.ref, 'refs/tags/v') && github.event_name != 'schedule'
       working-directory: ${{ env.dist_dir }}
       run: zip -r ../../automaton-Linux-${{ matrix.configuration}}-${{ steps.tag.outputs.result }}.zip .
     - name: Release
       uses: softprops/action-gh-release@v1
-      if: startsWith(github.ref, 'refs/tags/v')
+      if: startsWith(github.ref, 'refs/tags/v') && github.event_name != 'schedule'
       with:
         files: automaton-Linux-${{ matrix.configuration }}-${{ steps.tag.outputs.result }}.zip
         prerelease: true
@@ -163,12 +174,12 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Check for full rebuild
-      if: startsWith(github.ref, 'refs/tags/v')
+      if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'schedule'
       run: |
            echo "::set-env name=build_deps::ON"
       shell: bash
     - name: Get tag information
-      if: startsWith(github.ref, 'refs/tags/v')
+      if: startsWith(github.ref, 'refs/tags/v') && github.event_name != 'schedule'
       id: tag
       uses: actions/github-script@0.9.0
       with:
@@ -198,12 +209,12 @@ jobs:
       working-directory: ${{ env.build_dir }}
       run: ctest -j4 -C ${{ matrix.configuration }}
     - name: Archive
-      if: startsWith(github.ref, 'refs/tags/v')
+      if: startsWith(github.ref, 'refs/tags/v') && github.event_name != 'schedule'
       working-directory: ${{ env.dist_dir }}
       run: zip -r ../../automaton-macOS-${{ matrix.configuration}}-${{ steps.tag.outputs.result }}.zip .
     - name: Release
       uses: softprops/action-gh-release@v1
-      if: startsWith(github.ref, 'refs/tags/v')
+      if: startsWith(github.ref, 'refs/tags/v') && github.event_name != 'schedule'
       with:
         files: automaton-macOS-${{ matrix.configuration }}-${{ steps.tag.outputs.result }}.zip
         prerelease: true
