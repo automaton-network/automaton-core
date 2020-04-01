@@ -36,13 +36,16 @@ THE SOFTWARE.
 
 ## Social
 
-Telegram:
-
-<a link="https://t.me/automaton_network"><img title="Telegram" width="64" height="64" src="media/Telegram_Logo.svg"></a>
-
-Discord:
-
+<div>
+<span>
+Discord:<br/>
 <a link="https://discord.gg/f3GRjhF"><img title="Discord" width="64" height="64" src="media/Discord-Logo-Color.svg"></a>
+</span>
+<span>
+Telegram:<br/>
+<a link="https://t.me/automaton_network"><img title="Telegram" width="64" height="64" src="media/Telegram_Logo.svg"></a>
+</span>
+</div>
 
 ## Building Automaton
 
