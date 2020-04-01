@@ -132,7 +132,7 @@ uint32_t protobuf_schema::create_message(const std::string& message_name) {
 uint32_t protobuf_schema::create_enum(const std::string& enum_name) {
   enums.push_back(new EnumDescriptorProto());
   enums[enums.size() - 1]->set_name(enum_name);
-  return enums.size() - 1;
+  return static_cast<uint32_t>(enums.size()) - 1;
 }
 
 void protobuf_schema::add_enum_value(uint32_t enum_id, const std::string& value_name,

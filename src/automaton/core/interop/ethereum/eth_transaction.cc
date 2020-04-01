@@ -33,7 +33,7 @@ std::string rlp_encode(std::string s, bool is_list) {
   if (s.size() % 2) {
     s = "0" + s;
   }
-  uint32_t length = s.size() / 2;
+  uint32_t length = static_cast<uint32_t>(s.size()) / 2;
   if (length == 0) {
     return "80";
   }
@@ -45,7 +45,7 @@ std::string rlp_encode(std::string s, bool is_list) {
     ss << dec2hex((is_list ? 192 : 128) + length) << s;
   } else {
     std::string length_in_hex = dec2hex(length);
-    uint32_t first_byte = (is_list ? 247 : 183) + (length_in_hex.size() / 2);
+    uint32_t first_byte = (is_list ? 247 : 183) + (static_cast<uint32_t>(length_in_hex.size()) / 2);
     // todo: check if this byte is valid
     ss << dec2hex(first_byte) << length_in_hex << s;
   }

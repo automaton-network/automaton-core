@@ -106,7 +106,7 @@ void engine::bind_data() {
     });
 
   msg_type.set(sol::meta_function::new_index,
-    [](sol::this_state L, msg& m, std::string key, sol::object value) {
+    [](sol::this_state _L, msg& m, std::string key, sol::object value) {
       VLOG(9) << "Setting key:" << key << " value: " << value.as<std::string>();
       auto tag_id = m.get_field_tag(key);
       auto fi = m.get_field_info_by_tag(tag_id);

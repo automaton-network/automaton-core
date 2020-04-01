@@ -61,7 +61,7 @@ class blockchain_cpp_node : public automaton::core::node::node {
   block get_blockchain_top();
 
   uint32_t get_blocks_size() {
-    return blocks.size();
+    return static_cast<uint32_t>(blocks.size());
   }
 
  private:

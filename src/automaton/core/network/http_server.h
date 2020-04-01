@@ -8,17 +8,10 @@
 #include <string>
 #include <thread>
 
-#if defined(__clang__)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wshadow"
-#endif
+#include <boost/config/warning_disable.hpp>
 
 #include <boost/asio/io_service.hpp>
 #include <boost/asio/ip/tcp.hpp>
-
-#if defined(__clang__)
-#pragma clang diagnostic pop
-#endif
 
 #include "automaton/core/io/io.h"
 

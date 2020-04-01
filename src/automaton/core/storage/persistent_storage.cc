@@ -2,6 +2,8 @@
 
 #include <string>
 
+#include <boost/config/warning_disable.hpp>
+
 #include <boost/filesystem.hpp>
 #include <boost/iostreams/device/mapped_file.hpp>
 

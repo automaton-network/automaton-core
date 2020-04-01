@@ -130,9 +130,9 @@ void blockchain_cpp_node::s_update(uint64_t time) {
 }
 
 std::string blockchain_cpp_node::s_debug_html() {
-  std::stringstream nodes, edges;
+  std::stringstream ss_nodes, ss_edges;
   // GENESIS_HASH
-  nodes <<
+  ss_nodes <<
       "{id: '" << hashstr(GENESIS_HASH) << "', shape: 'box', label: 'GENESIS', color: '#D2B4DE', level: 0}";
 
   std::string clr;
@@ -141,7 +141,7 @@ std::string blockchain_cpp_node::s_debug_html() {
     block b = it.second;
     std::string short_hash = hashstr(hash);
     // check if this is in current blockchain
-    if (hash == blockchain[b.height - 1]) {
+    if (hash == blockchain[static_cast<size_t>(b.height) - 1]) {
       clr = "'#cce0ff', font: {face:'Play'}";
     } else {
       clr = "'#f2e6d9', font: {color:'#333', face:'Play'}";
@@ -150,8 +150,8 @@ std::string blockchain_cpp_node::s_debug_html() {
     ss << ",\n{id: '" << short_hash << "', shape: 'box', label: '" << short_hash << "', color: "<< clr <<
         ", level: " << b.height << ", title: '" << "mined by " << b.miner << "<br>HASH: " << bin2hex(hash) <<
         "<br>HEIGHT: " << b.height <<"'}";
-    nodes << ss.str();
-    edges << "{from: '" << hashstr(b.prev_hash) << "', to: '" << short_hash << "', arrows:'to'}" << ",\n";
+    ss_nodes << ss.str();
+    ss_edges << "{from: '" << hashstr(b.prev_hash) << "', to: '" << short_hash << "', arrows:'to'}" << ",\n";
   }
 
   std::unordered_map<std::string, uint32_t> balances = collect_balances();
@@ -176,12 +176,12 @@ R"HTML(<script type="text/javascript" charset="utf-8" src="https://code.jquery.c
   // create an array with nodes
   var nodes = new vis.DataSet([
 )HTML"
-  << nodes.str() <<
+  << ss_nodes.str() <<
 R"(]);
   // create an array with edges
   var edges = new vis.DataSet([
 )"
-  << edges.str() <<
+  << ss_edges.str() <<
 R"HTML(]);
 
   // create a network
@@ -261,12 +261,12 @@ void blockchain_cpp_node::on_block(uint32_t p_id, const block& b) {
       // Check if blocks[block.prev_hash] is part of the main chain and replace if necessary.
       int64_t block_height = blockchain.size() - 1;
       std::string longest_chain_hash = b.prev_hash;
-      while (block_height > 0 && blockchain[block_height - 1] != longest_chain_hash) {
-        blockchain[block_height - 1] = longest_chain_hash;
+      while (block_height > 0 && blockchain[static_cast<size_t>(block_height) - 1] != longest_chain_hash) {
+        blockchain[static_cast<size_t>(block_height) - 1] = longest_chain_hash;
         longest_chain_hash = blocks[longest_chain_hash].prev_hash;
         --block_height;
       }
-      gossip(p_id, block_height + 1);
+      gossip(p_id, static_cast<uint32_t>(block_height) + 1);
     }
   }
 }
@@ -382,7 +382,7 @@ void blockchain_cpp_node::send_blocks(uint32_t p_id, uint32_t starting_block) {
     log(get_peer_name(p_id), ss.str());
   }
   for (uint64_t i = starting_block - 1; i < blockchain.size(); ++i) {
-    send_block(p_id, blockchain[i]);
+    send_block(p_id, blockchain[static_cast<size_t>(i)]);
   }
 }
 
@@ -428,7 +428,7 @@ std::string blockchain_cpp_node::node_stats(uint32_t last_blocks = 0) {
   std::stringstream ss;
   int32_t starting_block = 0;
   if (last_blocks < blockchain.size() && last_blocks > 0) {
-    starting_block = blockchain.size() - last_blocks;
+    starting_block = static_cast<int32_t>(blockchain.size()) - static_cast<int32_t>(last_blocks);
   }
   for (uint32_t i = starting_block; i < blockchain.size(); ++i) {
     ss << bin2hex(blockchain[i]) << "\n";
@@ -443,7 +443,7 @@ block blockchain_cpp_node::get_blockchain_top() {
 std::unordered_map<std::string, uint32_t> blockchain_cpp_node::collect_balances() {
   std::unordered_map<std::string, uint32_t> balances;
   for (uint64_t i = 0; i < blockchain.size(); ++i) {
-    block b = get_block(blockchain[i]);
+    block b = get_block(blockchain[static_cast<size_t>(i)]);
     balances[b.miner]++;
   }
   return balances;

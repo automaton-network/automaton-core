@@ -26,8 +26,8 @@ uint8_t* blobstore::create_blob(const uint32_t size, uint64_t* id) {
   // allocate a new memory block with double the size and copy the data.
   if (next_free + size_in_int32 >= capacity) {
     capacity *= 2;
-    uint32_t * new_storage = new uint32_t[capacity];
-    std::memcpy(new_storage, storage, capacity*2);
+    uint32_t * new_storage = new uint32_t[static_cast<size_t>(capacity)];
+    std::memcpy(new_storage, storage, static_cast<size_t>(capacity)*2);
     delete[] storage;
     storage = new_storage;
   }

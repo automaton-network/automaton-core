@@ -40,7 +40,7 @@ unsigned int mine_key(unsigned char* mask, unsigned char* difficulty, unsigned c
 
   while (!found && (--max_attempts > 0)) {
     for (int i = 0; i < 32; i++) {
-      priv_key[i] = engine();
+      priv_key[i] = static_cast<uint8_t>(engine());
     }
     if (!secp256k1_ec_pubkey_create(context, pubkey, priv_key)) {
       LOG(WARNING) << "Invalid priv_key " << bin2hex(std::string(reinterpret_cast<char*>(priv_key), 32));
@@ -76,7 +76,7 @@ std::string sign(const unsigned char* priv_key, const unsigned char* msg_hash) {
   secp256k1_ecdsa_sign_recoverable(context, &signature, (unsigned char*)msg_hash, (unsigned char*)priv_key, NULL, NULL);
   secp256k1_ecdsa_recoverable_signature_serialize_compact(context, (unsigned char*)signatureArr, &v, &signature);
   secp256k1_context_destroy(context);
-  signatureArr[64] = v + 27;
+  signatureArr[64] = static_cast<uint8_t>(v) + 27;
   return std::string(reinterpret_cast<char*>(signatureArr), 65);
 }
 

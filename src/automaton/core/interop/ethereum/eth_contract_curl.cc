@@ -260,7 +260,7 @@ size_t eth_contract::curl_callback(void* contents, size_t size, size_t nmemb, st
         << std::string(reinterpret_cast<char*>(contents), new_length) << "\n ===== EoCH ====";
   }
   catch (std::bad_alloc& e) {
-    LOG(WARNING) << "Bad_alloc while reading data!";
+    LOG(WARNING) << "Bad_alloc while reading data!\n" << e.what();
     return 0;
   }
   return new_length;

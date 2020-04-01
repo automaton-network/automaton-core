@@ -286,15 +286,15 @@ void state_impl::commit_changes() {
   // Erase backups
   backup.clear();
   if (free_locations.empty()) {
-    permanent_nodes_count = nodes.size();
+    permanent_nodes_count = static_cast<uint32_t>(nodes.size());
     return;
   }
   // If we have fragmented, move not deleted elements from
   // the end of the vector into them
   auto it_low = free_locations.begin();
   auto rit_high = free_locations.rbegin();
-  uint32_t empty_elements = free_locations.size();
-  uint32_t last_element = nodes.size() - 1;
+  uint32_t empty_elements = static_cast<uint32_t>(free_locations.size());
+  uint32_t last_element = static_cast<uint32_t>(nodes.size()) - 1;
   // Copy elements and skip if element is deleted
   while (*it_low != *rit_high) {
   // auto it_last_element = free_locations.find(last_element);
@@ -312,7 +312,7 @@ void state_impl::commit_changes() {
   nodes[*it_low] = nodes[last_element];
 
   nodes.resize(nodes.size() - empty_elements);
-  permanent_nodes_count = nodes.size();
+  permanent_nodes_count = static_cast<uint32_t>(nodes.size());
   free_locations.clear();
 }
 
@@ -338,7 +338,7 @@ void state_impl::print_subtrie(std::string path, std::string formated_path) {
   }
 }
 uint32_t state_impl::size() {
-  return nodes.size();
+  return static_cast<uint32_t>(nodes.size());
 }
 // TODO(Samir): Remove all calls to substring
 int32_t state_impl::get_node_index(const std::string& path) {
@@ -407,7 +407,7 @@ uint32_t state_impl::add_node(uint32_t from, uint8_t to) {
   uint32_t new_node;
   // Add node to the end of the vector if the are no fragmented location
   if (free_locations.empty()) {
-    new_node = nodes.size();
+    new_node = static_cast<uint32_t>(nodes.size());
     nodes.push_back(node());
   } else {
     auto it_fragmented_locations =  free_locations.begin();
@@ -435,13 +435,13 @@ void state_impl::calculate_hash(uint32_t cur_node) {
   // Hash the value
   value =
       reinterpret_cast<const uint8_t*>(nodes[cur_node].value.data());
-  uint32_t len = nodes[cur_node].value.length();
+  uint32_t len = static_cast<uint32_t>(nodes[cur_node].value.length());
   hasher->update(value, len);
 
   // Hash the prefix
   prefix =
       reinterpret_cast<const uint8_t*>(nodes[cur_node].prefix.data());
-  len = nodes[cur_node].prefix.length();
+  len = static_cast<uint32_t>(nodes[cur_node].prefix.length());
   hasher->update(prefix, len);
 
   // Hash the children hashes
@@ -450,7 +450,7 @@ void state_impl::calculate_hash(uint32_t cur_node) {
       uint32_t child = nodes[cur_node].children[i];
       child_hash =
           reinterpret_cast<const uint8_t*>(nodes[child].hash.data());
-      len = nodes[child].hash.length();
+      len = static_cast<uint32_t>(nodes[child].hash.length());
       hasher->update(child_hash, len);
     }
   }
