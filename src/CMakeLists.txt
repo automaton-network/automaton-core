@@ -21,40 +21,42 @@ option(automaton_BUILD_DEPENDENCIES "Build third-party libraries" ON)
 
 option(automaton_RUN_GANACHE_TESTS "Run tests with local ganache server" OFF)
 
-
-if (MSVC)
-  add_compile_options(
-    /W4
-    /wd4100
-#    /wd4101
-    /wd4127
-#    /wd4244
-#    /wd4245
-#    /wd4458
-#    /wd4505
-#    /wd4702
-#    /wd4996
-    /WX
-  )
-else()
-  add_compile_options(
-    -Wall
-    -Wextra
-    -Wshadow
-#    -Wduplicated-cond
-#    -Wduplicated-branches
-#    -Wlogical-op
-    -Wnull-dereference
-#    -Wold-style-cast
-#    -Wuseless-cast
-#    -Wjump-misses-init
-    -Wformat=2
-    -Wno-unused-parameter
-    -Wno-uninitialized
-#    -Werror
-  )
-endif()
-
+macro(set_warnings_level target)
+  if (MSVC)
+    target_compile_options(
+      ${target} PRIVATE
+      /W4
+      /wd4100
+  #    /wd4101
+      /wd4127
+  #    /wd4244
+  #    /wd4245
+  #    /wd4458
+  #    /wd4505
+  #    /wd4702
+  #    /wd4996
+      /WX
+    )
+  else()
+    add_compile_options(
+      ${target} PRIVATE
+      -Wall
+      -Wextra
+      -Wshadow
+  #    -Wduplicated-cond
+  #    -Wduplicated-branches
+  #    -Wlogical-op
+      -Wnull-dereference
+  #    -Wold-style-cast
+  #    -Wuseless-cast
+  #    -Wjump-misses-init
+      -Wformat=2
+      -Wno-unused-parameter
+      -Wno-uninitialized
+  #    -Werror
+    )
+  endif()
+endmacro()
 
 set(CPACK_PACKAGE_VERSION_MAJOR "0")
 set(CPACK_PACKAGE_VERSION_MINOR "1")
@@ -103,6 +105,7 @@ include_directories(${CMAKE_INSTALL_PREFIX}/include)
 link_directories(${CMAKE_INSTALL_PREFIX}/lib)
 
 add_library(automaton-core STATIC ${CRYPTO_FILES})
+set_warnings_level(automaton-core)
 
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
   set(CRYPTOPP_LIB cryptopp-static)
@@ -200,6 +203,8 @@ macro(automaton_configure_debugger_directory target_name)
 endmacro()
 
 add_executable(automaton-core-cli automaton/core/core.cc)
+set_warnings_level(automaton-core-cli)
+
 target_compile_definitions(
   automaton-core-cli PUBLIC
   BOOST_ALL_NO_LIB
@@ -228,6 +233,7 @@ macro(automaton_test test_path test_name)
     automaton/tests/${test_path}/${test_name}.cc
     automaton/tests/data/proto_files.cc
   )
+  set_warnings_level(${test_name})
   target_include_directories(${test_name} PRIVATE ${GTEST_INCLUDE_DIR})
   target_link_libraries(${test_name} automaton-core ${GTEST_LIBS})
   add_test(

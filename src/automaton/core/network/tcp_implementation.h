@@ -8,10 +8,7 @@
 #include <utility>
 #include <vector>
 
-#if defined(__clang__)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wshadow"
-#endif
+#include <boost/config/warning_disable.hpp>
 
 #include <boost/asio/basic_stream_socket.hpp>
 #include <boost/asio/buffer.hpp>
@@ -19,10 +16,6 @@
 #include <boost/asio/io_service.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/write.hpp>
-
-#if defined(__clang__)
-#pragma clang diagnostic pop
-#endif
 
 #include "automaton/core/network/acceptor.h"
 #include "automaton/core/network/connection.h"

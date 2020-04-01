@@ -5,6 +5,8 @@
 #include <sstream>
 #include <thread>
 
+#include <boost/config/warning_disable.hpp>
+
 #include <boost/asio/read.hpp>
 
 #include "automaton/core/io/io.h"

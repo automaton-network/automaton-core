@@ -43,7 +43,7 @@ std::string state_persistent::get(const std::string& key) {
 void state_persistent::set(const std::string& key, const std::string& value) {
   if (value == "") {
     return;
-    erase(key);
+    // erase(key);
   }
   uint32_t cur_node = 0;
   uint32_t cur_prefix_index = 0;

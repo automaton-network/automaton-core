@@ -1,3 +1,5 @@
+#include <boost/config/warning_disable.hpp>
+
 #include <curl/curl.h>
 #include <cryptopp/base64.h>
 #include <cryptopp/filters.h>
@@ -395,7 +397,7 @@ int main(int argc, char* argv[]) {
   });
 
   std::shared_ptr<automaton::core::network::http_server::server_handler> s_handler(new rpc_server_handler(&script));
-  http_server rpc_server(rpc_port, s_handler);
+  http_server rpc_server(static_cast<uint16_t>(rpc_port), s_handler);
   rpc_server.run();
 
   while (1) {
