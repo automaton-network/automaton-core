@@ -667,7 +667,7 @@ inline std::string decode(const std::string& signatures_json, const std::string&
     type t = get_type(signature);
     if (t.s_type == dynamic_size_bytes || t.s_type == string || t.s_array_type == dynamic) {
       std::string s = data.substr(pos, 32);
-      size_t offset = u256_to_u64(s);
+      size_t offset = static_cast<size_t>(u256_to_u64(s));
       ss << decode_param(t, data, offset);
     } else {
       ss << decode_param(t, data, pos);

@@ -31,7 +31,7 @@ std::string get_file_contents(const char* filename) {
   if (in) {
     std::string contents;
     in.seekg(0, std::ios::end);
-    contents.resize(in.tellg());
+    contents.resize(static_cast<size_t>(in.tellg()));
     in.seekg(0, std::ios::beg);
     in.read(&contents[0], contents.size());
     in.close();
@@ -110,14 +110,7 @@ uint32_t hex2dec(const std::string& hex) {
 std::string get_date_string(std::chrono::system_clock::time_point t) {
   auto as_time_t = std::chrono::system_clock::to_time_t(t);
   struct tm tm;
-
-#ifdef _MSC_VER
-  bool success = ::gmtime_s(&tm, &as_time_t) == 0;
-#else
-  bool success = ::gmtime_r(&as_time_t, &tm) != 0;
-#endif
-
-  if (success) {
+  if (::gmtime_r(&tm, &as_time_t)) {
     char some_buffer[64];
     if (std::strftime(some_buffer, sizeof(some_buffer), "%F %T", &tm)) {
       return std::string{some_buffer};
