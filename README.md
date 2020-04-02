@@ -87,19 +87,39 @@ make install is necessary in order to setup libraries for projects using core (s
 #### Build instructions
 
 **IMPORTANT FOR WINDOWS**
-Sync the repos into a root path that's not too long, otherwise boost filenames might become unaccessible! e.g. c:\dev, instead of 
+Sync the repos into a root path that's not too long, otherwise boost filenames might become unaccessible! e.g. ``c:\dev``, instead of somehting really long like ``c:\Development Projects\Github Repositories\External Projects\``
 
 Start the "x64 Native Tools Command Prompt for VS 2019"
 
 From the automaton repo folder:
 
+**WARNING! Make sure to use latest CMake, we've been having issues with CMake older than 3.17!!!**
+```
+cmake -version
+```
+
+**create build folder for CMake**
 ```
 cd src
 mkdir build
 cd build
-cmake .. -DCMAKE_BUILD_TYPE=Debug -A x64 -Dautomaton_STATIC_RUNTIME=OFF -DCMAKE_INSTALL_PREFIX=../local_third_party
-msbuild /t:Build /m /p:Configuration=Debug /p:Platform=x64 INSTALL.vcxproj
 ```
+
+Build DEBUG or RELEASE:
+
+**DEBUG full build (including third party libraries)**
+```
+cmake .. -DCMAKE_BUILD_TYPE=Debug -A x64 -Dautomaton_STATIC_RUNTIME=ON -DCMAKE_INSTALL_PREFIX=../local_third_party -Dautomaton_BUILD_DEPENDENCIES=ON
+msbuild /t:Build INSTALL.vcxproj /p:Configuration=Debug /p:Platform=x64
+```
+
+**Release full build (including third party libraries)**
+```
+cmake .. -DCMAKE_BUILD_TYPE=Release -A x64 -Dautomaton_STATIC_RUNTIME=ON -DCMAKE_INSTALL_PREFIX=../local_third_party -Dautomaton_BUILD_DEPENDENCIES=ON
+msbuild /t:Build INSTALL.vcxproj /p:Configuration=Release /p:Platform=x64
+```
+
+
 
 This will build and install necessary libraries for projects using core (such as the Automaton Playground)
 
