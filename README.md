@@ -1,4 +1,4 @@
-# <img title="Automaton" width="231" height="39" src="media/automaton-logo-black-on-white-8x8.svg"> [<img title="Discord" width="32" height="32" src="media/social/svg/discord.svg">](https://discord.gg/f3GRjhF) [<img title="Telegram" width="32" height="32" src="media/social/svg/telegram.svg">](https://t.me/automaton_network)
+# <img title="Automaton" width="231" height="39" src="media/automaton-logo-black-on-white-8x8.svg"> [<img title="Discord" width="32" height="32" src="media/social/svg/discord.svg">](https://discord.gg/f3GRjhF) [<img title="Telegram" width="32" height="32" src="media/social/svg/telegram.svg">](https://t.me/automaton_network) [<img title="Pivotal Tracker" width="32" height="32" src="media/Tracker_Icon.svg">](https://www.pivotaltracker.com/n/projects/2441722)
 
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
