@@ -113,7 +113,7 @@ cmake .. -DCMAKE_BUILD_TYPE=Debug -A x64 -Dautomaton_STATIC_RUNTIME=ON -DCMAKE_I
 msbuild /t:Build INSTALL.vcxproj /p:Configuration=Debug /p:Platform=x64
 ```
 
-**Release full build (including third party libraries)**
+**RELEASE full build (including third party libraries)**
 ```
 cmake .. -DCMAKE_BUILD_TYPE=Release -A x64 -Dautomaton_STATIC_RUNTIME=ON -DCMAKE_INSTALL_PREFIX=../local_third_party -Dautomaton_BUILD_DEPENDENCIES=ON
 msbuild /t:Build INSTALL.vcxproj /p:Configuration=Release /p:Platform=x64
