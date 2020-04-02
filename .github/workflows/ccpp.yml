@@ -28,6 +28,13 @@ jobs:
       static_runtime: ON
       automaton_version: v0.1.11a
     steps:
+    - name: Setup cmake
+      uses: jwlawson/actions-setup-cmake@v1.0
+      with:
+        cmake-version: '3.17.x'
+        github-api-token: ${{ secrets.GITHUB_TOKEN }}
+    - name: Use cmake
+      run: cmake --version
     - uses: actions/checkout@v2
     - name: Check for full rebuild
       if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'schedule'
@@ -100,6 +107,13 @@ jobs:
       automaton_version: v0.1.11a
       CTEST_OUTPUT_ON_FAILURE: 1
     steps:
+    - name: Setup cmake
+      uses: jwlawson/actions-setup-cmake@v1.0
+      with:
+        cmake-version: '3.17.x'
+        github-api-token: ${{ secrets.GITHUB_TOKEN }}
+    - name: Use cmake
+      run: cmake --version
     - uses: actions/checkout@v2
     - name: Check for full rebuild
       if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'schedule'
@@ -171,6 +185,13 @@ jobs:
       automaton_version: v0.1.11a
       MACOSX_DEPLOYMENT_TARGET: 10.9
     steps:
+    - name: Setup cmake
+      uses: jwlawson/actions-setup-cmake@v1.0
+      with:
+        cmake-version: '3.17.x'
+        github-api-token: ${{ secrets.GITHUB_TOKEN }}
+    - name: Use cmake
+      run: cmake --version
     - uses: actions/checkout@v2
     - name: Check for full rebuild
       if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'schedule'
