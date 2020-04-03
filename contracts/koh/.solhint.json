@@ -1,6 +1,6 @@
 {
   "extends": "solhint:default",
   "rules": {
-    "indent": ["error",4]
+    "indent": ["error", 2]
   }  
 }
