@@ -2,10 +2,10 @@ name: Doxygen generation
 
 on:
   push:
-    paths:
-      - 'src/**'
-      - '.github/workflows/doxygen.yml'
-  pull_request:
+    branches:
+      - master
+    tags:
+      - 'v*.*.*'
     paths:
       - 'src/**'
       - '.github/workflows/doxygen.yml'
