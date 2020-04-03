@@ -75,7 +75,7 @@ contract KingAutomaton is KingOfTheHill {
     balances[_to] += _value;
     balances[_from] -= _value;
     if (allowance < UINT256_MAX) {
-        allowed[_from][msg.sender] -= _value;
+      allowed[_from][msg.sender] -= _value;
     }
     emit Transfer(_from, _to, _value); //solhint-disable-line indent, no-unused-vars
     return true;
@@ -139,16 +139,19 @@ contract KingAutomaton is KingOfTheHill {
   }
 
   function getBallotBox(uint256 _id) public view
-      returns (Proposals.BallotBoxState state, uint256 numChoices, uint256 paidSlots) {
+  returns (Proposals.BallotBoxState state, uint256 numChoices, uint256 paidSlots) {
     Proposals.BallotBox memory b = proposalsData.ballotBoxes[_id];
     state = b.state;
     numChoices = b.numChoices;
     paidSlots = b.paidSlots;
   }
 
-  function getProposal(uint256 _id) public view returns (address contributor, string memory title,
-      string memory documentsLink, bytes memory documentsHash, uint256 budgetPeriodLen, uint256 remainingPeriods,
-      uint256 budgetPerPeriod, uint256 nextPaymentDate, Proposals.ProposalState state, uint256 initialEndDate,
+  function getProposal(uint256 _id)
+  public view returns (address contributor, string memory title,
+      string memory documentsLink, bytes memory documentsHash,
+      uint256 budgetPeriodLen, uint256 remainingPeriods,
+      uint256 budgetPerPeriod, uint256 nextPaymentDate,
+      Proposals.ProposalState state, uint256 initialEndDate,
       uint256 contestEndDate) {
     Proposals.Proposal memory p = proposalsData.proposals[_id];
 
@@ -169,9 +172,10 @@ contract KingAutomaton is KingOfTheHill {
     return proposalsData.createBallotBox(_choices, numSlots);
   }
 
-  function createProposal(address payable contributor, string calldata title, string calldata documents_link,
-      bytes calldata documents_hash, uint256 budget_period_len, uint256 num_periods, uint256 budget_per_period)
-      external returns (uint256 _id) {
+  function createProposal(
+    address payable contributor, string calldata title, string calldata documents_link,
+    bytes calldata documents_hash, uint256 budget_period_len, uint256 num_periods, uint256 budget_per_period
+  ) external returns (uint256 _id) {
     require(budget_period_len <= minPeriodLen);
     require(num_periods * budget_per_period <= proposalsData.treasuryLimitPercentage * balances[treasuryAddress] / 100);
     _id = proposalsData.createProposal(
@@ -376,7 +380,7 @@ contract KingAutomaton is KingOfTheHill {
   }
 
   function getOrder(uint256 _id) public view
-      returns (uint256 AUTO, uint256 ETH, address owner, DEX.OrderType orderType) {
+  returns (uint256 AUTO, uint256 ETH, address owner, DEX.OrderType orderType) {
     DEX.Order memory o = dexData.orders[_id];
     AUTO = o.AUTO;
     ETH = o.ETH;

@@ -2,8 +2,8 @@ pragma solidity ^0.6.2;
 
 import "./Util.sol";
 
+// solhint-disable-next-line
 abstract contract KingOfTheHill {
-
   event NewSlotKing(uint256 slot, address newOwner);
 
   struct ValidatorSlot {

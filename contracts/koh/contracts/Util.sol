@@ -7,12 +7,13 @@ library Util {
   }
 
   // Verifies that signature of a message matches the given public key.
-  function verifySignature(bytes32 pubkeyX,
-                           bytes32 pubkeyY,
-                           bytes32 hash,
-                           uint8 v,
-                           bytes32 r,
-                           bytes32 s) public pure returns (bool) {
+  function verifySignature(
+    bytes32 pubkeyX,
+    bytes32 pubkeyY,
+    bytes32 hash,
+    uint8 v,
+    bytes32 r,
+    bytes32 s) public pure returns (bool) {
     uint256 addr = getAddressFromPubKey(pubkeyX, pubkeyY);
     address addr_r = ecrecover(hash, v, r, s);
     return addr == uint256(addr_r);

@@ -174,9 +174,12 @@ library Proposals {
     box.payGas2[_slot] = 0;
   }
 
-  function getVote(Data storage self, uint256 _id, uint256 _slot)
-      public view validBallotBoxID(self, _id) returns (uint256) {
-    uint256 numChoices =  self.ballotBoxes[_id].numChoices;
+  function getVote(
+    Data storage self,
+    uint256 _id,
+    uint256 _slot
+  ) public view validBallotBoxID(self, _id) returns (uint256) {
+    uint256 numChoices = self.ballotBoxes[_id].numChoices;
     uint256 bitsPerVote = Util.msb(numChoices) + 1;
     uint256 votesPerWord = 255 / bitsPerVote;
 
@@ -189,8 +192,9 @@ library Proposals {
     return (self.ballotBoxes[_id].votes[index] & mask) >> offset;
   }
 
-  function updateProposalState(Data storage self, uint256 _id)
-      public validBallotBoxID(self, _id) returns (bool _return_to_treasury) {
+  function updateProposalState(
+    Data storage self, uint256 _id
+  ) public validBallotBoxID(self, _id) returns (bool _return_to_treasury) {
     Proposal storage p = self.proposals[_id];
     ProposalState p_state = p.state;
     uint256 _initialEndDate = p.initialEndDate;
@@ -239,8 +243,10 @@ library Proposals {
   // AFTER all periods are passed and the funds locked
   // in the proposal address will be returned to treasury.
   // Rejecting the proposal will have the same effect.
-  function claimReward(Data storage self, uint256 _id, uint256 _budget) public validBallotBoxID(self, _id)
-      returns (bool _is_sender_transfer_allowed, uint256 _return_to_treasury) {
+  function claimReward(
+    Data storage self, uint256 _id, uint256 _budget
+  ) public validBallotBoxID(self, _id)
+  returns (bool _is_sender_transfer_allowed, uint256 _return_to_treasury) {
     Proposal storage p = self.proposals[_id];
     require(p.state == ProposalState.Accepted || p.state == ProposalState.Contested,
         "Incorrect proposal state!");
