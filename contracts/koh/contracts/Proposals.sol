@@ -174,7 +174,8 @@ library Proposals {
     box.payGas2[_slot] = 0;
   }
 
-  function getVote(Data storage self, uint256 _id, uint256 _slot) public view validBallotBoxID(self, _id) returns (uint256) {
+  function getVote(Data storage self, uint256 _id, uint256 _slot)
+      public view validBallotBoxID(self, _id) returns (uint256) {
     uint256 numChoices =  self.ballotBoxes[_id].numChoices;
     uint256 bitsPerVote = Util.msb(numChoices) + 1;
     uint256 votesPerWord = 255 / bitsPerVote;
@@ -188,7 +189,8 @@ library Proposals {
     return (self.ballotBoxes[_id].votes[index] & mask) >> offset;
   }
 
-  function updateProposalState(Data storage self, uint256 _id) public validBallotBoxID(self, _id) returns (bool _return_to_treasury) {
+  function updateProposalState(Data storage self, uint256 _id)
+      public validBallotBoxID(self, _id) returns (bool _return_to_treasury) {
     Proposal storage p = self.proposals[_id];
     ProposalState p_state = p.state;
     uint256 _initialEndDate = p.initialEndDate;
@@ -207,7 +209,9 @@ library Proposals {
               _return_to_treasury = true;
             }
           }
-        } else {  // Either gas has been just paid and time hasn't been set or the initial time hasn't passed
+        } else {
+          // Either gas has been just paid and time hasn't been set
+          // or the initial time hasn't passed
           p.initialEndDate = now + PROPOSAL_START_PERIOD;
         }
       }
@@ -231,12 +235,15 @@ library Proposals {
     }
   }
 
-  // In case the contributor is inactive anyone could call the function AFTER all periods are passed and the funds locked
-  // in the proposal address will be returned to treasury. Rejecting the proposal will have the same effect.
+  // In case the contributor is inactive anyone could call the function
+  // AFTER all periods are passed and the funds locked
+  // in the proposal address will be returned to treasury.
+  // Rejecting the proposal will have the same effect.
   function claimReward(Data storage self, uint256 _id, uint256 _budget) public validBallotBoxID(self, _id)
       returns (bool _is_sender_transfer_allowed, uint256 _return_to_treasury) {
     Proposal storage p = self.proposals[_id];
-    require(p.state == ProposalState.Accepted || p.state == ProposalState.Contested, "Incorrect proposal state!");
+    require(p.state == ProposalState.Accepted || p.state == ProposalState.Contested,
+        "Incorrect proposal state!");
     uint256 paymentDate = p.nextPaymentDate;
     uint256 remainingPeriods = p.remainingPeriods;
     uint256 periodLen = p.budgetPeriodLen;
@@ -283,7 +290,8 @@ library Proposals {
     require(self.ballotBoxes[_id].state == BallotBoxState.Active, "Ballot is not active!");
     Proposal storage p = self.proposals[_id];
     ProposalState p_state = p.state;
-    require(p_state == ProposalState.Started || p_state == ProposalState.Contested, "Invalid proposal state!");
+    require(p_state == ProposalState.Started || p_state == ProposalState.Contested,
+        "Invalid proposal state!");
     p.state = ProposalState.Completed;
     self.ballotBoxes[_id].state = BallotBoxState.Inactive;
   }
