@@ -288,7 +288,10 @@ contract KingAutomaton is KingOfTheHill {
   //////////////////////////////////////////////////////////////////////////////////////////////////
   uint256 private rewardPerSlotPerSecond;
 
-  function initMining(uint256 nSlots, uint256 minDifficultyBits, uint256 predefinedMask, uint256 initialDailySupply) public {
+  function initMining(uint256 nSlots,
+                      uint256 minDifficultyBits,
+                      uint256 predefinedMask,
+                      uint256 initialDailySupply) public {
     require(nSlots > 0);
     setMinDifficulty(minDifficultyBits);
     if (predefinedMask == 0) {
