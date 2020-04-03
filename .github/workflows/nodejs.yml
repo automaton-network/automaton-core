@@ -24,9 +24,9 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
     - run: npm i -g solhint
-    - run: npm i -g ganache-cli truffle
     - run: solhint "*.sol"
       working-directory: ${{ env.test_dir }}
+    - run: npm i -g ganache-cli truffle
     - run: npm ci
       working-directory: ${{ env.test_dir }}
     - name: test
