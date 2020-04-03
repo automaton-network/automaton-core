@@ -174,7 +174,16 @@ contract KingAutomaton is KingOfTheHill {
       external returns (uint256 _id) {
     require(budget_period_len <= minPeriodLen);
     require(num_periods * budget_per_period <= proposalsData.treasuryLimitPercentage * balances[treasuryAddress] / 100);
-    _id = proposalsData.createProposal(numSlots, contributor, title, documents_link, documents_hash, budget_period_len, num_periods, budget_per_period);
+    _id = proposalsData.createProposal(
+        numSlots,
+        contributor,
+        title,
+        documents_link,
+        documents_hash,
+        budget_period_len,
+        num_periods,
+        budget_per_period
+    );
     transferInternal(treasuryAddress, address(_id), num_periods * budget_per_period);
   }
 
@@ -225,8 +234,10 @@ contract KingAutomaton is KingOfTheHill {
     }
   }
 
-  // In case the contributor is inactive anyone could call the function AFTER all periods are passed and the funds locked
-  // in the proposal address will be returned to treasury. Rejecting the proposal will have the same effect.
+  // In case the contributor is inactive anyone could call the function
+  // AFTER all periods are passed and the funds locked
+  // in the proposal address will be returned to treasury.
+  // Rejecting the proposal will have the same effect.
   function claimReward(uint256 _id, uint256 _budget) public validBallotBoxID(_id) {
     updateProposalState(_id);
     (bool _is_transfer_allowed, uint256 _return_to_treasury) = proposalsData.claimReward(_id, _budget);
@@ -251,7 +262,8 @@ contract KingAutomaton is KingOfTheHill {
   }
 
   function castVotesForApproval(uint256 _id) public debugOnly returns(uint256){
-    uint256 minNumYesVotes = uint256((int256(numSlots) * (proposalsData.approvalPercentage + 100) + 199) / 200);
+    uint256 minNumYesVotes =
+        uint256((int256(numSlots) * (proposalsData.approvalPercentage + 100) + 199) / 200);
     for (uint256 i = 0; i < minNumYesVotes; ++i) {
       castVote(_id, i, 1);
     }
@@ -259,7 +271,8 @@ contract KingAutomaton is KingOfTheHill {
   }
 
   function castVotesForRejection(uint256 _id) public debugOnly returns(uint256){
-    uint256 minNumNoVotes = uint256((int256(numSlots) * (100 - proposalsData.contestPercentage) + 199) / 200);
+    uint256 minNumNoVotes =
+        uint256((int256(numSlots) * (100 - proposalsData.contestPercentage) + 199) / 200);
     for (uint256 i = 0; i < minNumNoVotes; ++i) {
       castVote(_id, i, 2);
     }
