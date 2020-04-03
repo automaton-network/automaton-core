@@ -90,8 +90,16 @@ library Proposals {
     payForGas(self, id, 1);
   }
 
-  function createProposal(Data storage self, uint256 num_slots, address payable contributor, string memory title,
-      string memory documents_link, bytes memory documents_hash, uint256 budget_period_len, uint256 num_periods, uint256 budget_per_period) public returns (uint256 id) {
+  function createProposal(
+      Data storage self,
+      uint256 num_slots,
+      address payable contributor,
+      string memory title,
+      string memory documents_link,
+      bytes memory documents_hash,
+      uint256 budget_period_len,
+      uint256 num_periods,
+      uint256 budget_per_period) public returns (uint256 id) {
     id = createBallotBox(self, 2, num_slots);
     Proposal storage p = self.proposals[id];
     p.contributor = contributor;
