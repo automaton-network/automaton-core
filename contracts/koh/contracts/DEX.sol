@@ -26,7 +26,11 @@ library DEX {
     self.orders[_id] = o;
   }
 
-  function addOrder(Data storage self, uint256 _AUTO, uint256 _value, address payable _sender, OrderType _orderType) public returns (uint256) {
+  function addOrder(Data storage self,
+                    uint256 _AUTO,
+                    uint256 _value,
+                    address payable _sender,
+                    OrderType _orderType) public returns (uint256) {
     uint256 id = ++self.ids;
     self.orders[id] = Order(_AUTO, _value, _sender, _orderType);
     return id;

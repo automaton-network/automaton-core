@@ -75,7 +75,7 @@ contract KingAutomaton is KingOfTheHill {
     balances[_to] += _value;
     balances[_from] -= _value;
     if (allowance < UINT256_MAX) {
-        allowed[_from][msg.sender] -= _value;
+      allowed[_from][msg.sender] -= _value;
     }
     emit Transfer(_from, _to, _value); //solhint-disable-line indent, no-unused-vars
     return true;
@@ -139,16 +139,19 @@ contract KingAutomaton is KingOfTheHill {
   }
 
   function getBallotBox(uint256 _id) public view
-      returns (Proposals.BallotBoxState state, uint256 numChoices, uint256 paidSlots) {
+  returns (Proposals.BallotBoxState state, uint256 numChoices, uint256 paidSlots) {
     Proposals.BallotBox memory b = proposalsData.ballotBoxes[_id];
     state = b.state;
     numChoices = b.numChoices;
     paidSlots = b.paidSlots;
   }
 
-  function getProposal(uint256 _id) public view returns (address contributor, string memory title,
-      string memory documentsLink, bytes memory documentsHash, uint256 budgetPeriodLen, uint256 remainingPeriods,
-      uint256 budgetPerPeriod, uint256 nextPaymentDate, Proposals.ProposalState state, uint256 initialEndDate,
+  function getProposal(uint256 _id)
+  public view returns (address contributor, string memory title,
+      string memory documentsLink, bytes memory documentsHash,
+      uint256 budgetPeriodLen, uint256 remainingPeriods,
+      uint256 budgetPerPeriod, uint256 nextPaymentDate,
+      Proposals.ProposalState state, uint256 initialEndDate,
       uint256 contestEndDate) {
     Proposals.Proposal memory p = proposalsData.proposals[_id];
 
@@ -169,12 +172,22 @@ contract KingAutomaton is KingOfTheHill {
     return proposalsData.createBallotBox(_choices, numSlots);
   }
 
-  function createProposal(address payable contributor, string calldata title, string calldata documents_link,
-      bytes calldata documents_hash, uint256 budget_period_len, uint256 num_periods, uint256 budget_per_period)
-      external returns (uint256 _id) {
+  function createProposal(
+    address payable contributor, string calldata title, string calldata documents_link,
+    bytes calldata documents_hash, uint256 budget_period_len, uint256 num_periods, uint256 budget_per_period
+  ) external returns (uint256 _id) {
     require(budget_period_len <= minPeriodLen);
     require(num_periods * budget_per_period <= proposalsData.treasuryLimitPercentage * balances[treasuryAddress] / 100);
-    _id = proposalsData.createProposal(numSlots, contributor, title, documents_link, documents_hash, budget_period_len, num_periods, budget_per_period);
+    _id = proposalsData.createProposal(
+        numSlots,
+        contributor,
+        title,
+        documents_link,
+        documents_hash,
+        budget_period_len,
+        num_periods,
+        budget_per_period
+    );
     transferInternal(treasuryAddress, address(_id), num_periods * budget_per_period);
   }
 
@@ -225,8 +238,10 @@ contract KingAutomaton is KingOfTheHill {
     }
   }
 
-  // In case the contributor is inactive anyone could call the function AFTER all periods are passed and the funds locked
-  // in the proposal address will be returned to treasury. Rejecting the proposal will have the same effect.
+  // In case the contributor is inactive anyone could call the function
+  // AFTER all periods are passed and the funds locked
+  // in the proposal address will be returned to treasury.
+  // Rejecting the proposal will have the same effect.
   function claimReward(uint256 _id, uint256 _budget) public validBallotBoxID(_id) {
     updateProposalState(_id);
     (bool _is_transfer_allowed, uint256 _return_to_treasury) = proposalsData.claimReward(_id, _budget);
@@ -251,7 +266,8 @@ contract KingAutomaton is KingOfTheHill {
   }
 
   function castVotesForApproval(uint256 _id) public debugOnly returns(uint256){
-    uint256 minNumYesVotes = uint256((int256(numSlots) * (proposalsData.approvalPercentage + 100) + 199) / 200);
+    uint256 minNumYesVotes =
+        uint256((int256(numSlots) * (proposalsData.approvalPercentage + 100) + 199) / 200);
     for (uint256 i = 0; i < minNumYesVotes; ++i) {
       castVote(_id, i, 1);
     }
@@ -259,7 +275,8 @@ contract KingAutomaton is KingOfTheHill {
   }
 
   function castVotesForRejection(uint256 _id) public debugOnly returns(uint256){
-    uint256 minNumNoVotes = uint256((int256(numSlots) * (100 - proposalsData.contestPercentage) + 199) / 200);
+    uint256 minNumNoVotes =
+        uint256((int256(numSlots) * (100 - proposalsData.contestPercentage) + 199) / 200);
     for (uint256 i = 0; i < minNumNoVotes; ++i) {
       castVote(_id, i, 2);
     }
@@ -275,7 +292,10 @@ contract KingAutomaton is KingOfTheHill {
   //////////////////////////////////////////////////////////////////////////////////////////////////
   uint256 private rewardPerSlotPerSecond;
 
-  function initMining(uint256 nSlots, uint256 minDifficultyBits, uint256 predefinedMask, uint256 initialDailySupply) public {
+  function initMining(uint256 nSlots,
+                      uint256 minDifficultyBits,
+                      uint256 predefinedMask,
+                      uint256 initialDailySupply) public {
     require(nSlots > 0);
     setMinDifficulty(minDifficultyBits);
     if (predefinedMask == 0) {
@@ -360,7 +380,7 @@ contract KingAutomaton is KingOfTheHill {
   }
 
   function getOrder(uint256 _id) public view
-      returns (uint256 AUTO, uint256 ETH, address owner, DEX.OrderType orderType) {
+  returns (uint256 AUTO, uint256 ETH, address owner, DEX.OrderType orderType) {
     DEX.Order memory o = dexData.orders[_id];
     AUTO = o.AUTO;
     ETH = o.ETH;
