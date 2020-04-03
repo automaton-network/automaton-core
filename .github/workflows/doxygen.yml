@@ -1,0 +1,28 @@
+name: Doxygen generation
+
+on:
+  push:
+    paths:
+      - 'src/**'
+      - '.github/workflows/doxygen.yml'
+  pull_request:
+    paths:
+      - 'src/**'
+      - '.github/workflows/doxygen.yml'
+
+jobs:
+  doxygen:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: kamiazya/setup-graphviz@v1
+      - name: Generate Doxygen
+        uses: automaton-network/doxygen-action@v1.0.4
+        with:
+          working-directory: './src'
+          doxyfile-path: './Doxyfile'
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./automaton-core-docs
