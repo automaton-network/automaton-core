@@ -2,10 +2,10 @@ name: Doxygen generation
 
 on:
   push:
-    paths:
-      - 'src/**'
-      - '.github/workflows/doxygen.yml'
-  pull_request:
+    branches:
+      - master
+    tags:
+      - 'v*.*.*'
     paths:
       - 'src/**'
       - '.github/workflows/doxygen.yml'
@@ -24,5 +24,7 @@ jobs:
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          deploy_key: ${{ secrets.ACTIONS_DEPLOY_KEY }}
+          external_repository: automaton-network/automaton-core-docs
+          publish_branch: master
           publish_dir: ./automaton-core-docs
