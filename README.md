@@ -8,12 +8,19 @@
 ## Build Status
 
 Automaton Core:
+
 [![Automaton Core](https://github.com/automaton-network/automaton/workflows/C/C++%20CI/badge.svg?branch=master)](https://github.com/automaton-network/automaton/actions?query=workflow%3A%22C%2FC%2B%2B+CI%22+branch%3Amaster)
 
 Smart Contract:
+
 [![Smart Contract](https://github.com/automaton-network/automaton/workflows/Node.js%20CI/badge.svg?branch=master)](https://github.com/automaton-network/automaton/actions?query=workflow%3A%22Node.js+CI%22+branch%3Amaster)
 
+Smart Contract Coverage:
+
+[![Coverage Status](https://coveralls.io/repos/github/automaton-network/automaton/badge.svg)](https://coveralls.io/github/automaton-network/automaton)
+
 Nightly Build:
+
 [![Nightly Build](https://github.com/automaton-network/automaton/workflows/C/C++%20CI/badge.svg?event=schedule)](https://github.com/automaton-network/automaton/actions?query=workflow%3A%22C%2FC%2B%2B+CI%22+event%3Aschedule)
 
 Table of Contents
