@@ -34,3 +34,11 @@ jobs:
         ganache-cli -p 7545 &
         truffle test
       working-directory: ${{ env.test_dir }}
+    - name: Generate coverage information
+      run: truffle run coverage
+      working-directory: ./src/automaton
+    - name: Coveralls
+      uses: coverallsapp/github-action@master
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        path-to-lcov: ./contracts/koh/coverage/lcov.info
