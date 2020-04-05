@@ -17,7 +17,7 @@ Smart Contract:
 
 Smart Contract Coverage:
 
-[![Coverage Status](https://coveralls.io/repos/github/automaton-network/automaton/badge.svg)](https://coveralls.io/github/automaton-network/automaton)
+[![Coverage Status](https://coveralls.io/repos/github/automaton-network/automaton/badge.svg?branch=master)](https://coveralls.io/github/automaton-network/automaton?branch=master)
 
 Nightly Build:
 
