@@ -74,3 +74,7 @@ DerivedData/
 # JUCE
 
 Builds
+
+# Solidity Smart Contracts Coverage
+contracts/koh/coverage.json
+contracts/koh/coverage
