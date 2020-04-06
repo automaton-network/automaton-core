@@ -1,10 +1,6 @@
 name: Solidity Coverage
 
 on:
-  push:
-    paths:
-      - 'contracts/**'
-      - '.github/workflows/nodejs.yml'
   pull_request:
     paths:
       - 'contracts/**'
