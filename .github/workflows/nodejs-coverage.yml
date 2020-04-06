@@ -1,4 +1,4 @@
-name: Solidity CI
+name: Solidity Coverage
 
 on:
   push:
@@ -10,11 +10,11 @@ on:
       - 'contracts/**'
       - '.github/workflows/nodejs.yml'
 jobs:
-  test:
+  coverage:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [10.x, 12.x]
+        node-version: 12.x
     env:
       test_dir: ./contracts/koh
     steps:
@@ -29,8 +29,11 @@ jobs:
     - run: npm i -g ganache-cli truffle
     - run: npm ci
       working-directory: ${{ env.test_dir }}
-    - name: test
-      run: |
-        ganache-cli -p 7545 &
-        truffle test
+    - name: Generate coverage information
+      run: truffle run coverage
       working-directory: ${{ env.test_dir }}
+    - name: Coveralls
+      uses: coverallsapp/github-action@master
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        path-to-lcov: ./contracts/koh/coverage/lcov.info
