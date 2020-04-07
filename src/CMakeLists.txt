@@ -8,6 +8,8 @@ project(automaton-network)
 
 option(automaton_STATIC_RUNTIME "Use static C runtime" ON)
 
+option(automaton_TEST_COVERAGE "Enable coverage testing" OFF)
+
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
   if (automaton_STATIC_RUNTIME)
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
@@ -22,6 +24,11 @@ endif()
 option(automaton_BUILD_DEPENDENCIES "Build third-party libraries" ON)
 
 option(automaton_RUN_GANACHE_TESTS "Run tests with local ganache server" OFF)
+
+if (automaton_TEST_COVERAGE)
+  set(COVERAGE_COMPILER_FLAGS --coverage CACHE INTERNAL "")
+  set(COVERAGE_LINKER_FLAGS --coverage CACHE INTERNAL "")
+endif()
 
 macro(set_warnings_level target)
   if (MSVC)
@@ -58,6 +65,11 @@ macro(set_warnings_level target)
       -Wno-unused-parameter
       -Wno-uninitialized
 #     -Werror
+      ${COVERAGE_COMPILER_FLAGS}
+    )
+    target_link_options(
+      ${target} PUBLIC
+      ${COVERAGE_LINKER_FLAGS}
     )
   endif()
 endmacro()

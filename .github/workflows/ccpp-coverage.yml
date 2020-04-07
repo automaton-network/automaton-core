@@ -1,0 +1,94 @@
+name: C/C++ Coverage
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'src/**'
+      - '.github/workflows/ccpp-coverage.yml'
+  pull_request:
+    paths:
+      - 'src/**'
+      - '.github/workflows/ccpp-coverage.yml'
+
+jobs:
+  ubuntu:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        configuration: [Release]
+    env:
+      build_dir: ./src/build
+      dist_dir: ./src/local_third_party
+      test_contracts_dir: ./contracts/test_contract
+      build_deps: OFF
+      automaton_version: v0.1.11a
+      CTEST_OUTPUT_ON_FAILURE: 1
+    steps:
+    - name: Setup cmake
+      uses: jwlawson/actions-setup-cmake@v1.0
+      with:
+        cmake-version: '3.17.x'
+        github-api-token: ${{ secrets.GITHUB_TOKEN }}
+    - name: Use cmake
+      run: cmake --version
+    - uses: actions/checkout@v2
+    - name: Check for full rebuild
+      if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'schedule'
+      run: |
+           echo "::set-env name=build_deps::ON"
+      shell: bash
+    - name: Get tag information
+      if: startsWith(github.ref, 'refs/tags/v') && github.event_name != 'schedule'
+      id: tag
+      uses: actions/github-script@0.9.0
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        result-encoding: string
+        script: |
+          return context.payload.ref.replace(/refs\/tags\//, '');
+    - name: prepare
+      run: |
+        mkdir ${{ env.build_dir }}
+        mkdir ${{ env.dist_dir }}
+    - name: Fetch dependencies
+      if: startsWith(env.build_deps, 'OFF')
+      working-directory: ${{ env.dist_dir }}
+      run: |
+        curl -L -O https://github.com/automaton-network/automaton/releases/download/${{ env.automaton_version }}/automaton-Linux-${{ matrix.configuration }}-${{ env.automaton_version }}.zip
+        unzip automaton-Linux-${{ matrix.configuration }}-${{ env.automaton_version }}.zip -x "include/automaton/*"
+    - name: configure
+      working-directory: ${{ env.build_dir }}
+      run: cmake .. -DCMAKE_BUILD_TYPE=${{ matrix.configuration }} -Dautomaton_TEST_COVERAGE=ON -Dautomaton_BUILD_DEPENDENCIES=${{ env.build_deps }} -DCMAKE_INSTALL_PREFIX=../local_third_party -Dautomaton_RUN_GANACHE_TESTS=ON
+    - name: build
+      working-directory: ${{ env.build_dir }}
+      run: make install
+    - name: Use Node.js 10.x
+      uses: actions/setup-node@v1
+      with:
+        node-version: 10.x
+    - run: npm i -g ganache-cli truffle
+      working-directory: ${{ env.test_contracts_dir }}
+    - name: Setup Ganache
+      run: ganache-cli -m 'myth like bonus scare over problem client lizard pioneer submit female collect' -p 7545 -e 10000 &
+      working-directory: ${{ env.test_contracts_dir }}
+    - name: Deploy contract
+      run: truffle --network ganache deploy --reset
+      working-directory: ${{ env.test_contracts_dir }}
+    - name: test
+      working-directory: ${{ env.build_dir }}
+      run: ctest -j4 -C ${{ matrix.configuration }} --build-run-dir=..
+    - name: install lcov
+      run: sudo apt-get install lcov
+    - name: coverage report
+      working-directory: ${{ env.build_dir }}
+      run: lcov -c -b `cd .. && pwd`/automaton/core -d . -o main_coverage.info --no-external
+    - name: inventory
+      working-directory: .
+      run: find .
+    - name: Coveralls
+      uses: coverallsapp/github-action@master
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        path-to-lcov: ./src/build/main_coverage.info
