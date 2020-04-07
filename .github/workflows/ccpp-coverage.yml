@@ -91,4 +91,4 @@ jobs:
       uses: coverallsapp/github-action@master
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
-        path-to-lcov: ${{ env.buil_dir }}/main_coverage.info
+        path-to-lcov: ./src/build/main_coverage.info
