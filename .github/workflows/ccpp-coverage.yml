@@ -83,7 +83,7 @@ jobs:
       run: sudo apt-get install lcov
     - name: coverage report
       working-directory: ${{ env.build_dir }}
-      run: lcov -c --directory . -o main_coverage.info
+      run: lcov -c --directory . -o main_coverage.info --no-external
     - name: inventory
       working-directory: .
       run: find .
