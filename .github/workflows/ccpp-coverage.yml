@@ -79,6 +79,11 @@ jobs:
     - name: test
       working-directory: ${{ env.build_dir }}
       run: ctest -j4 -C ${{ matrix.configuration }} --build-run-dir=..
+    - name: install lcov
+      run: sudo apt-get install lcov
+    - name: coverage report
+      working-directory: ${{ env.build_dir }}
+      run: lcov -c --directory . -o main_coverage.info
     - name: inventory
       working-directory: .
       run: find .
