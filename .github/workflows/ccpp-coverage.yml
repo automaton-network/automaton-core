@@ -56,8 +56,8 @@ jobs:
       if: startsWith(env.build_deps, 'OFF')
       working-directory: ${{ env.dist_dir }}
       run: |
-        curl -L -O https://github.com/automaton-network/automaton/releases/download/${{ env.automaton_version }}/automaton-Linux-${{ matrix.configuration }}-${{ env.automaton_version }}.zip
-        unzip automaton-Linux-${{ matrix.configuration }}-${{ env.automaton_version }}.zip -x "include/automaton/*"
+        curl -L -O https://github.com/automaton-network/automaton-core/releases/download/${{ env.automaton_version }}/automaton-Linux-${{ matrix.configuration }}-${{ env.automaton_version }}.zip
+        unzip automaton-Linux-${{ matrix.configuration }}-${{ env.automaton_version }}.zip -x "include/automaton-core/*"
     - name: configure
       working-directory: ${{ env.build_dir }}
       run: cmake .. -DCMAKE_BUILD_TYPE=${{ matrix.configuration }} -Dautomaton_TEST_COVERAGE=ON -Dautomaton_BUILD_DEPENDENCIES=${{ env.build_deps }} -DCMAKE_INSTALL_PREFIX=../local_third_party -Dautomaton_RUN_GANACHE_TESTS=ON
