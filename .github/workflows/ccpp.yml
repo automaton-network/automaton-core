@@ -65,8 +65,8 @@ jobs:
       if: startsWith(env.build_deps, 'OFF')
       working-directory: ${{ env.dist_dir }}
       run: |
-        curl -L -O https://github.com/automaton-network/automaton/releases/download/${{ env.automaton_version }}/automaton-Windows-${{ matrix.configuration }}-${{ matrix.runtime_link }}-${{ matrix.platform }}-${{ env.automaton_version }}.zip
-        unzip automaton-Windows-${{ matrix.configuration }}-${{ matrix.runtime_link }}-${{ matrix.platform }}-${{ env.automaton_version }}.zip -x "include/automaton/*"
+        curl -L -O https://github.com/automaton-network/automaton-core/releases/download/${{ env.automaton_version }}/automaton-Windows-${{ matrix.configuration }}-${{ matrix.runtime_link }}-${{ matrix.platform }}-${{ env.automaton_version }}.zip
+        unzip automaton-Windows-${{ matrix.configuration }}-${{ matrix.runtime_link }}-${{ matrix.platform }}-${{ env.automaton_version }}.zip -x "include/automaton-core/*"
     - name: Add msbuild to PATH
       uses: microsoft/setup-msbuild@v1.0.0
     - name: configure
