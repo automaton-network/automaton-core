@@ -15,7 +15,7 @@ Smart Contract:
 
 [![Smart Contract](https://github.com/automaton-network/automaton/workflows/Node.js%20CI/badge.svg?branch=master)](https://github.com/automaton-network/automaton/actions?query=workflow%3A%22Node.js+CI%22+branch%3Amaster)
 
-Smart Contract Coverage:
+Core Modules C++ Coverage:
 
 [![Coverage Status](https://coveralls.io/repos/github/automaton-network/automaton-core/badge.svg?branch=master&service=github)](https://coveralls.io/github/automaton-network/automaton-core?branch=master)
 
