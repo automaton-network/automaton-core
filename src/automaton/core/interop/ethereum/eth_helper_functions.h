@@ -12,29 +12,56 @@
 #include <vector>
 
 #include <json.hpp>
+#include <secp256k1.h>  // NOLINT
+#include <secp256k1_recovery.h>  // NOLINT
 
 #include "gtest/gtest.h"
 
 #include "automaton/core/common/status.h"
+#include "automaton/core/crypto/cryptopp/Keccak_256_cryptopp.h"
 #include "automaton/core/io/io.h"
+#include "automaton/tools/miner/miner.h"
 
 using json = nlohmann::json;
 
 using automaton::core::common::status;
+using automaton::core::crypto::cryptopp::Keccak_256_cryptopp;
 using automaton::core::io::bin2hex;
-using automaton::core::io::hex2bin;
 using automaton::core::io::dec2hex;
+using automaton::core::io::hex2bin;
+using automaton::core::io::hex2dec;
+using automaton::tools::miner::sign;
 
 namespace automaton {
 namespace core {
 namespace interop {
 namespace ethereum {
 
+static const uint32_t ERROR_BUF_SIZE = 1024;
 
-inline size_t curl_callback(void *contents, size_t size, size_t nmemb, std::string *s) {
-  size_t new_length = size * nmemb;
+struct curl_struct {
+  CURL* curl;
+  curl_slist* list;
+  char curl_err_buf[ERROR_BUF_SIZE];
+  std::string msg_buf;
+};
+
+/**
+ Returns Keccak_256 hash of data as 32-byte string.
+*/
+inline std::string hash(const std::string& data) {
+  Keccak_256_cryptopp hasher;
+  uint8_t digest[32];
+  hasher.calculate_digest(reinterpret_cast<const uint8_t*>(data.data()), data.size(), digest);
+  return std::string(reinterpret_cast<char*>(digest), 32);
+}
+
+inline size_t curl_callback(void* contents, size_t size, size_t nmemb, std::string* s) {
+  size_t new_length = size* nmemb;
   try {
     s->append(reinterpret_cast<char*>(contents), new_length);
+    LOG(INFO) << "\n=== CHUNK ===\n"
+        << std::string(reinterpret_cast<char*>(contents), new_length) << "\n ===== EoCH ====";
   }
   catch (std::bad_alloc& e) {
     LOG(WARNING) << "Bad_alloc while reading data! " << e.what();
@@ -43,13 +70,60 @@ inline size_t curl_callback(void *contents, size_t size, size_t nmemb, std::stri
   return new_length;
 }
 
-inline status handle_result(const std::string& result) {
+inline curl_struct* create_new_curl_struct(const std::string& url) {
+  CURL* c = curl_easy_init();
+  if (c) {
+    curl_struct* c_struct = new curl_struct();
+    curl_slist* list = nullptr;
+    list = curl_slist_append(list, "Content-Type: application/json");
+    curl_easy_setopt(c, CURLOPT_URL, url.c_str());
+    curl_easy_setopt(c, CURLOPT_ERRORBUFFER, c_struct->curl_err_buf);
+    curl_easy_setopt(c, CURLOPT_WRITEFUNCTION, curl_callback);
+    curl_easy_setopt(c, CURLOPT_WRITEDATA, &(c_struct->msg_buf));
+    curl_easy_setopt(c, CURLOPT_ENCODING, "gzip");
+    curl_easy_setopt(c, CURLOPT_HTTPHEADER, list);
+
+    c_struct->curl = c;
+    c_struct->list = list;
+    return c_struct;
+  }
+  return nullptr;
+}
+
+inline void destroy_curl_struct(curl_struct* c_struct) {
+  if (!c_struct) {
+    return;
+  }
+  curl_slist_free_all(c_struct->list);
+  curl_easy_cleanup(c_struct->curl);
+  delete c_struct;
+}
+
+inline status handle_result(const std::string& message, uint32_t call_id) {
   json j;
-  std::stringstream ss(result);
+  uint32_t result_call_id;
+  std::stringstream ss(message);
   try {
     ss >> j;
-  } catch (...) {
-    return status::internal("Could not parse JSON!");
+  } catch (const std::exception& e) {
+    std::stringstream ss_error;
+    ss_error << "Invalid JSON! " << e.what();
+    LOG(WARNING) << ss_error.str();
+    return status::internal(ss_error.str());
+  }
+
+  if (j.find("id") != j.end() && j["id"].is_number()) {
+    result_call_id = j["id"].get<uint32_t>();
+  } else {
+    LOG(WARNING) << "ID not found!";
+    return status::internal("ID not found!");
+  }
+
+  if (result_call_id != call_id) {
+    std::stringstream ss_error;
+    ss_error << "Result ID " << result_call_id << " does not match request ID: " << call_id;
+    LOG(WARNING) << ss_error.str();
+    return status::internal(ss_error.str());
   }
 
   if (j.find("error") != j.end()) {
@@ -61,88 +135,150 @@ inline status handle_result(const std::string& result) {
     return status::internal(obj.dump());
   } else if (j.find("result") != j.end()) {
     if (j["result"].is_string()) {
-      std::string new_result = j["result"].get<std::string>();
-      return status::ok(new_result.substr(2));
+      return status::ok(j["result"].get<std::string>());
     }
     return status::ok(j["result"].dump());
   }
-  return status::internal("No result and no error!? Received: \n" + result);
+  return status::internal("No result and no error!? Message: \n" + message);
 }
 
-inline status curl_post(const std::string& url, const std::string& data) {
-  CURL *curl;
-  CURLcode res;
-  std::string message;
-  char curl_err_buf[1024];
-
-  curl = curl_easy_init();
-
+inline status curl_post(const std::string& url, const std::string& data, uint32_t call_id) {
   LOG(INFO) << "\n======= REQUEST =======\n" << data << "\n=====================";
-
-  if (curl) {
-    struct curl_slist *list = NULL;
-
-    list = curl_slist_append(list, "Content-Type: application/json");
-
-    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-    curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, curl_err_buf);
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_callback);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &message);
-    curl_easy_setopt(curl, CURLOPT_ENCODING, "gzip");
-    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, list);
-
-    curl_err_buf[0] = '\0';
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data.c_str());
-    res = curl_easy_perform(curl);
-    curl_slist_free_all(list);
-    curl_easy_cleanup(curl);
-    if (res != CURLE_OK) {
-      size_t len = strlen(curl_err_buf);
-      LOG(WARNING) << "Curl result code != CURLE_OK. Result code: " << res;
+  curl_struct* c_struct = create_new_curl_struct(url);
+  status s = status::ok();
+  if (c_struct) {
+    /* set the error buffer as empty before performing a request */
+    c_struct->curl_err_buf[0] = '\0';
+    curl_easy_setopt(c_struct->curl, CURLOPT_POSTFIELDS, data.c_str());
+    CURLcode c_code = curl_easy_perform(c_struct->curl);
+    if (c_code != CURLE_OK) {
+      size_t len = strlen(c_struct->curl_err_buf);
+      LOG(WARNING) << "Curl result code != CURLE_OK. Result code: " << c_code;
       if (len) {
-        return status::internal(std::string(curl_err_buf, len));
+        s = status::internal(std::string(c_struct->curl_err_buf, len));
+      } else {
+        s = status::internal("CURL error");
       }
-      return status::internal("CURL error");
     } else {
-      LOG(INFO) << "\n======= RESPONSE =======\n" << message << "\n=====================";
-      return handle_result(message);
+      LOG(INFO) << "\n======= RESPONSE =======\n" << c_struct->msg_buf << "\n=====================";
+      s = handle_result(c_struct->msg_buf, call_id);
     }
   } else {
-    return status::internal("No curl!");
+    LOG(WARNING) << "No curl!";
+    s = status::internal("No curl!");
   }
+
+  destroy_curl_struct(c_struct);
+  return s;
 }
 
 inline status eth_getTransactionCount(const std::string& url, const std::string& address) {
   std::stringstream ss;
   ss << "{\"jsonrpc\":\"2.0\",\"method\":\"eth_getTransactionCount\",\"params\":[\"" << address <<
       "\",\"latest\"" << "],\"id\":1}";
-  return curl_post(url, ss.str());
+  return curl_post(url, ss.str(), 1);
 }
 
 inline status eth_getCode(const std::string& url, const std::string& address) {
   std::stringstream ss;
   ss << "{\"jsonrpc\":\"2.0\",\"method\":\"eth_getCode\",\"params\":[\"" << address <<
-      "\",\"latest\"" << "],\"id\":1}";
-  return curl_post(url, ss.str());
+      "\",\"latest\"" << "],\"id\":2}";
+  return curl_post(url, ss.str(), 2);
 }
 
 inline status eth_getBalance(const std::string& url, const std::string& address) {
   std::stringstream ss;
   ss << "{\"jsonrpc\":\"2.0\",\"method\":\"eth_getBalance\",\"params\":[\"" << address <<
-      "\",\"latest\"" << "],\"id\":1}";
-  return curl_post(url, ss.str());
+      "\",\"latest\"" << "],\"id\":3}";
+  return curl_post(url, ss.str(), 3);
 }
 
 inline status eth_gasPrice(const std::string& url) {
   std::stringstream ss;
-  ss << "{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":1}";
-  return curl_post(url, ss.str());
+  ss << "{\"jsonrpc\":\"2.0\",\"method\":\"eth_gasPrice\",\"params\":[],\"id\":4}";
+  return curl_post(url, ss.str(), 4);
 }
 
 inline status eth_getTransactionReceipt(const std::string& url, const std::string& tx_hash) {
   std::stringstream ss;
-  ss << "{\"jsonrpc\":\"2.0\",\"method\":\"eth_getTransactionReceipt\",\"params\":[\"" << tx_hash << "\"],\"id\":1}";
-  return curl_post(url, ss.str());
+  ss << "{\"jsonrpc\":\"2.0\",\"method\":\"eth_getTransactionReceipt\",\"params\":[\"" << tx_hash << "\"],\"id\":5}";
+  return curl_post(url, ss.str(), 5);
+}
+
+inline std::string get_address_from_prkey(const std::string& private_key_hex) {
+  secp256k1_context* context = secp256k1_context_create(SECP256K1_CONTEXT_SIGN | SECP256K1_CONTEXT_VERIFY);
+  secp256k1_pubkey* pubkey = new secp256k1_pubkey();
+  std::string pr_key_bin = hex2bin(private_key_hex);
+
+  if (!secp256k1_ec_pubkey_create(context, pubkey, reinterpret_cast<const uint8_t*>(pr_key_bin.data()))) {
+    LOG(WARNING) << "Invalid private key!";
+    delete pubkey;
+    secp256k1_context_destroy(context);
+    return "";
+  }
+
+  unsigned char pub_key_serialized[65];
+  size_t outLen = 65;
+  secp256k1_ec_pubkey_serialize(context, pub_key_serialized, &outLen, pubkey, SECP256K1_EC_UNCOMPRESSED);
+  delete pubkey;
+  secp256k1_context_destroy(context);
+
+  std::string pub_key(reinterpret_cast<char*>(&pub_key_serialized[1]), 64);
+  std::string pub_key_hash = hash(pub_key);
+  return "0x" + bin2hex(pub_key_hash.substr(12));
+}
+
+/**
+ Signs a message using secp256k1 also checks if a public key can be created from the given private key. If the check
+ fails, empty string will be returned. Returns concatenated r, s and v values of the signature.
+ @param[in] priv_key byte array repesenting the private key
+ @param[in] message_hash 32-byte string.
+*/
+inline std::string sign_and_verify(const unsigned char* priv_key, const unsigned char* message_hash) {
+  secp256k1_context* context = secp256k1_context_create(SECP256K1_CONTEXT_SIGN | SECP256K1_CONTEXT_VERIFY);
+  secp256k1_pubkey* pubkey = new secp256k1_pubkey();
+
+  std::string rsv = sign(priv_key, message_hash);
+
+  if (!secp256k1_ec_pubkey_create(context, pubkey, priv_key)) {
+    LOG(WARNING) << "Invalid private key!!!" << bin2hex(std::string(reinterpret_cast<const char*>(priv_key), 32));
+    delete pubkey;
+    secp256k1_context_destroy(context);
+    return "";
+  }
+  delete pubkey;
+  secp256k1_context_destroy(context);
+  return rsv;
+}
+
+/**
+ Returns recovered Ethereum address from a message and a signature.
+*/
+inline std::string recover_address(const unsigned char* rsv, const unsigned char* message_hash) {
+  int32_t v = rsv[64];
+  v -= 27;
+  secp256k1_context* context = secp256k1_context_create(SECP256K1_CONTEXT_SIGN | SECP256K1_CONTEXT_VERIFY);
+  secp256k1_ecdsa_recoverable_signature signature;
+  if (!secp256k1_ecdsa_recoverable_signature_parse_compact(context, &signature, (unsigned char*)rsv, v)) {
+    LOG(WARNING) << "Cannot parse signature!";
+    secp256k1_context_destroy(context);
+    return "";
+  }
+  secp256k1_pubkey* pubkey = new secp256k1_pubkey();
+  if (!secp256k1_ecdsa_recover(context, pubkey, &signature, (unsigned char*) message_hash)) {
+    LOG(WARNING) << "Cannot recover signature!";
+    delete pubkey;
+    secp256k1_context_destroy(context);
+    return "";
+  }
+
+  size_t out_len = 65;
+  unsigned char pub_key_serialized[65];
+  secp256k1_ec_pubkey_serialize(context, pub_key_serialized, &out_len, pubkey, SECP256K1_EC_UNCOMPRESSED);
+  std::string pub_key_uncompressed(reinterpret_cast<char*>(pub_key_serialized), out_len);
+  delete pubkey;
+  secp256k1_context_destroy(context);
+  return hash(pub_key_uncompressed.substr(1)).substr(12);
 }
 
 // Argument encoding and decoding
@@ -171,7 +307,7 @@ enum abi_array_type {
   dynamic = 2
 };
 
-static std::ostream& operator<<(std::ostream& os, const abi_type& obj) {
+inline std::ostream& operator<<(std::ostream& os, const abi_type& obj) {
   switch (obj) {
     case numerical: os << "numerical"; break;
     case string: os << "string"; break;
@@ -297,6 +433,12 @@ inline std::string encode_string(const std::string& byte_array) {
   return ss.str();
 }
 
+inline std::string dec_to_32hex(uint32_t n) {
+  std::stringstream ss;
+  ss << std::setfill('0') << std::setw(64) << std::hex << n;
+  return ss.str();
+}
+
 inline std::string u64_to_u256(uint64_t n) {
   char bytes[8];
   bytes[7] = (n) & 0xFF;
@@ -361,6 +503,34 @@ inline void check_and_resize_buffer(char** buffer, size_t* size, size_t pos, siz
     *buffer = new_buffer;
     *size = new_size;
   }
+}
+
+/**
+ Returns RLP encoding of s in hex.
+ @param[in] s data to be encode, MUST be in hex WITHOUT '0x' prefix.
+ @param[in] is_list shows if s represents one element or the payload of a list.
+*/
+inline std::string rlp_encode(std::string s, bool is_list) {
+  if (s.size() % 2) {
+    s = "0" + s;
+  }
+  uint32_t length = static_cast<uint32_t>(s.size()) / 2;
+  if (length == 0) {
+    return "80";
+  }
+  if (length == 1 && hex2dec(s.substr(0, 2)) < 128) {
+    return s;
+  }
+  std::stringstream ss;
+  if (length < 56) {
+    ss << dec2hex((is_list ? 192 : 128) + length) << s;
+  } else {
+    std::string length_in_hex = dec2hex(length);
+    uint32_t first_byte = (is_list ? 247 : 183) + (static_cast<uint32_t>(length_in_hex.size()) / 2);
+    // todo: check if this byte is valid
+    ss << dec2hex(first_byte) << length_in_hex << s;
+  }
+  return ss.str();
 }
 
 inline void encode_param(type t, const json& json_data, char** buffer, size_t* buf_size,

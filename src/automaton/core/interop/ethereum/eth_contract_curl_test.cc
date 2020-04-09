@@ -29,7 +29,7 @@ using json = nlohmann::json;
 
 // Ganache test
 static const char* URL = "127.0.0.1:7545";
-static const char* CONTRACT_ADDR = "0x22D9d6faB361FaA969D2EfDE420472633cBB7B11";
+static const char* CONTRACT_ADDR = "0x4B7c78aB094Ab856eAdA523Fa847236567e1750E";
 static const char* ADDRESS = "0x603CB0d1c8ab86E72beb3c7DF564A36D7B85ecD2";
 static const char* PRIVATE_KEY = "56aac550d97013a8402c98e3b2aeb20482d19f142a67022d2ab357eb8bb673b0";
 
@@ -74,7 +74,9 @@ int main() {
   if (j.find("abi") != j.end()) {
     abi = j["abi"].get<json>();
   } else {
-    LOG(FATAL) << "No abi!";
+    LOG(WARNING) << "No abi!";
+    curl_global_cleanup();
+    return 0;
   }
   std::string abi_string = abi.dump();
   eth_contract::register_contract(URL, CONTRACT_ADDR, abi_string);
@@ -90,41 +92,36 @@ int main() {
   status s = status::ok();
   json j_output;
 
-  uint32_t nonce = 0;
-  s = eth_getTransactionCount(URL, ADDRESS);
-  if (s.code == automaton::core::common::status::OK) {
-    nonce = hex2dec(s.msg);
-    std::cout << "Nonce is: " << nonce << std::endl;
-  } else {
-    std::cout << "Error (eth_getTransactionCount()) " << s << std::endl;
-  }
-
   std::cout << "Fetching Gas price..." << std::endl;
   s = eth_gasPrice(URL);
   if (s.code == automaton::core::common::status::OK) {
-    std::cout << "Gas price: " << hex2dec(s.msg) << std::endl;
+    std::cout << "Gas price: " << hex2dec(s.msg.substr(2)) << std::endl;
   } else {
-    std::cout << "Error (eth_gasPrice()) " << s << std::endl;
+    LOG(WARNING) << "Error (eth_gasPrice()) " << s << std::endl;
+    curl_global_cleanup();
+    return 0;
   }
 
   s = eth_getCode(URL, CONTRACT_ADDR);
   if (s.code == automaton::core::common::status::OK) {
-    if (s.msg == "") {
-      std::cout << "Contract NOT FOUND!" << std::endl;
-      return 1;
+    if (s.msg == "" || s.msg == "0x") {
+      LOG(WARNING) << "Contract NOT FOUND!" << std::endl;
+      curl_global_cleanup();
+      return 0;
     } else {
-      std::cout << "Code: " << s.msg.substr(0, std::min<size_t>(64, s.msg.size())) << "..." << std::endl;
+      std::string m = s.msg.substr(2);
+      std::cout << "Code: " << m.substr(0, std::min<size_t>(64, m.size())) << "..." << std::endl;
     }
   } else {
     std::cout << "Error (eth_getCode()) " << s << std::endl;
   }
 
-  s = contract->call("getSlotsNumber", "");
+  s = contract->call("numSlots", "");
   if (s.code == automaton::core::common::status::OK) {
     j_output = json::parse(s.msg);
     std::cout << "Number of slots: " << (*j_output.begin()).get<std::string>() << std::endl;
   } else {
-    std::cout << "Error (getSlotsNumber()) " << s << std::endl;
+    std::cout << "Error (numSlots()) " << s << std::endl;
   }
 
   s = contract->call("getSlotOwner", "[2]");
@@ -153,31 +150,31 @@ int main() {
   }
 
   std::string hex_mask;
-  s = contract->call("getMask", "");
+  s = contract->call("mask", "");
   if (s.code == automaton::core::common::status::OK) {
     j_output = json::parse(s.msg);
     hex_mask = bin2hex(dec_to_i256(false, (*j_output.begin()).get<std::string>()));
     std::cout << "Mask: " << hex_mask << std::endl;
   } else {
-    std::cout << "Error (getMask()) " << s << std::endl;
+    std::cout << "Error (mask()) " << s << std::endl;
   }
 
   std::string hex_min_diff;
-  s = contract->call("getMinDifficulty", "");
+  s = contract->call("minDifficulty", "");
   if (s.code == automaton::core::common::status::OK) {
     j_output = json::parse(s.msg);
     hex_min_diff = bin2hex(dec_to_i256(false, (*j_output.begin()).get<std::string>()));
     std::cout << "Min Difficulty: " << hex_min_diff << std::endl;
   } else {
-    std::cout << "Error (getMinDifficulty()) " << s << std::endl;
+    std::cout << "Error (minDifficulty()) " << s << std::endl;
   }
 
-  s = contract->call("getClaimed", "");
+  s = contract->call("numTakeOvers", "");
   if (s.code == automaton::core::common::status::OK) {
     j_output = json::parse(s.msg);
-    std::cout << "Number of slot claims: " << (*j_output.begin()).get<std::string>() << std::endl;
+    std::cout << "Number of slot take overs: " << (*j_output.begin()).get<std::string>() << std::endl;
   } else {
-    std::cout << "Error (getClaimed()) " << s << std::endl;
+    std::cout << "Error (numTakeOvers()) " << s << std::endl;
   }
 
   // Mine key.
@@ -190,12 +187,76 @@ int main() {
   memcpy(&difficulty, bin_min_diff.c_str(), 32);
   unsigned int keys_generated = mine_key(mask, difficulty, pk, 10000000);
   if (keys_generated == 0) {
-    LOG(FATAL) << "Did not mine a key...";
+    LOG(WARNING) << "Did not mine a key...";
+    curl_global_cleanup();
+    return 0;
   }
 
   // Generate signature.
   std::string pub_key = gen_pub_key(pk);
   std::string sig = sign(pk, reinterpret_cast<const unsigned char *>(BIN_ADDRESS.c_str()));
+
+  // Encode claimSlot data.
+  int32_t v = sig[64];
+  std::stringstream claim_slot_params;
+  claim_slot_params << "[\""
+      // pubKeyX
+      << bin2hex(pub_key.substr(0, 32)) << "\",\""
+      // pubKeyY
+      << bin2hex(pub_key.substr(32, 32)) << "\","
+      // v
+      << v << ",\""
+      // r
+      << bin2hex(sig.substr(0, 32)) << "\",\""
+      // s
+      << bin2hex(sig.substr(32, 32)) << "\"]";
+
+  s = contract->call("claimSlot", claim_slot_params.str(), PRIVATE_KEY);
+  if (s.code == automaton::core::common::status::OK) {
+    std::cout << "Claim slot result: " << s.msg << std::endl;
+  } else {
+    std::cout << "Error (claimSlot) " << s << std::endl;
+  }
+
+  s = contract->call("numTakeOvers", "");
+  if (s.code == automaton::core::common::status::OK) {
+    j_output = json::parse(s.msg);
+    std::cout << "Number of slot take overs: " << (*j_output.begin()).get<std::string>() << std::endl;
+  } else {
+    std::cout << "Error (numTakeOvers()) " << s << std::endl;
+  }
+
+  s = contract->call("createProposal",
+  "[\"603CB0d1c8ab86E72beb3c7DF564A36D7B85ecD2\", \"title\",\"documents_link\",\"\",259200,3,20]",
+  PRIVATE_KEY);
+  if (s.code == automaton::core::common::status::OK) {
+    std::cout << "Create proposal result: " << s.msg << std::endl;
+  } else {
+    std::cout << "Error (createProposal) " << s << std::endl;
+  }
+
+  // Mine key 2.
+  keys_generated = mine_key(mask, difficulty, pk, 10000000);
+  if (keys_generated == 0) {
+    LOG(WARNING) << "Did not mine a key...";
+    curl_global_cleanup();
+    return 0;
+  }
+
+  // Generate signature.
+  pub_key = gen_pub_key(pk);
+  sig = sign(pk, reinterpret_cast<const unsigned char *>(BIN_ADDRESS.c_str()));
+
+  uint32_t nonce = 0;
+  s = eth_getTransactionCount(URL, ADDRESS);
+  if (s.code == automaton::core::common::status::OK) {
+    nonce = hex2dec(s.msg.substr(2));
+    std::cout << "Nonce is: " << nonce << std::endl;
+  } else {
+    LOG(WARNING) << "Error (eth_getTransactionCount()) " << s;
+    curl_global_cleanup();
+    return 0;
+  }
 
   // Encode claimSlot data.
   std::stringstream claim_slot_data;
@@ -222,25 +283,19 @@ int main() {
   t.data = claim_slot_data.str();
   t.chain_id = "01";
 
-  std::string transaction_receipt = "";
-
-  s = contract->call("claimSlot", t.sign_tx(PRIVATE_KEY));
+  s = contract->call("claimSlot", t.sign_tx(PRIVATE_KEY));  // Send raw transaction
   if (s.code == automaton::core::common::status::OK) {
-    std::cout << "Claim slot result: " << s.msg << std::endl;
-    transaction_receipt = s.msg;
+    std::cout << "Claim slot result (raw tx): " << s.msg << std::endl;
   } else {
-    std::cout << "Error (claimSlot) " << s << std::endl;
+    std::cout << "Error (claimSlot raw) " << s << std::endl;
   }
 
-  if (transaction_receipt != "" && transaction_receipt != "null") {
-    s = eth_getTransactionReceipt(URL, transaction_receipt);
-    if (s.code == automaton::core::common::status::OK) {
-      std::cout << "Transaction receipt: " << s.msg << std::endl;
-    } else {
-      std::cout << "Error (eth_getTransactionReceipt()) " << s << std::endl;
-    }
+  s = contract->call("numTakeOvers", "");
+  if (s.code == automaton::core::common::status::OK) {
+    j_output = json::parse(s.msg);
+    std::cout << "Number of slot take overs: " << (*j_output.begin()).get<std::string>() << std::endl;
   } else {
-    std::cout << "Transaction receipt is NULL!" << std::endl;
+    std::cout << "Error (numTakeOvers()) " << s << std::endl;
   }
 
   curl_global_cleanup();

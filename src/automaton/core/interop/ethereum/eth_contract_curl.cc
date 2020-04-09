@@ -5,7 +5,6 @@
 #include <utility>
 
 #include "automaton/core/crypto/cryptopp/Keccak_256_cryptopp.h"
-#include "automaton/core/interop/ethereum/eth_transaction.h"
 #include "automaton/core/interop/ethereum/eth_helper_functions.h"
 #include "automaton/core/io/io.h"
 
@@ -15,18 +14,10 @@ using automaton::core::common::status;
 
 using json = nlohmann::json;
 
-static const char* GAS_LIMIT = "0x5B8D80";  // TODO(kari): Get this value from the blockchain before sending transaction
-
 namespace automaton {
 namespace core {
 namespace interop {
 namespace ethereum {
-
-std::string dec_to_32hex(uint32_t n) {
-  std::stringstream ss;
-  ss << std::setfill('0') << std::setw(64) << std::hex << n;
-  return ss.str();
-}
 
 std::unordered_map<std::string, std::shared_ptr<eth_contract> > eth_contract::contracts;
 
@@ -117,8 +108,8 @@ void eth_contract::parse_abi(json json_abi) {
   }
 }
 
-eth_contract::eth_contract(const std::string& server, const std::string& address,
-    const std::string& abi_json_string):call_id(0), server(server), address(address) {
+eth_contract::eth_contract(const std::string& url, const std::string& contract_address,
+    const std::string& abi_json_string):call_ids(0), server(url), address(contract_address) {
   json j;
   std::stringstream ss(abi_json_string);
   try {
@@ -128,142 +119,142 @@ eth_contract::eth_contract(const std::string& server, const std::string& address
   }
   abi = j;
   parse_abi(abi);
-  curl = curl_easy_init();
-  if (curl) {
-    list = curl_slist_append(list, "Content-Type: application/json");
-    curl_easy_setopt(curl, CURLOPT_URL, server.c_str());
-    curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, curl_err_buf);
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_callback);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &message);
-    curl_easy_setopt(curl, CURLOPT_ENCODING, "gzip");
-    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, list);
-
-    // DEBUG
-    // curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
-    // curl_easy_setopt(curl, CURLOPT_DEBUGFUNCTION, debug_callback);
-  }
 }
 
-eth_contract::~eth_contract() {
-  if (curl) {
-    curl_slist_free_all(list);
-    curl_easy_cleanup(curl);
-  }
-}
+eth_contract::~eth_contract() {}
 
-status eth_contract::call(const std::string& fname, const std::string& params) {
-  call_id++;
+status eth_contract::call(const std::string& fname, const std::string& params,
+    const std::string& private_key, const std::string& value,
+    const std::string& gas_price_, const std::string& gas_limit_) {
+  uint32_t call_id = get_next_call_id();
   auto it = signatures.find(fname);
   if (it == signatures.end()) {
     return status::invalid_argument("Function signature is not found!");
   }
+
+  auto p_it = function_inputs.find(fname);
+  if (p_it == function_inputs.end()) {
+    return status::invalid_argument("Function signature is not found in function_inputs!");
+  }
+  std::string encoded_params = "";
+  if (p_it->second != "[]") {
+    encoded_params = encode(p_it->second, params);
+  }
+
   bool is_transaction = it->second.second;
   std::stringstream data;
   std::string string_data;
+
   if (!is_transaction) {
-    auto p_it = function_inputs.find(fname);
-    if (p_it == function_inputs.end()) {
-      return status::invalid_argument("Function signature is not found in function_inputs!");
-    }
-    std::string encoded_params = "";
-    if (p_it->second != "[]") {
-      encoded_params = encode(p_it->second, params);
-    }
     data << "{\"jsonrpc\":\"2.0\",\"method\":\"eth_call\",\"params\":[{ \"to\":\"" << address <<
         "\",\"data\":\"" << it->second.first << bin2hex(encoded_params) <<
-        "\",\"gas\":\"" << GAS_LIMIT << "\"},\"latest\"" << "],\"id\":" << call_id << "}";
+        "\",\"gas\":\"0x" << (gas_limit_ != "" ? gas_limit_ : gas_limit) <<
+        "\"},\"latest\"" << "],\"id\":" << call_id << "}";
   } else {
-    data << "{\"jsonrpc\":\"2.0\",\"method\":\"eth_sendRawTransaction\",\"params\":[\"0x" <<
-        params << "\"],\"id\":" << call_id << "}";
+    if (private_key != "") {
+      eth_transaction t;
+      status s = fill_tx(&t, (it->second.first).substr(2), encoded_params, private_key,
+          value, gas_price_, gas_limit_);
+      if (s.code != status::OK) {
+        return s;
+      }
+      std::string signed_tx = t.sign_tx(private_key);
+
+      // send tx, no raw tx
+
+      data << "{\"jsonrpc\":\"2.0\",\"method\":\"eth_sendRawTransaction\",\"params\":[\"0x" <<
+          signed_tx << "\"],\"id\":" << call_id << "}";
+    } else {  // Raw transaction is given in params [for compatibility]
+      data << "{\"jsonrpc\":\"2.0\",\"method\":\"eth_sendRawTransaction\",\"params\":[\"0x" <<
+          params << "\"],\"id\":" << call_id << "}";
+    }
   }
 
   string_data = data.str();
   LOG(INFO) << "\n======= REQUEST =======\n" << fname << ", " << params << '\n' <<
       string_data << "\n=====================";
 
-  if (curl) {
-    /* set the error buffer as empty before performing a request */
-    curl_err_buf[0] = '\0';
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, string_data.c_str());
-    res = curl_easy_perform(curl);
-    if (res != CURLE_OK) {
-      size_t len = strlen(curl_err_buf);
-      LOG(WARNING) << "Curl result code != CURLE_OK. Result code: " << res;
-      if (len) {
-        return status::internal(std::string(curl_err_buf, len));
-      }
-      return status::internal("CURL error");
+  status s = curl_post(server, string_data, call_id);
+  if (s.code == status::OK) {
+    if (!is_transaction) {
+      return decode_function_result(fname, s.msg);
     } else {
-      return handle_message(fname);
+      // TODO(kari): Decode transaction receipt
+      return eth_getTransactionReceipt(server, s.msg);
     }
-  } else {
-    LOG(WARNING) << "No curl!";
-    return status::internal("No curl!");
   }
+  return s;
 }
 
-status eth_contract::handle_message(const std::string& fname) {
-  json j;
-  uint32_t result_call_id;
-  std::stringstream ss(message);
-  try {
-    ss >> j;
-  } catch (const std::exception& e) {
-    LOG(WARNING) << "Invalid JSON!\n" << e.what();
-    return status::internal(e.what());
-  }
-  message = "";
-
-  if (j.find("id") != j.end() && j["id"].is_number()) {
-    result_call_id = j["id"].get<uint32_t>();
-  } else {
-    LOG(WARNING) << "ID not found!";
-    return status::internal("ID not found!");
-  }
-
-  if (result_call_id != call_id) {
-    LOG(WARNING) << "Result ID " << result_call_id << " does not match request ID: " << call_id;
-    return status::internal("Result ID does not match request ID!");
-  }
-
-  if (j.find("error") != j.end()) {
-    json obj = j["error"];
-    if (obj.is_string()) {
-      std::string error = obj["message"].get<std::string>();
-      return status::internal(error);
-    }
-    return status::internal(obj.dump());
-  } else if (j.find("result") != j.end()) {
-    if (j["result"].is_string()) {
-      std::string result = j["result"].get<std::string>();
-      auto p_it = function_outputs.find(fname);
-      if (p_it == function_outputs.end()) {
-        return status::invalid_argument("Function signature is not found in function_outputs!");
-      }
-      if (p_it->second != "[]") {
-        std::string bin = hex2bin(result.substr(2));
-        std::string decoded = decode(p_it->second, bin);
-        return status::ok(decoded);
-      }
-      return status::ok(result);
-    }
-    return status::ok(j["result"].dump());
-  }
-  return status::internal("No result and no error!?");
+void eth_contract::set_gas_price(const std::string& new_gas_price_hex) {
+  gas_price = new_gas_price_hex;
 }
 
-size_t eth_contract::curl_callback(void* contents, size_t size, size_t nmemb, std::string* s) {
-  size_t new_length = size* nmemb;
-  try {
-    s->append(reinterpret_cast<char*>(contents), new_length);
-    LOG(INFO) << "\n=== CHUNK ===\n"
-        << std::string(reinterpret_cast<char*>(contents), new_length) << "\n ===== EoCH ====";
+void eth_contract::set_gas_limit(const std::string& new_gas_limit_hex) {
+  gas_limit = new_gas_limit_hex;
+}
+
+status eth_contract::decode_function_result(const std::string& fname, const std::string& result) {
+  auto it = signatures.find(fname);
+  if (it == signatures.end()) {
+    return status::invalid_argument("Function signature is not found!");
   }
-  catch (std::bad_alloc& e) {
-    LOG(WARNING) << "Bad_alloc while reading data!\n" << e.what();
-    return 0;
+  auto p_it = function_outputs.find(fname);
+  if (p_it == function_outputs.end()) {
+    return status::invalid_argument("Function signature is not found in function_outputs!");
   }
-  return new_length;
+
+  if (p_it->second != "[]") {
+    std::string bin;
+    if (result.find("0x") == 0) {
+      bin = hex2bin(result.substr(2));
+    } else {
+      bin = hex2bin(result);
+    }
+    std::string decoded = decode(p_it->second, bin);
+    return status::ok(decoded);
+  }
+  return status::ok(result);
+}
+
+status eth_contract::fill_tx(eth_transaction* tx, const std::string& fsig, const std::string& encoded_params,
+    const std::string& private_key, const std::string& value,
+    const std::string& gas_price_, const std::string& gas_limit_) {
+  std::string acc_address = get_address_from_prkey(private_key);
+  if (acc_address == "") {
+    return status::internal("Could not get eth address from private key!");
+  }
+
+  status s = eth_getTransactionCount(server, acc_address);
+  if (s.code == automaton::core::common::status::OK) {
+    tx->nonce = s.msg.substr(2);
+  } else {
+    return status::internal("Could not fetch nonce! " + s.msg);
+  }
+
+  if (gas_price_ != "") {
+    tx->gas_price = gas_price_;
+  } else {
+    tx->gas_price = gas_price;
+  }
+  if (gas_limit_ != "") {
+    tx->gas_limit = gas_limit_;
+  } else {
+    tx->gas_limit = gas_limit;
+  }
+  tx->to = address.substr(2);
+  tx->value = value;
+  tx->chain_id = "01";
+
+  std::stringstream tx_data;
+  tx_data << fsig << bin2hex(encoded_params);
+  tx->data = tx_data.str();
+  return status::ok();
+}
+
+uint32_t eth_contract::get_next_call_id() {
+  std::lock_guard<std::mutex> lock(call_ids_mutex);
+  return ++call_ids;
 }
 
 }  // namespace ethereum

@@ -9,31 +9,6 @@ namespace interop {
 namespace ethereum {
 
 /**
- Returns Keccak_256 hash of data as 32-byte string.
-*/
-std::string hash(const std::string& data);
-
-/**
- Returns RLP encoding of s in hex.
- @param[in] s data to be encode, MUST be in hex WITHOUT '0x' prefix.
- @param[in] is_list shows if s represents one element or the payload of a list.
-*/
-std::string rlp_encode(std::string s, bool is_list);
-
-/**
- Signs a message using secp256k1 also checks if a public key can be created from the given private key. If the check
- fails, empty string will be returned. Returns concatenated r, s and v values of the signature.
- @param[in] priv_key byte array repesenting the private key
- @param[in] message_hash 32-byte string.
-*/
-std::string check_and_sign(const unsigned char* priv_key, const unsigned char* message_hash);
-
-/**
- Returns recovered Ethereum address from a message and a signature.
-*/
-std::string recover_address(const unsigned char* rsv, const unsigned char* message_hash);
-
-/**
   Ethereum transaction. Transaction fields should be given as hex strings WITHOUT '0x' prefix.
 */
 class eth_transaction {
