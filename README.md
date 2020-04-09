@@ -13,7 +13,7 @@ Automaton Core:
 
 Smart Contract:
 
-[![Smart Contract](https://github.com/automaton-network/automaton/workflows/Node.js%20CI/badge.svg?branch=master)](https://github.com/automaton-network/automaton/actions?query=workflow%3A%22Node.js+CI%22+branch%3Amaster)
+[![Smart Contract](https://github.com/automaton-network/automaton-bootstrap/workflows/Solidity%20CI/badge.svg?branch=master)](https://github.com/automaton-network/automaton-bootstrap/actions?query=workflow%3A%22Solidity+CI%22+branch%3Amaster)
 
 Core Modules C++ Coverage:
 
