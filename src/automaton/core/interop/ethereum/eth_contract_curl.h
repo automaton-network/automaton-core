@@ -91,9 +91,6 @@ class eth_contract: public std::enable_shared_from_this<eth_contract> {
   void parse_abi(nlohmann::json json_abi);
   common::status decode_function_result(const std::string& fname, const std::string& result);
   // common::status decode_transaction_receipt(const std::string& receipt);  // Extract function result from logs
-  common::status fill_tx(eth_transaction* tx, const std::string& fsig, const std::string& encoded_params,
-      const std::string& private_key, const std::string& value,
-      const std::string& gas_price_, const std::string& gas_limit_);
   uint32_t get_next_call_id();
 };
 

@@ -152,18 +152,16 @@ status eth_contract::call(const std::string& fname, const std::string& params,
         "\"},\"latest\"" << "],\"id\":" << call_id << "}";
   } else {
     if (private_key != "") {
-      eth_transaction t;
-      status s = fill_tx(&t, (it->second.first).substr(2), encoded_params, private_key,
-          value, gas_price_, gas_limit_);
-      if (s.code != status::OK) {
-        return s;
+      std::string acc_address = get_address_from_prkey(private_key);
+      if (acc_address.size() != 42) {
+        return status::internal("Invalid private key! Could not generate address!");
       }
-      std::string signed_tx = t.sign_tx(private_key);
 
-      // send tx, no raw tx
-
-      data << "{\"jsonrpc\":\"2.0\",\"method\":\"eth_sendRawTransaction\",\"params\":[\"0x" <<
-          signed_tx << "\"],\"id\":" << call_id << "}";
+      data << "{\"jsonrpc\":\"2.0\",\"method\":\"eth_sendTransaction\",\"params\":[{ \"to\":\"" << address <<
+          "\",\"from\":\"" << acc_address << "\",\"value\":\"" << value <<
+          "\",\"data\":\"" << it->second.first << bin2hex(encoded_params) <<
+          "\",\"gas\":\"0x" << (gas_limit_ != "" ? gas_limit_ : gas_limit) <<
+          "\"}],\"id\":" << call_id << "}";
     } else {  // Raw transaction is given in params [for compatibility]
       data << "{\"jsonrpc\":\"2.0\",\"method\":\"eth_sendRawTransaction\",\"params\":[\"0x" <<
           params << "\"],\"id\":" << call_id << "}";
@@ -215,41 +213,6 @@ status eth_contract::decode_function_result(const std::string& fname, const std:
     return status::ok(decoded);
   }
   return status::ok(result);
-}
-
-status eth_contract::fill_tx(eth_transaction* tx, const std::string& fsig, const std::string& encoded_params,
-    const std::string& private_key, const std::string& value,
-    const std::string& gas_price_, const std::string& gas_limit_) {
-  std::string acc_address = get_address_from_prkey(private_key);
-  if (acc_address == "") {
-    return status::internal("Could not get eth address from private key!");
-  }
-
-  status s = eth_getTransactionCount(server, acc_address);
-  if (s.code == automaton::core::common::status::OK) {
-    tx->nonce = s.msg.substr(2);
-  } else {
-    return status::internal("Could not fetch nonce! " + s.msg);
-  }
-
-  if (gas_price_ != "") {
-    tx->gas_price = gas_price_;
-  } else {
-    tx->gas_price = gas_price;
-  }
-  if (gas_limit_ != "") {
-    tx->gas_limit = gas_limit_;
-  } else {
-    tx->gas_limit = gas_limit;
-  }
-  tx->to = address.substr(2);
-  tx->value = value;
-  tx->chain_id = "01";
-
-  std::stringstream tx_data;
-  tx_data << fsig << bin2hex(encoded_params);
-  tx->data = tx_data.str();
-  return status::ok();
 }
 
 uint32_t eth_contract::get_next_call_id() {
