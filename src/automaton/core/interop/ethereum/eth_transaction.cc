@@ -23,7 +23,7 @@ std::string eth_transaction::sign_tx(const std::string& private_key_hex) {
   std::string hashed_tx = hash(byte_array);
   // std::cout << "HASH tx hex: " << bin2hex(hashed_tx) << std::endl;
   std::string pr_key = hex2bin(private_key_hex);
-  std::string rsv = sign_and_verify(reinterpret_cast<const unsigned char*>(pr_key.c_str()),
+  std::string rsv = secp256k1_sign_and_verify(reinterpret_cast<const unsigned char*>(pr_key.c_str()),
       reinterpret_cast<const unsigned char*>(hashed_tx.c_str()));
   int32_t v = rsv[64];
   v -= 27;

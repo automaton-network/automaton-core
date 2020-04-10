@@ -20,7 +20,6 @@
 #include "automaton/core/common/status.h"
 #include "automaton/core/crypto/cryptopp/Keccak_256_cryptopp.h"
 #include "automaton/core/io/io.h"
-#include "automaton/tools/miner/miner.h"
 
 using json = nlohmann::json;
 
@@ -30,7 +29,6 @@ using automaton::core::io::bin2hex;
 using automaton::core::io::dec2hex;
 using automaton::core::io::hex2bin;
 using automaton::core::io::hex2dec;
-using automaton::tools::miner::sign;
 
 namespace automaton {
 namespace core {
@@ -228,17 +226,29 @@ inline std::string get_address_from_prkey(const std::string& private_key_hex) {
   return "0x" + bin2hex(pub_key_hash.substr(12));
 }
 
+inline std::string secp256k1_sign(const unsigned char* priv_key, const unsigned char* msg_hash) {
+  secp256k1_context* context = secp256k1_context_create(SECP256K1_CONTEXT_SIGN | SECP256K1_CONTEXT_VERIFY);
+  secp256k1_ecdsa_recoverable_signature signature;
+  char signatureArr[65];
+  int v = -1;
+  secp256k1_ecdsa_sign_recoverable(context, &signature, (unsigned char*)msg_hash, (unsigned char*)priv_key, NULL, NULL);
+  secp256k1_ecdsa_recoverable_signature_serialize_compact(context, (unsigned char*)signatureArr, &v, &signature);
+  secp256k1_context_destroy(context);
+  signatureArr[64] = static_cast<uint8_t>(v) + 27;
+  return std::string(reinterpret_cast<char*>(signatureArr), 65);
+}
+
 /**
  Signs a message using secp256k1 also checks if a public key can be created from the given private key. If the check
  fails, empty string will be returned. Returns concatenated r, s and v values of the signature.
  @param[in] priv_key byte array repesenting the private key
  @param[in] message_hash 32-byte string.
 */
-inline std::string sign_and_verify(const unsigned char* priv_key, const unsigned char* message_hash) {
+inline std::string secp256k1_sign_and_verify(const unsigned char* priv_key, const unsigned char* message_hash) {
   secp256k1_context* context = secp256k1_context_create(SECP256K1_CONTEXT_SIGN | SECP256K1_CONTEXT_VERIFY);
   secp256k1_pubkey* pubkey = new secp256k1_pubkey();
 
-  std::string rsv = sign(priv_key, message_hash);
+  std::string rsv = secp256k1_sign(priv_key, message_hash);
 
   if (!secp256k1_ec_pubkey_create(context, pubkey, priv_key)) {
     LOG(WARNING) << "Invalid private key!!!" << bin2hex(std::string(reinterpret_cast<const char*>(priv_key), 32));
@@ -254,7 +264,7 @@ inline std::string sign_and_verify(const unsigned char* priv_key, const unsigned
 /**
  Returns recovered Ethereum address from a message and a signature.
 */
-inline std::string recover_address(const unsigned char* rsv, const unsigned char* message_hash) {
+inline std::string secp256k1_recover_address(const unsigned char* rsv, const unsigned char* message_hash) {
   int32_t v = rsv[64];
   v -= 27;
   secp256k1_context* context = secp256k1_context_create(SECP256K1_CONTEXT_SIGN | SECP256K1_CONTEXT_VERIFY);
