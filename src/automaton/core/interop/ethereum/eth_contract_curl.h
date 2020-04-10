@@ -12,8 +12,7 @@
 #include <curl/curl.h>  // NOLINT
 #include <json.hpp>
 
-#include "automaton/core/interop/ethereum/eth_transaction.h"
-#include "automaton/core/network/connection.h"
+#include "automaton/core/common/status.h"
 
 namespace automaton {
 namespace core {

@@ -4,11 +4,9 @@
 #include <string>
 #include <utility>
 
-#include "automaton/core/crypto/cryptopp/Keccak_256_cryptopp.h"
 #include "automaton/core/interop/ethereum/eth_helper_functions.h"
 #include "automaton/core/io/io.h"
 
-using automaton::core::crypto::cryptopp::Keccak_256_cryptopp;
 using automaton::core::io::bin2hex;
 using automaton::core::common::status;
 
