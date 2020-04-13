@@ -117,6 +117,12 @@ eth_contract::eth_contract(const std::string& url, const std::string& contract_a
   }
   abi = j;
   parse_abi(abi);
+  status s = eth_gasPrice(url);
+  if (s.code == status::OK) {
+    gas_price = s.msg.substr(2);
+  } else {
+    gas_price = "1388";  // 5k
+  }
 }
 
 eth_contract::~eth_contract() {}
@@ -147,6 +153,7 @@ status eth_contract::call(const std::string& fname, const std::string& params,
     data << "{\"jsonrpc\":\"2.0\",\"method\":\"eth_call\",\"params\":[{ \"to\":\"" << address <<
         "\",\"data\":\"" << it->second.first << bin2hex(encoded_params) <<
         "\",\"gas\":\"0x" << (gas_limit_ != "" ? gas_limit_ : gas_limit) <<
+        "\",\"gasPrice\":\"0x" << (gas_price_ != "" ? gas_price_ : gas_price) <<
         "\"},\"latest\"" << "],\"id\":" << call_id << "}";
   } else {
     if (private_key != "") {
@@ -159,6 +166,7 @@ status eth_contract::call(const std::string& fname, const std::string& params,
           "\",\"from\":\"" << acc_address << "\",\"value\":\"" << value <<
           "\",\"data\":\"" << it->second.first << bin2hex(encoded_params) <<
           "\",\"gas\":\"0x" << (gas_limit_ != "" ? gas_limit_ : gas_limit) <<
+          "\",\"gasPrice\":\"0x" << (gas_price_ != "" ? gas_price_ : gas_price) <<
           "\"}],\"id\":" << call_id << "}";
     } else {  // Raw transaction is given in params [for compatibility]
       data << "{\"jsonrpc\":\"2.0\",\"method\":\"eth_sendRawTransaction\",\"params\":[\"0x" <<

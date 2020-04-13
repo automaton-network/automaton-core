@@ -79,7 +79,7 @@ class eth_contract: public std::enable_shared_from_this<eth_contract> {
   std::mutex call_ids_mutex;
 
   std::string gas_limit = "5B8D80";  // 6M
-  std::string gas_price = "1388";  // 5k
+  std::string gas_price;
 
   std::string server;
   std::string address;  // ETH address of the contract
