@@ -190,6 +190,14 @@ void eth_contract::set_gas_limit(const std::string& new_gas_limit_hex) {
   gas_limit = new_gas_limit_hex;
 }
 
+std::string eth_contract::get_gas_price() {
+  return gas_price;
+}
+
+std::string eth_contract::get_gas_limit() {
+  return gas_limit;
+}
+
 status eth_contract::decode_function_result(const std::string& fname, const std::string& result) {
   auto it = signatures.find(fname);
   if (it == signatures.end()) {

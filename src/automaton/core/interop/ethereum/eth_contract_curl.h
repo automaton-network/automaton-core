@@ -22,10 +22,6 @@ namespace ethereum {
 /* TODO(kari): Extract transaction result from transaction receipt. Right now if you call a function that is a transaction and returns value, the only way to get the returned value is to check the transaction receipt
 */
 
-// Helper encode/decode functions
-
-std::string dec_to_32hex(uint32_t n);
-
 /**
   Class storing Ethereum contract address and function signatures.
   It is used to send eth_call requests to the Ethereum network and pass the result to a given callback function.
@@ -71,7 +67,12 @@ class eth_contract: public std::enable_shared_from_this<eth_contract> {
       const std::string& gas_price = "", const std::string& gas_limit = "");
 
   void set_gas_price(const std::string& new_gas_price_hex);
+
   void set_gas_limit(const std::string& new_gas_limit_hex);
+
+  std::string get_gas_price();
+
+  std::string get_gas_limit();
 
  private:
   uint32_t call_ids;
