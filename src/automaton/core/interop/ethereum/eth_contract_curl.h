@@ -78,7 +78,7 @@ class eth_contract: public std::enable_shared_from_this<eth_contract> {
   uint32_t call_ids;
   std::mutex call_ids_mutex;
 
-  std::string gas_limit = "5B8D80";  // 6M
+  std::string gas_limit;
   std::string gas_price;
 
   std::string server;

@@ -123,6 +123,7 @@ eth_contract::eth_contract(const std::string& url, const std::string& contract_a
   } else {
     gas_price = "1388";  // 5k
   }
+  gas_limit = "5B8D80";  // 6M
 }
 
 eth_contract::~eth_contract() {}
