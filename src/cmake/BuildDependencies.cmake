@@ -155,8 +155,8 @@ else()
 endif()
 
 ExternalProject_Add(ext_boost
-  URL "https://dl.bintray.com/boostorg/release/1.70.0/source/boost_1_70_0.zip"
-  URL_HASH SHA256=48F379B2E90DD1084429AAE87D6BDBDE9670139FA7569EE856C8C86DD366039D
+  URL "https://dl.bintray.com/boostorg/release/1.72.0/source/boost_1_72_0.zip"
+  URL_HASH SHA256=8c20440aaba21dd963c0f7149517445f50c62ce4eb689df2b5544cc89e6e621e
   INSTALL_DIR ${CMAKE_INSTALL_PREFIX}
   BUILD_IN_SOURCE 1
   CONFIGURE_COMMAND <SOURCE_DIR>/${BOOST_BOOTSTRAP_COMMAND}
