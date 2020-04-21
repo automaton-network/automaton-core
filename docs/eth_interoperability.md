@@ -23,7 +23,7 @@ common::status call(const std::string& fname, const std::string& params,
     const std::string& gas_price = "", const std::string& gas_limit = "");
 ```
 
-### Ethereum functions that does not change the state
+### Ethereum functions that do not change the state
 
 Example usage:
 
@@ -37,7 +37,7 @@ Example result stored in ```s.msg```:
 ["603CB0D1C8AB86E72BEB3C7DF564A36D7B85ECD2"]
 ```
 
-### Ethereum functions that does change the state (transactions)
+### Ethereum functions that change the state (transactions)
 
 Transaction receipt is returned in ```s.msg```.
 #### Sending transaction
