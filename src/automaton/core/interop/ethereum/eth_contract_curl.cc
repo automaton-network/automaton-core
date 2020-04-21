@@ -141,16 +141,16 @@ status eth_contract::call(const std::string& fname, const std::string& params,
   if (p_it == function_inputs.end()) {
     return status::invalid_argument("Function signature is not found in function_inputs!");
   }
-  std::string encoded_params = "";
-  if (p_it->second != "[]") {
-    encoded_params = encode(p_it->second, params);
-  }
 
   bool is_transaction = it->second.second;
   std::stringstream data;
   std::string string_data;
+  std::string encoded_params = "";
 
   if (!is_transaction) {
+    if (p_it->second != "[]") {
+      encoded_params = encode(p_it->second, params);
+    }
     data << "{\"jsonrpc\":\"2.0\",\"method\":\"eth_call\",\"params\":[{ \"to\":\"" << address <<
         "\",\"data\":\"" << it->second.first << bin2hex(encoded_params) <<
         "\",\"gas\":\"0x" << (gas_limit_ != "" ? gas_limit_ : gas_limit) <<
@@ -161,6 +161,10 @@ status eth_contract::call(const std::string& fname, const std::string& params,
       std::string acc_address = get_address_from_prkey(private_key);
       if (acc_address.size() != 42) {
         return status::internal("Invalid private key! Could not generate address!");
+      }
+
+      if (p_it->second != "[]") {
+        encoded_params = encode(p_it->second, params);
       }
 
       data << "{\"jsonrpc\":\"2.0\",\"method\":\"eth_sendTransaction\",\"params\":[{ \"to\":\"" << address <<

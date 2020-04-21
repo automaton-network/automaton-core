@@ -54,13 +54,15 @@ class eth_contract: public std::enable_shared_from_this<eth_contract> {
       case 2: params is list in json format where 'bytes' and 'address' are given in hex, integers in decimal,
       'string' is string, 'boolean' is "true" or "false" (without quotes)
       ! 'fixed' numbers are not yet supported !
-    @param[in] nonce in hex (without 0x prefix)
+    @param[in] private_key in hex (without 0x prefix)
     @param[in] gas_price in hex (without 0x prefix)
     @param[in] gas_limit in hex (without 0x prefix)
     @param[in] value in hex (without 0x prefix)
-    @param[in] private_key in hex (without 0x prefix)
-    @returns status code where msg contains the function result -
+
+    @returns status code:
+      1) if function call was successful status code is 'OK' and status msg contains the function result:
       transaction receipt if the function is a transaction, decoded function result in json format, otherwise
+      2) if function call failed status code shows error type and status msg contains the error
   */
   common::status call(const std::string& fname, const std::string& params,
       const std::string& private_key = "", const std::string& value = "",
