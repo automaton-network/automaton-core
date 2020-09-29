@@ -26,7 +26,7 @@ jobs:
       dist_dir: ./src/local_third_party
       build_deps: OFF
       static_runtime: ON
-      automaton_version: v0.1.11a
+      automaton_version: v0.1.15
     steps:
     - name: Setup cmake
       uses: jwlawson/actions-setup-cmake@v1.0
@@ -104,7 +104,7 @@ jobs:
       dist_dir: ./src/local_third_party
       test_contracts_dir: ./contracts/test_contract
       build_deps: OFF
-      automaton_version: v0.1.11a
+      automaton_version: v0.1.15
       CTEST_OUTPUT_ON_FAILURE: 1
     steps:
     - name: Setup cmake
@@ -182,7 +182,7 @@ jobs:
       lint_dir: ./src/automaton
       dist_dir: ./src/local_third_party
       build_deps: OFF
-      automaton_version: v0.1.11a
+      automaton_version: v0.1.15
       MACOSX_DEPLOYMENT_TARGET: 10.9
     steps:
     - name: Setup cmake
