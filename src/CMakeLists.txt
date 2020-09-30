@@ -425,8 +425,8 @@ if (automaton_BUILD_DEPENDENCIES)
     ext_curl
     ext_googletest
     ext_boost
-    ext_sol2
     lua_install
     json_install
+    sol2_install
   )
 endif()

@@ -38,6 +38,12 @@ FetchContent_Declare(json
   UPDATE_COMMAND ""
 )
 
+FetchContent_Declare(sol2
+  GIT_REPOSITORY "https://github.com/ThePhD/sol2.git"
+  GIT_TAG "v3.2.1"
+  UPDATE_COMMAND ""
+)
+
 FetchContent_Declare(lua_source
   GIT_REPOSITORY "https://github.com/lua/lua.git"
   GIT_TAG "e354c6355e7f48e087678ec49e340ca0696725b1"
@@ -77,6 +83,15 @@ endif()
 
 add_custom_target(json_install
   COMMAND ${CMAKE_COMMAND} -E copy_if_different ${json_SOURCE_DIR}/single_include/nlohmann/json.hpp ${CMAKE_INSTALL_PREFIX}/include/json.hpp
+)
+
+FetchContent_GetProperties(sol2)
+if (NOT sol2_POPULATED)
+  FetchContent_Populate(sol2)
+endif()
+
+add_custom_target(sol2_install
+  COMMAND ${CMAKE_COMMAND} -E copy_if_different ${sol2_SOURCE_DIR}/single/include/sol/sol.hpp ${CMAKE_INSTALL_PREFIX}/include/sol/json.hpp
 )
 
 file(WRITE ${CMAKE_INSTALL_PREFIX}/include/lua.hpp
@@ -226,16 +241,16 @@ if (automaton_USE_OPENSSL)
   add_dependencies(ext_curl ext_openssl)
 endif()
 
-set(SOL2_SINGLE ON)
-set(SOL2_GENERATE_SINGLE ON)
-ExternalProject_Add(ext_sol2
-  GIT_REPOSITORY "https://github.com/ThePhD/sol2.git"
-  GIT_TAG "874c8e5f09cb2fa73a0a1d6b56fb6691a3aa1144"
-  INSTALL_DIR ${CMAKE_INSTALL_PREFIX}
-  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-  CMAKE_CACHE_ARGS -DCMAKE_MSVC_RUNTIME_LIBRARY:STRING=${CMAKE_MSVC_RUNTIME_LIBRARY} -DCMAKE_POLICY_DEFAULT_CMP0091:STRING=NEW
-  UPDATE_COMMAND ""
-)
+# set(SOL2_SINGLE ON)
+# set(SOL2_GENERATE_SINGLE ON)
+# ExternalProject_Add(ext_sol2
+#   GIT_REPOSITORY "https://github.com/ThePhD/sol2.git"
+#   GIT_TAG "874c8e5f09cb2fa73a0a1d6b56fb6691a3aa1144"
+#   INSTALL_DIR ${CMAKE_INSTALL_PREFIX}
+#   CMAKE_ARGS -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+#   CMAKE_CACHE_ARGS -DCMAKE_MSVC_RUNTIME_LIBRARY:STRING=${CMAKE_MSVC_RUNTIME_LIBRARY} -DCMAKE_POLICY_DEFAULT_CMP0091:STRING=NEW
+#   UPDATE_COMMAND ""
+# )
 
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
   FetchContent_Declare(secp256k1_source
