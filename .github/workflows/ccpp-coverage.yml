@@ -23,7 +23,7 @@ jobs:
       dist_dir: ./src/local_third_party
       test_contracts_dir: ./contracts/test_contract
       build_deps: OFF
-      automaton_version: v0.1.11a
+      automaton_version: v0.1.15
       CTEST_OUTPUT_ON_FAILURE: 1
     steps:
     - name: Setup cmake
