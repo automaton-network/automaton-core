@@ -46,7 +46,7 @@ macro(set_warnings_level target)
 #     /wd4702
       /wd4826
 #     /wd4996
-      /WX
+#     /WX
     )
   else()
     target_compile_options(
