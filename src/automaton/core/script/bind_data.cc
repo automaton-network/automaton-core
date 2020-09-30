@@ -16,7 +16,7 @@ namespace core {
 namespace script {
 
 void engine::bind_data() {
-  auto msg_type = create_simple_usertype<msg>();
+  auto msg_type = new_usertype<msg>("msg");
 
   msg_type.set(sol::meta_function::index,
     [this](sol::this_state _L, msg& m, std::string key) -> sol::object {
@@ -229,7 +229,7 @@ void engine::bind_data() {
 
   msg_type.set("to_string", &msg::to_string);
 
-  set_usertype("msg", msg_type);
+  // set_usertype("msg", msg_type);
 }
 
 }  // namespace script

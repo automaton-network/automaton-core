@@ -137,7 +137,7 @@ int main(int argc, char* argv[]) {
   script.bind_core();
 
   // Bind node::node class
-  auto node_type = script.create_simple_usertype<lua_node>();
+  auto node_type = script.new_usertype<lua_node>("lua_node");
 
   node_type.set(sol::call_constructor,
     sol::factories(
@@ -205,7 +205,7 @@ int main(int argc, char* argv[]) {
     return n.get_peer_info(pid).address;
   });
 
-  script.set_usertype("node", node_type);
+  // script.set_usertype("node", node_type);
 
   // Bind node static functions
 
