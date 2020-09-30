@@ -40,6 +40,7 @@ FetchContent_Declare(json
 
 FetchContent_Declare(sol2
   GIT_REPOSITORY "https://github.com/ThePhD/sol2.git"
+  GIT_TAG "e4f588d18c3a99d4266d9deaad37d3bf5a16772b"
   # GIT_TAG "v3.2.1"
   UPDATE_COMMAND ""
 )
