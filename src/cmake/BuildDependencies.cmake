@@ -226,6 +226,8 @@ if (automaton_USE_OPENSSL)
   add_dependencies(ext_curl ext_openssl)
 endif()
 
+set(SOL2_SINGLE ON)
+set(SOL2_GENERATE_SINGLE ON)
 ExternalProject_Add(ext_sol2
   GIT_REPOSITORY "https://github.com/ThePhD/sol2.git"
   GIT_TAG "874c8e5f09cb2fa73a0a1d6b56fb6691a3aa1144"
