@@ -11,7 +11,7 @@
 #include "automaton/core/crypto/secure_random.h"
 #include "automaton/core/data/factory.h"
 
-#include "sol/sol.hpp"
+#include <sol/sol.hpp>
 
 namespace automaton {
 namespace core {
