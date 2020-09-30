@@ -295,7 +295,7 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
   )
 else()
   ExternalProject_Add(ext_gmp
-    URL "https://gmplib.org/download/gmp/gmp-6.1.2.tar.xz"
+    URL "https://ftp.gnu.org/gnu/gmp/gmp-6.1.2.tar.xz"
     URL_HASH SHA256=87b565e89a9a684fe4ebeeddb8399dce2599f9c9049854ca8c0dfbdea0e21912
     INSTALL_DIR ${CMAKE_INSTALL_PREFIX}
     BUILD_IN_SOURCE 1
