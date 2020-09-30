@@ -297,24 +297,24 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
       DESTINATION include
   )
 else()
-  ExternalProject_Add(ext_gmp
-    URL "https://ftp.gnu.org/gnu/gmp/gmp-6.1.2.tar.xz"
-    URL_HASH SHA256=87b565e89a9a684fe4ebeeddb8399dce2599f9c9049854ca8c0dfbdea0e21912
-    INSTALL_DIR ${CMAKE_INSTALL_PREFIX}
-    BUILD_IN_SOURCE 1
-    CONFIGURE_COMMAND ./configure --prefix=${CMAKE_INSTALL_PREFIX} --enable-shared=no
-    BUILD_COMMAND make -j${CPUCOUNT}
-    INSTALL_COMMAND make -j${CPUCOUNT} install
-  )
+#  ExternalProject_Add(ext_gmp
+#    URL "https://ftp.gnu.org/gnu/gmp/gmp-6.1.2.tar.xz"
+#    URL_HASH SHA256=87b565e89a9a684fe4ebeeddb8399dce2599f9c9049854ca8c0dfbdea0e21912
+#    INSTALL_DIR ${CMAKE_INSTALL_PREFIX}
+#    BUILD_IN_SOURCE 1
+#    CONFIGURE_COMMAND ./configure --prefix=${CMAKE_INSTALL_PREFIX} --enable-shared=no
+#    BUILD_COMMAND make -j${CPUCOUNT}
+#    INSTALL_COMMAND make -j${CPUCOUNT} install
+#  )
   ExternalProject_Add(ext_secp256k1
     GIT_REPOSITORY "https://github.com/bitcoin-core/secp256k1"
     GIT_TAG "e9fccd4de1f2b382545dfbadeae54868447e2cdf"
     INSTALL_DIR ${CMAKE_INSTALL_PREFIX}
     BUILD_IN_SOURCE 1
-    CONFIGURE_COMMAND ./autogen.sh COMMAND ./configure --prefix=${CMAKE_INSTALL_PREFIX} --enable-module-recovery --enable-shared=no --with-sysroot=${CMAKE_INSTALL_PREFIX}
+    CONFIGURE_COMMAND ./autogen.sh COMMAND ./configure --prefix=${CMAKE_INSTALL_PREFIX} --with-bignum=no --enable-module-recovery --enable-shared=no --with-sysroot=${CMAKE_INSTALL_PREFIX}
     BUILD_COMMAND make -j${CPUCOUNT}
     INSTALL_COMMAND make -j${CPUCOUNT} install
     UPDATE_COMMAND ""
-    DEPENDS ext_gmp
+#    DEPENDS ext_gmp
   )
 endif()

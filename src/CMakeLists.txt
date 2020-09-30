@@ -161,9 +161,9 @@ else()
   set(REPLXX_LIB replxx)
   set(OPENSSL_LIBS ssl;crypto)
   set(Z_LIB z)
-  set(GMP_LIB ${CMAKE_INSTALL_PREFIX}/lib/libgmp.a)
+  # set(GMP_LIB ${CMAKE_INSTALL_PREFIX}/lib/libgmp.a)
   if (automaton_BUILD_DEPENDENCIES)
-    add_dependencies(automaton-core ext_gmp ext_secp256k1)
+    add_dependencies(automaton-core ext_secp256k1)
   endif()
 endif()
 
@@ -183,7 +183,7 @@ target_link_libraries(
   ${Z_LIB}
   ${GTEST_LIBS}
   ${CMAKE_DL_LIBS}
-  ${GMP_LIB}
+  # ${GMP_LIB}
 )
 
 
