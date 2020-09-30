@@ -4,6 +4,7 @@
 #include <array>
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "automaton/core/crypto/digital_signature.h"
