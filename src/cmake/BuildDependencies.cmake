@@ -93,6 +93,8 @@ endif()
 
 add_custom_target(sol2_install
   COMMAND ${CMAKE_COMMAND} -E copy_if_different ${sol2_SOURCE_DIR}/single/include/sol/sol.hpp ${CMAKE_INSTALL_PREFIX}/include/sol/sol.hpp
+  COMMAND ${CMAKE_COMMAND} -E copy_if_different ${sol2_SOURCE_DIR}/single/include/sol/config.hpp ${CMAKE_INSTALL_PREFIX}/include/sol/config.hpp
+  COMMAND ${CMAKE_COMMAND} -E copy_if_different ${sol2_SOURCE_DIR}/single/include/sol/forward.hpp ${CMAKE_INSTALL_PREFIX}/include/sol/forward.hpp
 )
 
 file(WRITE ${CMAKE_INSTALL_PREFIX}/include/lua.hpp
