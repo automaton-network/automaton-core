@@ -22,7 +22,7 @@ jobs:
       build_dir: ./src/build
       dist_dir: ./src/local_third_party
       test_contracts_dir: ./contracts/test_contract
-      build_deps: ON
+      build_deps: OFF
       automaton_version: v0.1.11a
       CTEST_OUTPUT_ON_FAILURE: 1
     steps:
