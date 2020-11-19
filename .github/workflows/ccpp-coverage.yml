@@ -27,7 +27,7 @@ jobs:
       CTEST_OUTPUT_ON_FAILURE: 1
     steps:
     - name: Setup cmake
-      uses: jwlawson/actions-setup-cmake@v1.0
+      uses: jwlawson/actions-setup-cmake@v1.4
       with:
         cmake-version: '3.17.x'
         github-api-token: ${{ secrets.GITHUB_TOKEN }}
