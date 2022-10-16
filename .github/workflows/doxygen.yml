@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: kamiazya/setup-graphviz@v1
+      - uses: ts-graphviz/setup-graphviz@v1
       - name: Generate Doxygen
         uses: automaton-network/doxygen-action@v1.0.4
         with:
